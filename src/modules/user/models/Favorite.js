@@ -3,11 +3,6 @@ const { sequelize } = require('../../../config/database');
 const User = require('../../user/models/User');
 const Master = require('../../user/models/Master');
 
-/**
- * Модель избранных мастеров (Favorite)
- * 
- * Клиенты могут добавлять мастеров в избранное
- */
 const Favorite = sequelize.define('Favorite', {
   id: {
     type: DataTypes.INTEGER,
@@ -69,10 +64,10 @@ const Favorite = sequelize.define('Favorite', {
   updatedAt: 'updated_at',
   validate: {
     userIsClient() {
-      // Проверка будет выполняться на уровне сервиса
+
     }
   }
 });
 
-// Ассоциации будут определены в associations.js
+
 module.exports = Favorite;

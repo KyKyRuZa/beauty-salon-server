@@ -20,7 +20,7 @@ const User = sequelize.define('User', {
         msg: 'Номер телефона должен содержать не менее 10 символов и может включать цифры, пробелы, дефисы и скобки'
       }
     },
-    field: 'phone' // Указывает, что поле в базе данных будет phone
+    field: 'phone'
   },
   email: {
     type: DataTypes.STRING,
@@ -38,7 +38,7 @@ const User = sequelize.define('User', {
         msg: 'Адрес электронной почты должен содержать от 5 до 255 символов'
       }
     },
-    field: 'email' // Указывает, что поле в базе данных будет email
+    field: 'email'
   },
   password: {
     type: DataTypes.STRING,
@@ -53,14 +53,14 @@ const User = sequelize.define('User', {
       },
       isStrongPassword(value) {
         if (value && typeof value === 'string') {
-          // Проверяем, содержит ли пароль хотя бы одну заглавную букву, строчную букву и цифру
+
           if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(value)) {
             throw new Error('Пароль должен содержать хотя бы одну заглавную букву, строчную букву и цифру');
           }
         }
       }
     },
-    field: 'password' // Указывает, что поле в базе данных будет password
+    field: 'password'
   },
   role: {
     type: DataTypes.ENUM('client', 'master', 'salon', 'admin'),
@@ -71,29 +71,29 @@ const User = sequelize.define('User', {
         msg: 'Роль должна быть одной из: client, master, salon, admin'
       }
     },
-    field: 'role' // Указывает, что поле в базе данных будет role
+    field: 'role'
   },
   isActive: {
     type: DataTypes.BOOLEAN,
     defaultValue: true,
-    field: 'is_active' // Указывает, что поле в базе данных будет is_active
+    field: 'is_active'
   }
 }, {
-  tableName: 'users', // Указываем имя таблицы явно
-  schema: 'user_schema', // Указываем схему для пользовательских данных
+  tableName: 'users',
+  schema: 'user_schema',
   indexes: [
     {
       unique: true,
-      fields: ['email'], // индекс для уникальности email
+      fields: ['email'],
       name: 'users_email_unique'
     },
     {
       unique: true,
-      fields: ['phone'], // индекс для уникальности phone
+      fields: ['phone'],
       name: 'users_phone_unique'
     },
     {
-      fields: ['role'], // индекс для поиска по роли
+      fields: ['role'],
       name: 'users_role_index'
     }
   ],
@@ -120,10 +120,10 @@ const User = sequelize.define('User', {
       }
     }
   },
-  paranoid: true, // Включаем мягкое удаление
-  timestamps: true, // Включаем автоматические метки времени
-  createdAt: 'created_at', // Имя поля для времени создания
-  updatedAt: 'updated_at' // Имя поля для времени обновления
+  paranoid: true,
+  timestamps: true,
+  createdAt: 'created_at',
+  updatedAt: 'updated_at'
 });
 
 module.exports = User;

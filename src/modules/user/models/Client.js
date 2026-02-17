@@ -30,7 +30,7 @@ const Client = sequelize.define('Client', {
   },
   first_name: {
     type: DataTypes.STRING,
-    field: 'first_name', // Указывает, что поле в базе данных будет first_name
+    field: 'first_name',
     validate: {
       notEmpty: {
         msg: 'Имя не может быть пустым'
@@ -48,7 +48,7 @@ const Client = sequelize.define('Client', {
   },
   last_name: {
     type: DataTypes.STRING,
-    field: 'last_name', // Указывает, что поле в базе данных будет last_name
+    field: 'last_name',
     validate: {
       notEmpty: {
         msg: 'Фамилия не может быть пустой'
@@ -66,32 +66,32 @@ const Client = sequelize.define('Client', {
   },
   image_url: {
     type: DataTypes.STRING,
-    field: 'image_url', // URL изображения клиента
+    field: 'image_url',
     validate: {
       is: {
-        args: /^(https?:\/\/|\/)/i, // Проверяем, начинается ли строка с http://, https:// или /
+        args: /^(https?:\/\/|\/)/i,
         msg: 'Изображение должно быть действительным URL или относительным путем'
       }
     }
   }
 }, {
-  tableName: 'clients', // Указываем имя таблицы явно
-  schema: 'user_schema', // Указываем схему для пользовательских данных
+  tableName: 'clients',
+  schema: 'user_schema',
   indexes: [
     {
       unique: true,
-      fields: ['user_id'], // индекс для уникальности user_id
+      fields: ['user_id'],
       name: 'clients_user_id_unique'
     },
     {
-      fields: ['last_name'], // индекс для поиска по фамилии
+      fields: ['last_name'],
       name: 'clients_last_name_index'
     }
   ],
-  paranoid: true, // Включаем мягкое удаление
-  timestamps: true, // Включаем автоматические метки времени
-  createdAt: 'created_at', // Имя поля для времени создания
-  updatedAt: 'updated_at', // Имя поля для времени обновления
+  paranoid: true,
+  timestamps: true,
+  createdAt: 'created_at',
+  updatedAt: 'updated_at',
   getterMethods: {
     firstName() {
       return this.getDataValue('first_name');

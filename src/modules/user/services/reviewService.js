@@ -7,22 +7,19 @@ const { createLogger } = require('../../../utils/logger');
 
 const logger = createLogger('review-service');
 
-/**
- * Создать отзыв
- */
 const createReview = async (reviewData) => {
   const transaction = await sequelize.transaction();
 
   try {
     const { user_id, master_id, salon_id, booking_id, rating, comment } = reviewData;
 
-    // Проверка: отзыв должен быть мастеру или салону
+
     if (!master_id && !salon_id) {
       logger.warn('Попытка создать отзыв без указания мастера или салона', { user_id });
       throw new Error('Отзыв должен быть оставлен мастеру или салону');
     }
 
-    // Проверка: если есть booking_id, проверяем существование бронирования
+
     if (booking_id) {
       const booking = await Booking.findByPk(booking_id);
       if (!booking) {
@@ -30,13 +27,13 @@ const createReview = async (reviewData) => {
         throw new Error('Бронирование не найдено');
       }
 
-      // Проверка: пользователь является автором бронирования
+
       if (booking.user_id !== user_id) {
         logger.warn('Пользователь пытается оставить отзыв к чужому бронированию', { user_id, booking_id });
         throw new Error('Вы можете оставить отзыв только к своему бронированию');
       }
 
-      // Проверка: не был ли уже оставлен отзыв к этому бронированию
+
       const existingReview = await Review.findOne({ where: { booking_id } });
       if (existingReview) {
         logger.warn('Попытка повторного отзыва к бронированию', { booking_id, user_id });
@@ -44,7 +41,7 @@ const createReview = async (reviewData) => {
       }
     }
 
-    // Создание отзыва
+
     const review = await Review.create({
       user_id,
       master_id,
@@ -55,7 +52,7 @@ const createReview = async (reviewData) => {
       is_visible: true
     }, { transaction });
 
-    // Обновление рейтинга мастера или салона
+
     if (master_id) {
       await updateMasterRating(master_id, transaction);
     }
@@ -74,28 +71,25 @@ const createReview = async (reviewData) => {
   }
 };
 
-/**
- * Обновить рейтинг мастера
- */
 const updateMasterRating = async (masterId, transaction = null) => {
   try {
     const options = transaction ? { transaction } : {};
 
-    // Получаем все видимые отзывы мастера
+
     const reviews = await Review.findAll({
       where: { master_id: masterId, is_visible: true },
       attributes: ['rating'],
       ...options
     });
 
-    // Рассчитываем средний рейтинг
+
     let newRating = 0;
     if (reviews.length > 0) {
       const sum = reviews.reduce((acc, review) => acc + review.rating, 0);
       newRating = Math.round((sum / reviews.length) * 100) / 100;
     }
 
-    // Обновляем рейтинг мастера
+
     await Master.update(
       { rating: newRating },
       { where: { id: masterId }, ...options }
@@ -109,28 +103,25 @@ const updateMasterRating = async (masterId, transaction = null) => {
   }
 };
 
-/**
- * Обновить рейтинг салона
- */
 const updateSalonRating = async (salonId, transaction = null) => {
   try {
     const options = transaction ? { transaction } : {};
 
-    // Получаем все видимые отзывы салона
+
     const reviews = await Review.findAll({
       where: { salon_id: salonId, is_visible: true },
       attributes: ['rating'],
       ...options
     });
 
-    // Рассчитываем средний рейтинг
+
     let newRating = 0;
     if (reviews.length > 0) {
       const sum = reviews.reduce((acc, review) => acc + review.rating, 0);
       newRating = Math.round((sum / reviews.length) * 100) / 100;
     }
 
-    // Обновляем рейтинг салона
+
     await Salon.update(
       { rating: newRating },
       { where: { id: salonId }, ...options }
@@ -144,9 +135,6 @@ const updateSalonRating = async (salonId, transaction = null) => {
   }
 };
 
-/**
- * Получить отзывы мастера
- */
 const getMasterReviews = async (masterId, options = {}) => {
   const { limit = 20, offset = 0, is_visible = true } = options;
 
@@ -173,9 +161,6 @@ const getMasterReviews = async (masterId, options = {}) => {
   }
 };
 
-/**
- * Получить отзывы салона
- */
 const getSalonReviews = async (salonId, options = {}) => {
   const { limit = 20, offset = 0, is_visible = true } = options;
 
@@ -202,9 +187,6 @@ const getSalonReviews = async (salonId, options = {}) => {
   }
 };
 
-/**
- * Получить отзыв по ID
- */
 const getReviewById = async (id) => {
   try {
     const review = await Review.findByPk(id, {
@@ -229,9 +211,6 @@ const getReviewById = async (id) => {
   }
 };
 
-/**
- * Обновить отзыв
- */
 const updateReview = async (id, updateData) => {
   const transaction = await sequelize.transaction();
 
@@ -244,7 +223,7 @@ const updateReview = async (id, updateData) => {
 
     await review.update(updateData, { transaction });
 
-    // Если изменился рейтинг или видимость, обновляем рейтинг мастера/салона
+
     if (updateData.rating !== undefined || updateData.is_visible !== undefined) {
       if (review.master_id) {
         await updateMasterRating(review.master_id, transaction);
@@ -265,9 +244,6 @@ const updateReview = async (id, updateData) => {
   }
 };
 
-/**
- * Удалить отзыв (мягкое удаление)
- */
 const deleteReview = async (id) => {
   const transaction = await sequelize.transaction();
 
@@ -283,7 +259,7 @@ const deleteReview = async (id) => {
 
     await review.destroy({ transaction });
 
-    // Обновляем рейтинги после удаления
+
     if (masterId) {
       await updateMasterRating(masterId, transaction);
     }
@@ -302,9 +278,6 @@ const deleteReview = async (id) => {
   }
 };
 
-/**
- * Получить статистику отзывов (для дашборда)
- */
 const getReviewStats = async (masterId, salonId) => {
   try {
     const where = { is_visible: true };

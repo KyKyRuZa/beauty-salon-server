@@ -5,26 +5,23 @@ const { createLogger } = require('../../../utils/logger');
 
 const logger = createLogger('favorite-service');
 
-/**
- * Добавить мастера в избранное
- */
 const addToFavorites = async (userId, masterId) => {
   try {
-    // Проверка: мастер существует
+
     const master = await Master.findByPk(masterId);
     if (!master) {
       logger.warn('Мастер не найден', { masterId });
       throw new Error('Мастер не найден');
     }
 
-    // Проверяем наличие записи (включая удалённые)
+
     const existing = await Favorite.findOne({
       where: { user_id: userId, master_id: masterId },
-      paranoid: false // Ищем включая удалённые
+      paranoid: false
     });
 
     if (existing) {
-      // Если запись была удалена - восстанавливаем
+
       if (existing.deletedAt) {
         await existing.restore();
         logger.info('Мастер восстановлен в избранном', { userId, masterId, favoriteId: existing.id });
@@ -49,9 +46,6 @@ const addToFavorites = async (userId, masterId) => {
   }
 };
 
-/**
- * Удалить мастера из избранного
- */
 const removeFromFavorites = async (userId, masterId) => {
   try {
     const favorite = await Favorite.findOne({
@@ -74,9 +68,6 @@ const removeFromFavorites = async (userId, masterId) => {
   }
 };
 
-/**
- * Получить список избранных мастеров пользователя
- */
 const getUserFavorites = async (userId) => {
   try {
     const favorites = await Favorite.findAll({
@@ -106,9 +97,6 @@ const getUserFavorites = async (userId) => {
   }
 };
 
-/**
- * Проверить, находится ли мастер в избранном
- */
 const isFavorite = async (userId, masterId) => {
   try {
     const favorite = await Favorite.findOne({
@@ -122,9 +110,6 @@ const isFavorite = async (userId, masterId) => {
   }
 };
 
-/**
- * Переключить статус избранного (добавить/удалить)
- */
 const toggleFavorite = async (userId, masterId) => {
   try {
     const existing = await Favorite.findOne({

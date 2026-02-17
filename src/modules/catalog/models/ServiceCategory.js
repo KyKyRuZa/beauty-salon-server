@@ -1,7 +1,7 @@
 const { DataTypes } = require('sequelize');
 const { sequelize } = require('../../../config/database');
 
-// Модель для категорий услуг
+
 const ServiceCategory = sequelize.define('ServiceCategory', {
   id: {
     type: DataTypes.INTEGER,
@@ -44,8 +44,8 @@ const ServiceCategory = sequelize.define('ServiceCategory', {
     field: 'is_popular'
   }
 }, {
-  tableName: 'service_categories', // Таблица для категорий услуг
-  schema: 'catalog_schema', // Указываем схему для каталога услуг
+  tableName: 'service_categories',
+  schema: 'catalog_schema',
   indexes: [
     {
       fields: ['is_active'],
@@ -56,11 +56,11 @@ const ServiceCategory = sequelize.define('ServiceCategory', {
       name: 'category_is_popular_index'
     }
   ],
-  paranoid: true, // Включаем мягкое удаление
-  timestamps: true, // Включаем автоматические метки времени
+  paranoid: true,
+  timestamps: true,
   createdAt: 'created_at',
   updatedAt: 'updated_at',
-  deletedAt: 'deletedAt' // Указываем имя поля для мягкого удаления
+  deletedAt: 'deletedAt'
 });
 
 module.exports = ServiceCategory;

@@ -2,11 +2,6 @@ const { createLogger } = require('../utils/logger');
 
 const validationLogger = createLogger('validation-middleware');
 
-/**
- * Преобразует FormData в обычный объект
- * @param {FormData|Object} data - Данные для преобразования
- * @returns {Object} - Обычный объект с данными
- */
 const convertFormDataToObject = (data) => {
   if (data && (data.constructor && data.constructor.name === 'FormData' || typeof data.get === 'function')) {
     const obj = {};
@@ -18,23 +13,18 @@ const convertFormDataToObject = (data) => {
   return data;
 };
 
-/**
- * Middleware для валидации входящих данных с использованием Zod
- * @param {z.Schema} schema - Схема валидации Zod
- * @param {'body' | 'params' | 'query'} location - Где искать данные для валидации
- */
 const validate = (schema, location = 'body') => {
   return (req, res, next) => {
     try {
-      // Преобразуем FormData в обычный объект, если необходимо
+
       const rawData = req[location];
       const dataToValidate = convertFormDataToObject(rawData);
 
-      // Валидируем данные
+
       const parsedData = schema.parse(dataToValidate);
 
-      // Заменяем оригинальные данные валидированными
-      // Это позволяет Zod выполнить преобразования типов при необходимости
+
+
       req[location] = parsedData;
 
       validationLogger.info(`Данные успешно валидированы`, {
@@ -46,7 +36,7 @@ const validate = (schema, location = 'body') => {
 
       next();
     } catch (error) {
-      // Проверяем, является ли ошибка ошибкой Zod
+
       if (error && error.issues) {
         const errors = error.issues.map(issue => ({
           field: issue.path.join('.'),

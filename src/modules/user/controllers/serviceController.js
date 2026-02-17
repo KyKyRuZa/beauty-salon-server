@@ -1,10 +1,10 @@
 const serviceService = require('../services/serviceService');
 const { createLogger } = require('../../../utils/logger');
 
-// Create a logger instance for this controller
+
 const logger = createLogger('service-controller');
 
-// Get all active services
+
 const getAllServices = async (req, res) => {
   logger.info('Получение всех активных услуг', { ip: req.ip });
 
@@ -25,7 +25,7 @@ const getAllServices = async (req, res) => {
   }
 };
 
-// Get service by ID
+
 const getServiceById = async (req, res) => {
   logger.info('Получение услуги по ID', { serviceId: req.params.id, ip: req.ip });
 
@@ -56,15 +56,15 @@ const getServiceById = async (req, res) => {
   }
 };
 
-// Create a new master service
+
 const createService = async (req, res) => {
   logger.info('Создание новой услуги мастера', { userId: req.user.id, ip: req.ip });
 
   try {
     const serviceData = req.body;
-    const masterId = req.user.masterId || req.user.userId || req.user.id; // assuming master info is attached to req by auth middleware
+    const masterId = req.user.masterId || req.user.userId || req.user.id;
 
-    // Валидация данных на уровне контроллера
+
     if (!serviceData.name || !serviceData.price) {
       return res.status(400).json({
         success: false,
@@ -72,7 +72,7 @@ const createService = async (req, res) => {
       });
     }
 
-    // Проверка, что цена положительная
+
     if (parseFloat(serviceData.price) <= 0) {
       return res.status(400).json({
         success: false,
@@ -80,7 +80,7 @@ const createService = async (req, res) => {
       });
     }
 
-    // Проверка, что продолжительность, если указана, положительная
+
     if (serviceData.duration_minutes && parseInt(serviceData.duration_minutes) <= 0) {
       return res.status(400).json({
         success: false,
@@ -99,7 +99,7 @@ const createService = async (req, res) => {
   } catch (error) {
     logger.error('Ошибка создания услуги мастера', { error: error.message, userId: req.user.id, ip: req.ip });
 
-    // Обработка ошибок валидации
+
     if (error.name === 'SequelizeValidationError' || error.name === 'SequelizeUniqueConstraintError') {
       return res.status(400).json({
         success: false,
@@ -114,7 +114,7 @@ const createService = async (req, res) => {
   }
 };
 
-// Update service
+
 const updateService = async (req, res) => {
   logger.info('Обновление услуги', { serviceId: req.params.id, userId: req.user.id, ip: req.ip });
 
@@ -147,7 +147,7 @@ const updateService = async (req, res) => {
   }
 };
 
-// Delete service
+
 const deleteService = async (req, res) => {
   logger.info('Удаление услуги', { serviceId: req.params.id, userId: req.user.id, ip: req.ip });
 

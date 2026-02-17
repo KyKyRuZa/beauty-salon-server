@@ -21,7 +21,7 @@ const Salon = sequelize.define('Salon', {
       },
       key: 'id'
     },
-    field: 'user_id' // Указывает, что поле в базе данных будет user_id
+    field: 'user_id'
   },
   name: {
     type: DataTypes.STRING,
@@ -68,7 +68,7 @@ const Salon = sequelize.define('Salon', {
     }
   },
   rating: {
-    type: DataTypes.DECIMAL(3, 2), // average rating out of 5
+    type: DataTypes.DECIMAL(3, 2),
     defaultValue: 0.00,
     validate: {
       min: {
@@ -83,32 +83,32 @@ const Salon = sequelize.define('Salon', {
   },
   image_url: {
     type: DataTypes.STRING,
-    field: 'image_url', // URL изображения салона
+    field: 'image_url',
     validate: {
       is: {
-        args: /^(https?:\/\/|\/)/i, // Проверяем, начинается ли строка с http://, https:// или /
+        args: /^(https?:\/\/|\/)/i,
         msg: 'Изображение должно быть действительным URL или относительным путем'
       }
     }
   }
 }, {
-  tableName: 'salons', // Указываем имя таблицы явно
-  schema: 'user_schema', // Указываем схему для пользовательских данных
+  tableName: 'salons',
+  schema: 'user_schema',
   indexes: [
     {
       unique: true,
-      fields: ['user_id'], // индекс для уникальности user_id
+      fields: ['user_id'],
       name: 'salons_user_id_unique'
     },
     {
-      fields: ['name'], // индекс для поиска по названию
+      fields: ['name'],
       name: 'salons_name_index'
     }
   ],
-  paranoid: true, // Включаем мягкое удаление
-  timestamps: true, // Включаем автоматические метки времени
-  createdAt: 'created_at', // Имя поля для времени создания
-  updatedAt: 'updated_at' // Имя поля для времени обновления
+  paranoid: true,
+  timestamps: true,
+  createdAt: 'created_at',
+  updatedAt: 'updated_at'
 });
 
 module.exports = Salon;

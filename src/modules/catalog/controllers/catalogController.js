@@ -4,10 +4,10 @@ const ServiceSubcategory = require('../models/ServiceSubcategory');
 const MasterService = require('../models/MasterService');
 const { createLogger } = require('../../../utils/logger');
 
-// Create a logger instance for this controller
+
 const logger = createLogger('catalog-controller');
 
-// Get all service categories from catalog with filtering and pagination
+
 const getAllCatalogCategories = async (req, res) => {
   logger.info('Получение категорий услуг из каталога', { ip: req.ip, params: req.query });
 
@@ -44,7 +44,7 @@ const getAllCatalogCategories = async (req, res) => {
   }
 };
 
-// Get service category by ID from catalog
+
 const getCatalogCategoryById = async (req, res) => {
   logger.info('Получение категории услуги из каталога по ID', { categoryId: req.params.id, ip: req.ip });
 
@@ -75,7 +75,7 @@ const getCatalogCategoryById = async (req, res) => {
   }
 };
 
-// Get popular service categories
+
 const getPopularCategories = async (req, res) => {
   logger.info('Получение популярных категорий услуг', { ip: req.ip });
 
@@ -98,14 +98,14 @@ const getPopularCategories = async (req, res) => {
   }
 };
 
-// Create a new service category in catalog
+
 const createCatalogCategory = async (req, res) => {
   logger.info('Создание новой категории услуги в каталоге', { userId: req.user?.userId || req.user?.id, ip: req.ip });
 
   try {
     const categoryData = req.body;
 
-    // Валидация данных на уровне контроллера
+
     if (!categoryData.name) {
       return res.status(400).json({
         success: false,
@@ -113,7 +113,7 @@ const createCatalogCategory = async (req, res) => {
       });
     }
 
-    // Проверка минимальной длины названия
+
     if (categoryData.name.length < 2) {
       return res.status(400).json({
         success: false,
@@ -132,7 +132,7 @@ const createCatalogCategory = async (req, res) => {
   } catch (error) {
     logger.error('Ошибка создания категории услуги в каталоге', { error: error.message, userId: req.user?.userId || req.user?.id, ip: req.ip });
 
-    // Обработка ошибок валидации
+
     if (error.name === 'SequelizeValidationError' || error.name === 'SequelizeUniqueConstraintError') {
       return res.status(400).json({
         success: false,
@@ -147,7 +147,7 @@ const createCatalogCategory = async (req, res) => {
   }
 };
 
-// Update service category in catalog
+
 const updateCatalogCategory = async (req, res) => {
   logger.info('Обновление категории услуги в каталоге', { categoryId: req.params.id, userId: req.user?.userId || req.user?.id, ip: req.ip });
 
@@ -180,7 +180,7 @@ const updateCatalogCategory = async (req, res) => {
   }
 };
 
-// Delete service category from catalog
+
 const deleteCatalogCategory = async (req, res) => {
   logger.info('Удаление категории услуги из каталога', { categoryId: req.params.id, userId: req.user?.userId || req.user?.id, ip: req.ip });
 
@@ -212,7 +212,7 @@ const deleteCatalogCategory = async (req, res) => {
   }
 };
 
-// Get services by catalog category
+
 const getServicesByCategory = async (req, res) => {
   logger.info('Получение услуг по категории каталога', { categoryId: req.params.categoryId, ip: req.ip });
 
@@ -242,7 +242,7 @@ const getServicesByCategory = async (req, res) => {
   }
 };
 
-// Get service variations by service
+
 const getServiceVariations = async (req, res) => {
   logger.info('Получение вариантов услуги', { serviceId: req.params.serviceId, ip: req.ip });
 
@@ -272,7 +272,7 @@ const getServiceVariations = async (req, res) => {
   }
 };
 
-// Get all services from catalog with filtering and pagination
+
 const getAllCatalogServices = async (req, res) => {
   logger.info('Получение услуг из каталога', { ip: req.ip, params: req.query });
 
@@ -311,7 +311,7 @@ const getAllCatalogServices = async (req, res) => {
   }
 };
 
-// Get service by ID from catalog
+
 const getCatalogServiceById = async (req, res) => {
   logger.info('Получение услуги из каталога по ID', { serviceId: req.params.id, ip: req.ip });
 
@@ -342,14 +342,14 @@ const getCatalogServiceById = async (req, res) => {
   }
 };
 
-// Create a new service in catalog
+
 const createCatalogService = async (req, res) => {
   logger.info('Создание новой услуги в каталоге', { userId: req.user?.userId || req.user?.id, ip: req.ip });
 
   try {
     const serviceData = req.body;
 
-    // Валидация данных на уровне контроллера
+
     if (!serviceData.name || !serviceData.price) {
       return res.status(400).json({
         success: false,
@@ -357,7 +357,7 @@ const createCatalogService = async (req, res) => {
       });
     }
 
-    // Проверка минимальной длины названия
+
     if (serviceData.name.length < 2) {
       return res.status(400).json({
         success: false,
@@ -365,7 +365,7 @@ const createCatalogService = async (req, res) => {
       });
     }
 
-    // Проверка, что цена положительная
+
     if (parseFloat(serviceData.price) <= 0) {
       return res.status(400).json({
         success: false,
@@ -384,7 +384,7 @@ const createCatalogService = async (req, res) => {
   } catch (error) {
     logger.error('Ошибка создания услуги в каталоге', { error: error.message, userId: req.user?.userId || req.user?.id, ip: req.ip });
 
-    // Обработка ошибок валидации
+
     if (error.name === 'SequelizeValidationError' || error.name === 'SequelizeUniqueConstraintError') {
       return res.status(400).json({
         success: false,
@@ -399,7 +399,7 @@ const createCatalogService = async (req, res) => {
   }
 };
 
-// Update service in catalog
+
 const updateCatalogService = async (req, res) => {
   logger.info('Обновление услуги в каталоге', { serviceId: req.params.id, userId: req.user?.userId || req.user?.id, ip: req.ip });
 
@@ -432,7 +432,7 @@ const updateCatalogService = async (req, res) => {
   }
 };
 
-// Delete service from catalog
+
 const deleteCatalogService = async (req, res) => {
   logger.info('Удаление услуги из каталога', { serviceId: req.params.id, userId: req.user?.userId || req.user?.id, ip: req.ip });
 
@@ -464,12 +464,12 @@ const deleteCatalogService = async (req, res) => {
   }
 };
 
-// Create a service for a specific master within a category
+
 const createMasterService = async (req, res) => {
   logger.info('Создание услуги для мастера', { userId: req.user?.userId || req.user?.id, ip: req.ip });
 
   try {
-    // Проверяем, что пользователь аутентифицирован
+
     if (!req.user) {
       return res.status(401).json({
         success: false,
@@ -477,7 +477,7 @@ const createMasterService = async (req, res) => {
       });
     }
 
-    // Получаем ID пользователя из токена (JWT payload использует userId)
+
     const userId = req.user.userId || req.user.id;
 
     if (!userId) {
@@ -487,7 +487,7 @@ const createMasterService = async (req, res) => {
       });
     }
 
-    // Получаем ID мастера по ID пользователя
+
     const Master = require('../../user/models/Master');
     const masterRecord = await Master.findOne({ where: { user_id: userId } });
 
@@ -501,7 +501,7 @@ const createMasterService = async (req, res) => {
     const masterId = masterRecord.id;
     const serviceData = req.body;
 
-    // Валидация данных на уровне контроллера - теперь нужны name и price
+
     if (!serviceData.name || !serviceData.price) {
       return res.status(400).json({
         success: false,
@@ -509,7 +509,7 @@ const createMasterService = async (req, res) => {
       });
     }
 
-    // Проверка, что цена положительная
+
     if (parseFloat(serviceData.price) <= 0) {
       return res.status(400).json({
         success: false,
@@ -517,7 +517,7 @@ const createMasterService = async (req, res) => {
       });
     }
 
-    // Проверка, что продолжительность, если указана, положительная
+
     if (serviceData.duration_minutes && parseInt(serviceData.duration_minutes) <= 0) {
       return res.status(400).json({
         success: false,
@@ -536,7 +536,7 @@ const createMasterService = async (req, res) => {
   } catch (error) {
     logger.error('Ошибка создания услуги для мастера', { error: error.message, userId: req.user?.userId || req.user?.id, ip: req.ip });
 
-    // Обработка ошибок валидации
+
     if (error.name === 'SequelizeValidationError' || error.name === 'SequelizeUniqueConstraintError') {
       return res.status(400).json({
         success: false,
@@ -551,12 +551,12 @@ const createMasterService = async (req, res) => {
   }
 };
 
-// Create a service for a specific salon within a category
+
 const createSalonService = async (req, res) => {
   logger.info('Создание услуги для салона', { userId: req.user?.userId || req.user?.id, ip: req.ip });
 
   try {
-    // Проверяем, что пользователь аутентифицирован
+
     if (!req.user) {
       return res.status(401).json({
         success: false,
@@ -564,7 +564,7 @@ const createSalonService = async (req, res) => {
       });
     }
 
-    // Получаем ID пользователя из токена (JWT payload использует userId)
+
     const userId = req.user.userId || req.user.id;
 
     if (!userId) {
@@ -574,7 +574,7 @@ const createSalonService = async (req, res) => {
       });
     }
 
-    // Получаем ID салона по ID пользователя
+
     const Salon = require('../../user/models/Salon');
     const salonRecord = await Salon.findOne({ where: { user_id: userId } });
 
@@ -588,7 +588,7 @@ const createSalonService = async (req, res) => {
     const salonId = salonRecord.id;
     const serviceData = req.body;
 
-    // Валидация данных на уровне контроллера
+
     if (!serviceData.name || !serviceData.price || !serviceData.duration || !serviceData.catalog_id) {
       return res.status(400).json({
         success: false,
@@ -596,7 +596,7 @@ const createSalonService = async (req, res) => {
       });
     }
 
-    // Проверка минимальной длины названия
+
     if (serviceData.name.length < 2) {
       return res.status(400).json({
         success: false,
@@ -604,7 +604,7 @@ const createSalonService = async (req, res) => {
       });
     }
 
-    // Проверка, что цена положительная
+
     if (parseFloat(serviceData.price) <= 0) {
       return res.status(400).json({
         success: false,
@@ -612,7 +612,7 @@ const createSalonService = async (req, res) => {
       });
     }
 
-    // Проверка, что продолжительность положительная
+
     if (parseInt(serviceData.duration) <= 0) {
       return res.status(400).json({
         success: false,
@@ -631,7 +631,7 @@ const createSalonService = async (req, res) => {
   } catch (error) {
     logger.error('Ошибка создания услуги для салона', { error: error.message, userId: req.user?.userId || req.user?.id, ip: req.ip });
 
-    // Обработка ошибок валидации
+
     if (error.name === 'SequelizeValidationError' || error.name === 'SequelizeUniqueConstraintError') {
       return res.status(400).json({
         success: false,
@@ -646,12 +646,12 @@ const createSalonService = async (req, res) => {
   }
 };
 
-// Get services created by the authenticated master
+
 const getMasterServices = async (req, res) => {
   logger.info('Получение услуг мастера', { userId: req.user?.userId || req.user?.id, ip: req.ip });
 
   try {
-    // Проверяем, что пользователь аутентифицирован
+
     if (!req.user) {
       return res.status(401).json({
         success: false,
@@ -659,7 +659,7 @@ const getMasterServices = async (req, res) => {
       });
     }
 
-    // Получаем ID пользователя из токена (JWT payload использует userId)
+
     const userId = req.user.userId || req.user.id;
 
     if (!userId) {
@@ -669,7 +669,7 @@ const getMasterServices = async (req, res) => {
       });
     }
 
-    // Получаем ID мастера по ID пользователя
+
     const Master = require('../../user/models/Master');
     const masterRecord = await Master.findOne({ where: { user_id: userId } });
 
@@ -712,12 +712,12 @@ const getMasterServices = async (req, res) => {
   }
 };
 
-// Get services created by the authenticated salon
+
 const getSalonServices = async (req, res) => {
   logger.info('Получение услуг салона', { userId: req.user?.userId || req.user?.id, ip: req.ip });
 
   try {
-    // Проверяем, что пользователь аутентифицирован
+
     if (!req.user) {
       return res.status(401).json({
         success: false,
@@ -725,7 +725,7 @@ const getSalonServices = async (req, res) => {
       });
     }
 
-    // Получаем ID пользователя из токена (JWT payload использует userId)
+
     const userId = req.user.userId || req.user.id;
 
     if (!userId) {
@@ -735,7 +735,7 @@ const getSalonServices = async (req, res) => {
       });
     }
 
-    // Получаем ID салона по ID пользователя
+
     const Salon = require('../../user/models/Salon');
     const salonRecord = await Salon.findOne({ where: { user_id: userId } });
 
@@ -778,12 +778,12 @@ const getSalonServices = async (req, res) => {
   }
 };
 
-// Update a service owned by the authenticated master
+
 const updateMasterService = async (req, res) => {
   logger.info('Обновление услуги мастера', { serviceId: req.params.id, userId: req.user?.userId || req.user?.id, ip: req.ip });
 
   try {
-    // Проверяем, что пользователь аутентифицирован
+
     if (!req.user) {
       return res.status(401).json({
         success: false,
@@ -791,7 +791,7 @@ const updateMasterService = async (req, res) => {
       });
     }
 
-    // Получаем ID пользователя из токена (JWT payload использует userId)
+
     const userId = req.user.userId || req.user.id;
 
     if (!userId) {
@@ -801,7 +801,7 @@ const updateMasterService = async (req, res) => {
       });
     }
 
-    // Получаем ID мастера по ID пользователя
+
     const Master = require('../../user/models/Master');
     const masterRecord = await Master.findOne({ where: { user_id: userId } });
 
@@ -841,12 +841,12 @@ const updateMasterService = async (req, res) => {
   }
 };
 
-// Update a service owned by the authenticated salon
+
 const updateSalonService = async (req, res) => {
   logger.info('Обновление услуги салона', { serviceId: req.params.id, userId: req.user?.userId || req.user?.id, ip: req.ip });
 
   try {
-    // Проверяем, что пользователь аутентифицирован
+
     if (!req.user) {
       return res.status(401).json({
         success: false,
@@ -854,7 +854,7 @@ const updateSalonService = async (req, res) => {
       });
     }
 
-    // Получаем ID пользователя из токена (JWT payload использует userId)
+
     const userId = req.user.userId || req.user.id;
 
     if (!userId) {
@@ -864,7 +864,7 @@ const updateSalonService = async (req, res) => {
       });
     }
 
-    // Получаем ID салона по ID пользователя
+
     const Salon = require('../../user/models/Salon');
     const salonRecord = await Salon.findOne({ where: { user_id: userId } });
 
@@ -904,12 +904,12 @@ const updateSalonService = async (req, res) => {
   }
 };
 
-// Delete a service owned by the authenticated master
+
 const deleteMasterService = async (req, res) => {
   logger.info('Удаление услуги мастера', { serviceId: req.params.id, userId: req.user?.userId || req.user?.id, ip: req.ip });
 
   try {
-    // Проверяем, что пользователь аутентифицирован
+
     if (!req.user) {
       return res.status(401).json({
         success: false,
@@ -917,7 +917,7 @@ const deleteMasterService = async (req, res) => {
       });
     }
 
-    // Получаем ID пользователя из токена (JWT payload использует userId)
+
     const userId = req.user.userId || req.user.id;
 
     if (!userId) {
@@ -927,7 +927,7 @@ const deleteMasterService = async (req, res) => {
       });
     }
 
-    // Получаем ID мастера по ID пользователя
+
     const Master = require('../../user/models/Master');
     const masterRecord = await Master.findOne({ where: { user_id: userId } });
 
@@ -966,12 +966,12 @@ const deleteMasterService = async (req, res) => {
   }
 };
 
-// Delete a service owned by the authenticated salon
+
 const deleteSalonService = async (req, res) => {
   logger.info('Удаление услуги салона', { serviceId: req.params.id, userId: req.user?.userId || req.user?.id, ip: req.ip });
 
   try {
-    // Проверяем, что пользователь аутентифицирован
+
     if (!req.user) {
       return res.status(401).json({
         success: false,
@@ -979,7 +979,7 @@ const deleteSalonService = async (req, res) => {
       });
     }
 
-    // Получаем ID пользователя из токена (JWT payload использует userId)
+
     const userId = req.user.userId || req.user.id;
 
     if (!userId) {
@@ -989,7 +989,7 @@ const deleteSalonService = async (req, res) => {
       });
     }
 
-    // Получаем ID салона по ID пользователя
+
     const Salon = require('../../user/models/Salon');
     const salonRecord = await Salon.findOne({ where: { user_id: userId } });
 

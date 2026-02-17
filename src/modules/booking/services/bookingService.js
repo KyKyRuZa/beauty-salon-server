@@ -10,9 +10,6 @@ const { createLogger } = require('../../../utils/logger');
 
 const logger = createLogger('booking-service');
 
-/**
- * Создать новую запись
- */
 const createBooking = async (bookingData) => {
   const transaction = await sequelize.transaction();
 
@@ -27,19 +24,19 @@ const createBooking = async (bookingData) => {
       comment
     } = bookingData;
 
-    // Проверка: клиент существует
+
     const client = await Client.findByPk(client_id);
     if (!client) {
       throw new Error('Клиент не найден');
     }
 
-    // Проверка: мастер существует
+
     const master = await Master.findByPk(master_id);
     if (!master) {
       throw new Error('Мастер не найден');
     }
 
-    // Проверка: услуга существует и принадлежит мастеру
+
     const service = await MasterService.findOne({
       where: {
         id: master_service_id,
@@ -50,7 +47,7 @@ const createBooking = async (bookingData) => {
       throw new Error('Услуга не найдена или не принадлежит мастеру');
     }
 
-    // Проверка: нет ли пересекающихся записей у мастера
+
     const overlappingBooking = await Booking.findOne({
       where: {
         master_id,
@@ -68,7 +65,7 @@ const createBooking = async (bookingData) => {
       throw new Error('Это время уже занято');
     }
 
-    // Если указан time_slot_id, проверяем его статус
+
     if (time_slot_id) {
       const timeSlot = await TimeSlot.findByPk(time_slot_id);
       if (!timeSlot) {
@@ -77,11 +74,11 @@ const createBooking = async (bookingData) => {
       if (timeSlot.status !== 'free') {
         throw new Error('Это время уже забронировано');
       }
-      // Помечаем слот как забронированный
+
       await timeSlot.update({ status: 'booked' }, { transaction });
     }
 
-    // Создаём бронирование
+
     const booking = await Booking.create({
       client_id,
       master_id,
@@ -89,7 +86,7 @@ const createBooking = async (bookingData) => {
       time_slot_id,
       start_time,
       end_time,
-      status: 'pending', // по умолчанию ожидает подтверждения мастера
+      status: 'pending',
       comment,
       price: service.price
     }, { transaction });
@@ -105,15 +102,12 @@ const createBooking = async (bookingData) => {
   }
 };
 
-/**
- * Получить все записи клиента
- */
 const getClientBookings = async (clientId, options = {}) => {
   const { status, limit = 50, offset = 0 } = options;
 
   const where = { client_id: clientId };
   if (status) {
-    // Поддержка как одиночного статуса, так и массива
+
     if (Array.isArray(status)) {
       where.status = { [Op.in]: status };
     } else {
@@ -145,9 +139,6 @@ const getClientBookings = async (clientId, options = {}) => {
   return bookings;
 };
 
-/**
- * Получить все записи мастера
- */
 const getMasterBookings = async (masterId, options = {}) => {
   const { status, date, limit = 50, offset = 0 } = options;
 
@@ -190,9 +181,6 @@ const getMasterBookings = async (masterId, options = {}) => {
   return bookings;
 };
 
-/**
- * Получить запись по ID
- */
 const getBookingById = async (bookingId) => {
   const booking = await Booking.findByPk(bookingId, {
     include: [
@@ -209,9 +197,6 @@ const getBookingById = async (bookingId) => {
   return booking;
 };
 
-/**
- * Обновить статус бронирования
- */
 const updateBookingStatus = async (bookingId, status) => {
   const validStatuses = ['pending', 'confirmed', 'cancelled', 'completed'];
   if (!validStatuses.includes(status)) {
@@ -223,7 +208,7 @@ const updateBookingStatus = async (bookingId, status) => {
     throw new Error('Бронирование не найдено');
   }
 
-  // Если отменяем бронирование, освобождаем слот
+
   if (status === 'cancelled' && booking.time_slot_id) {
     const timeSlot = await TimeSlot.findByPk(booking.time_slot_id);
     if (timeSlot) {
@@ -237,21 +222,18 @@ const updateBookingStatus = async (bookingId, status) => {
   return booking;
 };
 
-/**
- * Обновить бронирование (время, комментарий)
- */
 const updateBooking = async (bookingId, updateData) => {
   const booking = await Booking.findByPk(bookingId);
   if (!booking) {
     throw new Error('Бронирование не найдено');
   }
 
-  // Нельзя изменить завершённое или отменённое бронирование
+
   if (['completed', 'cancelled'].includes(booking.status)) {
     throw new Error('Нельзя изменить отменённое или завершённое бронирование');
   }
 
-  // Если меняем время, проверяем на пересечения
+
   if (updateData.start_time || updateData.end_time) {
     const startTime = updateData.start_time || booking.start_time;
     const endTime = updateData.end_time || booking.end_time;
@@ -281,26 +263,14 @@ const updateBooking = async (bookingId, updateData) => {
   return booking;
 };
 
-/**
- * Отменить бронирование
- */
 const cancelBooking = async (bookingId) => {
   return updateBookingStatus(bookingId, 'cancelled');
 };
 
-/**
- * Подтвердить бронирование (для мастера)
- */
 const confirmBooking = async (bookingId) => {
   return updateBookingStatus(bookingId, 'confirmed');
 };
 
-/**
- * Получить доступные слоты для мастера на дату
- * Если слоты есть в БД, возвращает их
- * Если есть расписание (MasterAvailability), но нет слотов — генерирует их
- * Если нет расписания — возвращает пустой массив
- */
 const getAvailableSlots = async (masterId, date, serviceId) => {
   const startOfDay = new Date(date);
   startOfDay.setHours(0, 0, 0, 0);
@@ -308,7 +278,7 @@ const getAvailableSlots = async (masterId, date, serviceId) => {
   endOfDay.setHours(23, 59, 59, 999);
 
   try {
-    // Получаем все слоты мастера на эту дату
+
     const slots = await TimeSlot.findAll({
       where: {
         master_id: masterId,
@@ -320,9 +290,9 @@ const getAvailableSlots = async (masterId, date, serviceId) => {
       }
     });
 
-    // Если слоты есть, фильтруем забронированные
+
     if (slots.length > 0) {
-      // Получаем все бронирования мастера на эту дату
+
       const bookings = await Booking.findAll({
         where: {
           master_id,
@@ -334,7 +304,7 @@ const getAvailableSlots = async (masterId, date, serviceId) => {
         }
       });
 
-      // Фильтруем слоты, исключая забронированные
+
       const availableSlots = slots.filter(slot => {
         const slotStart = new Date(slot.start_time);
         const slotEnd = new Date(slot.end_time);
@@ -350,7 +320,7 @@ const getAvailableSlots = async (masterId, date, serviceId) => {
       return availableSlots;
     }
 
-    // Если слотов нет, проверяем наличие расписания
+
     const availability = await MasterAvailability.findOne({
       where: {
         master_id: masterId,
@@ -360,7 +330,7 @@ const getAvailableSlots = async (masterId, date, serviceId) => {
     });
 
     if (availability) {
-      // Расписание есть, но слотов нет — генерируем их
+
       const availabilityService = require('./availabilityService');
       await availabilityService.generateTimeSlots(
         masterId,
@@ -370,7 +340,7 @@ const getAvailableSlots = async (masterId, date, serviceId) => {
         availability.slot_duration
       );
 
-      // Получаем сгенерированные слоты
+
       const newSlots = await TimeSlot.findAll({
         where: {
           master_id: masterId,
@@ -389,21 +359,18 @@ const getAvailableSlots = async (masterId, date, serviceId) => {
     logger.warn('Ошибка получения слотов', { error: error.message });
   }
 
-  // Если нет расписания, возвращаем пустой массив
+
   logger.info('Нет расписания или слотов', { masterId, date });
   return [];
 };
 
-/**
- * Получить свободные окна для записи (группировка по времени)
- */
 const getFreeTimeWindows = async (masterId, date, serviceDuration = 60) => {
   const startOfDay = new Date(date);
   startOfDay.setHours(0, 0, 0, 0);
   const endOfDay = new Date(date);
   endOfDay.setHours(23, 59, 59, 999);
 
-  // Получаем все бронирования мастера на эту дату
+
   const bookings = await Booking.findAll({
     where: {
       master_id: masterId,
@@ -416,7 +383,7 @@ const getFreeTimeWindows = async (masterId, date, serviceDuration = 60) => {
     order: [['start_time', 'ASC']]
   });
 
-  // Получаем рабочие часы мастера (из TimeSlot)
+
   const workingSlots = await TimeSlot.findAll({
     where: {
       master_id: masterId,
@@ -429,10 +396,10 @@ const getFreeTimeWindows = async (masterId, date, serviceDuration = 60) => {
   });
 
   if (workingSlots.length === 0) {
-    return []; // Мастер не работает в этот день
+    return [];
   }
 
-  // Находим свободные окна
+
   const freeWindows = [];
   let currentTime = new Date(workingSlots[0].start_time);
   const dayEnd = new Date(workingSlots[workingSlots.length - 1].end_time);
@@ -440,7 +407,7 @@ const getFreeTimeWindows = async (masterId, date, serviceDuration = 60) => {
   while (currentTime < dayEnd) {
     const windowEnd = new Date(currentTime.getTime() + serviceDuration * 60000);
 
-    // Проверяем, не пересекается ли с бронированиями
+
     const hasConflict = bookings.some(booking => {
       const bookingStart = new Date(booking.start_time);
       const bookingEnd = new Date(booking.end_time);
@@ -454,7 +421,7 @@ const getFreeTimeWindows = async (masterId, date, serviceDuration = 60) => {
       });
     }
 
-    // Переходим к следующему окну (шаг 30 минут)
+
     currentTime = new Date(currentTime.getTime() + 30 * 60000);
   }
 

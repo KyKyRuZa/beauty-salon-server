@@ -2,17 +2,17 @@ const adminAuthService = require('../services/adminAuthService');
 const jwt = require('jsonwebtoken');
 const { createLogger } = require('../../../utils/logger');
 
-// Create a logger instance for this controller
+
 const logger = createLogger('admin-auth-controller');
 
-// Register a new admin
+
 const register = async (req, res) => {
   logger.info('Получен запрос на регистрацию администратора', { ip: req.ip, userAgent: req.get('User-Agent') });
 
   try {
     const adminData = req.body;
 
-    // Валидация данных на уровне контроллера
+
     if (!adminData.email || !adminData.password || !adminData.phone || !adminData.first_name || !adminData.last_name) {
       return res.status(400).json({
         success: false,
@@ -20,7 +20,7 @@ const register = async (req, res) => {
       });
     }
 
-    // Проверка формата email
+
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(adminData.email)) {
       return res.status(400).json({
@@ -29,7 +29,7 @@ const register = async (req, res) => {
       });
     }
 
-    // Проверка длины пароля
+
     if (adminData.password.length < 6) {
       return res.status(400).json({
         success: false,
@@ -37,7 +37,7 @@ const register = async (req, res) => {
       });
     }
 
-    // Проверка формата телефона
+
     const phoneRegex = /^\+?[\d\s\-()]{10,}$/;
     if (!phoneRegex.test(adminData.phone)) {
       return res.status(400).json({
@@ -46,7 +46,7 @@ const register = async (req, res) => {
       });
     }
 
-    // Проверка длины имени
+
     if (adminData.first_name.length < 2 || adminData.first_name.length > 100) {
       return res.status(400).json({
         success: false,
@@ -54,7 +54,7 @@ const register = async (req, res) => {
       });
     }
 
-    // Проверка длины фамилии
+
     if (adminData.last_name.length < 2 || adminData.last_name.length > 100) {
       return res.status(400).json({
         success: false,
@@ -64,7 +64,7 @@ const register = async (req, res) => {
 
     const admin = await adminAuthService.registerAdmin(adminData);
 
-    // Generate JWT token
+
     const token = jwt.sign(
       { userId: admin.user.id, email: admin.user.email, role: admin.user.role },
       process.env.JWT_SECRET || 'fallback_secret_key',
@@ -87,7 +87,7 @@ const register = async (req, res) => {
   } catch (error) {
     logger.error('Ошибка регистрации администратора', { error: error.message, ip: req.ip });
 
-    // Обработка ошибок валидации
+
     if (error.name === 'SequelizeValidationError' || error.name === 'SequelizeUniqueConstraintError') {
       return res.status(400).json({
         success: false,
@@ -102,7 +102,7 @@ const register = async (req, res) => {
   }
 };
 
-// Login admin
+
 const login = async (req, res) => {
   logger.info('Получен запрос на вход администратора', { ip: req.ip, userAgent: req.get('User-Agent') });
 
@@ -119,7 +119,7 @@ const login = async (req, res) => {
       });
     }
 
-    // Generate JWT token
+
     const token = jwt.sign(
       { userId: admin.user.id, email: admin.user.email, role: admin.user.role },
       process.env.JWT_SECRET || 'fallback_secret_key',

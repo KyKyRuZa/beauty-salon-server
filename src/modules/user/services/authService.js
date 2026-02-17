@@ -7,22 +7,22 @@ const { Op } = require('sequelize');
 const { sequelize } = require('../../../config/database');
 const { createLogger } = require('../../../utils/logger');
 
-// Create a logger instance for this service
+
 const logger = createLogger('auth-service');
 
-// Register a new user
+
 const register = async (userData) => {
   logger.info('Регистрация нового пользователя', { email: userData.email, role: userData.role });
 
   const { phone, email, password, role } = userData;
   
-  // Extract profile data fields from userData
+
   const { profileData, first_name, last_name, ...userDataWithoutProfile } = userData;
 
   const transaction = await sequelize.transaction();
 
   try {
-    // Check if phone or email already exists
+
     const existingUser = await User.findOne({
       where: {
         [Op.or]: [
@@ -37,11 +37,11 @@ const register = async (userData) => {
       throw new Error('Номер телефона или email уже существуют');
     }
 
-    // Hash the password
+
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-    // Create the user
+
     const user = await User.create({
       phone,
       email,
@@ -51,7 +51,7 @@ const register = async (userData) => {
 
     logger.info('Пользователь создан', { userId: user.id, role });
 
-    // Create corresponding profile based on role
+
     switch (role) {
       case 'client':
         await Client.create({
@@ -88,7 +88,7 @@ const register = async (userData) => {
     await transaction.commit();
     logger.info('Регистрация пользователя успешно завершена', { userId: user.id });
 
-    // Return user without password
+
     const userWithoutPassword = {
       id: user.id,
       email: user.email,
@@ -104,11 +104,11 @@ const register = async (userData) => {
   }
 };
 
-// Login user
+
 const login = async (email, password) => {
   logger.info('Попытка входа пользователя', { email });
 
-  // Find user by email
+
   const user = await User.findOne({ where: { email } });
   if (!user) {
     logger.warn('Пользователь не найден при входе', { email });
@@ -120,7 +120,7 @@ const login = async (email, password) => {
     throw new Error('Аккаунт деактивирован');
   }
 
-  // Check password
+
   const isValidPassword = await bcrypt.compare(password, user.password);
   if (!isValidPassword) {
     logger.warn('Предоставлен неверный пароль', { userId: user.id, email });
@@ -129,7 +129,7 @@ const login = async (email, password) => {
 
   logger.info('Вход пользователя успешен', { userId: user.id, email });
 
-  // Return user without password
+
   const userWithoutPassword = {
     id: user.id,
     email: user.email,

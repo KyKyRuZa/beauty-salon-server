@@ -6,7 +6,7 @@ const User = sequelize.define('ChatUser', {
     type: DataTypes.INTEGER,
     primaryKey: true,
     autoIncrement: true,
-    field: 'id' // Указывает, что поле в базе данных будет id
+    field: 'id'
   },
   username: {
     type: DataTypes.STRING,
@@ -24,7 +24,7 @@ const User = sequelize.define('ChatUser', {
         msg: 'Имя пользователя может содержать только буквы и цифры'
       }
     },
-    field: 'username' // Указывает, что поле в базе данных будет username
+    field: 'username'
   },
   password: {
     type: DataTypes.STRING,
@@ -39,14 +39,14 @@ const User = sequelize.define('ChatUser', {
       },
       isStrongPassword(value) {
         if (value && typeof value === 'string') {
-          // Проверяем, содержит ли пароль хотя бы одну заглавную букву, строчную букву и цифру
+
           if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(value)) {
             throw new Error('Пароль должен содержать хотя бы одну заглавную букву, строчную букву и цифру');
           }
         }
       }
     },
-    field: 'password' // Указывает, что поле в базе данных будет password
+    field: 'password'
   },
   email: {
     type: DataTypes.STRING,
@@ -59,24 +59,24 @@ const User = sequelize.define('ChatUser', {
         msg: 'Адрес электронной почты не должен превышать 255 символов'
       }
     },
-    field: 'email' // Указывает, что поле в базе данных будет email
+    field: 'email'
   },
   is_active: {
     type: DataTypes.BOOLEAN,
     defaultValue: true,
-    field: 'is_active' // Указывает, что поле в базе данных будет is_active
+    field: 'is_active'
   }
 }, {
-  tableName: 'chat_users', // Указываем имя таблицы явно
+  tableName: 'chat_users',
   indexes: [
     {
       unique: true,
-      fields: ['username'], // индекс для уникальности username
+      fields: ['username'],
       name: 'chat_users_username_unique'
     },
     {
       unique: true,
-      fields: ['email'], // индекс для уникальности email
+      fields: ['email'],
       name: 'chat_users_email_unique'
     }
   ],
@@ -87,10 +87,10 @@ const User = sequelize.define('ChatUser', {
       }
     }
   },
-  paranoid: true, // Включаем мягкое удаление
-  timestamps: true, // Включаем автоматические метки времени
-  createdAt: 'created_at', // Имя поля для времени создания
-  updatedAt: 'updated_at' // Имя поля для времени обновления
+  paranoid: true,
+  timestamps: true,
+  createdAt: 'created_at',
+  updatedAt: 'updated_at'
 });
 
 module.exports = User;

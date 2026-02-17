@@ -1,5 +1,6 @@
 const TimeSlot = require('../models/TimeSlot');
 const Booking = require('../models/Booking');
+const Master = require('../../user/models/Master'); // Правильный путь к модели Master
 const availabilityService = require('../services/availabilityService');
 const { sequelize } = require('../../../config/database');
 const { Op } = require('sequelize');
@@ -7,27 +8,37 @@ const { createLogger } = require('../../../utils/logger');
 
 const logger = createLogger('timeslot-controller');
 
-/**
- * Получить слоты мастера на дату
- * GET /api/timeslots/master
- */
+const getMasterId = async (userId) => {
+  logger.info('getMasterId вызов', { userId });
+  try {
+    const master = await Master.findOne({ 
+      where: { user_id: userId },
+      paranoid: false
+    });
+    logger.info('getMasterId результат', { userId, masterFound: !!master, masterId: master?.id });
+    return master ? master.id : null;
+  } catch (error) {
+    logger.error('getMasterId ошибка', { userId, error: error.message });
+    return null;
+  }
+};
+
 const getMasterSlots = async (req, res) => {
   try {
     const { date } = req.query;
 
     if (!date) {
-      return res.status(400).json({
-        success: false,
-        message: 'Необходимо указать дату'
-      });
+      return res.status(400).json({ success: false, message: 'Необходимо указать дату' });
     }
 
-    const masterId = req.user?.master?.id;
+    const userId = req.user?.userId || req.user?.id;
+    if (!userId) {
+      return res.status(400).json({ success: false, message: 'Пользователь не найден' });
+    }
+
+    const masterId = await getMasterId(userId);
     if (!masterId) {
-      return res.status(400).json({
-        success: false,
-        message: 'Профиль мастера не найден'
-      });
+      return res.status(400).json({ success: false, message: 'Профиль мастера не найден' });
     }
 
     const startOfDay = new Date(date);
@@ -61,42 +72,34 @@ const getMasterSlots = async (req, res) => {
   }
 };
 
-/**
- * Создать временной слот
- * POST /api/timeslots
- */
 const createTimeSlot = async (req, res) => {
   const transaction = await sequelize.transaction();
 
   try {
     const { start_time, end_time } = req.body;
 
-    const masterId = req.user?.master?.id;
+    const userId = req.user?.userId || req.user?.id;
+    if (!userId) {
+      return res.status(400).json({ success: false, message: 'Пользователь не найден' });
+    }
+
+    const masterId = await getMasterId(userId);
     if (!masterId) {
-      return res.status(400).json({
-        success: false,
-        message: 'Профиль мастера не найден'
-      });
+      return res.status(400).json({ success: false, message: 'Профиль мастера не найден' });
     }
 
     if (!start_time || !end_time) {
-      return res.status(400).json({
-        success: false,
-        message: 'Необходимо указать start_time и end_time'
-      });
+      return res.status(400).json({ success: false, message: 'Необходимо указать start_time и end_time' });
     }
 
     const start = new Date(start_time);
     const end = new Date(end_time);
 
     if (start >= end) {
-      return res.status(400).json({
-        success: false,
-        message: 'Время окончания должно быть позже времени начала'
-      });
+      return res.status(400).json({ success: false, message: 'Время окончания должно быть позже времени начала' });
     }
 
-    // Проверка на пересечение с существующими слотами
+
     const overlappingSlot = await TimeSlot.findOne({
       where: {
         master_id: masterId,
@@ -116,7 +119,7 @@ const createTimeSlot = async (req, res) => {
       });
     }
 
-    // Проверка на пересечение с бронированиями
+
     const overlappingBooking = await Booking.findOne({
       where: {
         master_id: masterId,
@@ -163,10 +166,6 @@ const createTimeSlot = async (req, res) => {
   }
 };
 
-/**
- * Обновить временной слот
- * PUT /api/timeslots/:id
- */
 const updateTimeSlot = async (req, res) => {
   const transaction = await sequelize.transaction();
 
@@ -174,12 +173,14 @@ const updateTimeSlot = async (req, res) => {
     const { id } = req.params;
     const { start_time, end_time, status } = req.body;
 
-    const masterId = req.user?.master?.id;
+    const userId = req.user?.userId || req.user?.id;
+    if (!userId) {
+      return res.status(400).json({ success: false, message: 'Пользователь не найден' });
+    }
+
+    const masterId = await getMasterId(userId);
     if (!masterId) {
-      return res.status(400).json({
-        success: false,
-        message: 'Профиль мастера не найден'
-      });
+      return res.status(400).json({ success: false, message: 'Профиль мастера не найден' });
     }
 
     const slot = await TimeSlot.findOne({
@@ -193,7 +194,7 @@ const updateTimeSlot = async (req, res) => {
       });
     }
 
-    // Нельзя редактировать забронированный слот
+
     if (slot.status === 'booked') {
       return res.status(400).json({
         success: false,
@@ -213,7 +214,7 @@ const updateTimeSlot = async (req, res) => {
         });
       }
 
-      // Проверка на пересечение с другими слотами
+
       const overlappingSlot = await TimeSlot.findOne({
         where: {
           master_id: masterId,
@@ -234,7 +235,7 @@ const updateTimeSlot = async (req, res) => {
         });
       }
 
-      // Проверка на пересечение с бронированиями
+
       const overlappingBooking = await Booking.findOne({
         where: {
           master_id: masterId,
@@ -284,22 +285,20 @@ const updateTimeSlot = async (req, res) => {
   }
 };
 
-/**
- * Удалить временной слот
- * DELETE /api/timeslots/:id
- */
 const deleteTimeSlot = async (req, res) => {
   const transaction = await sequelize.transaction();
 
   try {
     const { id } = req.params;
 
-    const masterId = req.user?.master?.id;
+    const userId = req.user?.userId || req.user?.id;
+    if (!userId) {
+      return res.status(400).json({ success: false, message: 'Пользователь не найден' });
+    }
+
+    const masterId = await getMasterId(userId);
     if (!masterId) {
-      return res.status(400).json({
-        success: false,
-        message: 'Профиль мастера не найден'
-      });
+      return res.status(400).json({ success: false, message: 'Профиль мастера не найден' });
     }
 
     const slot = await TimeSlot.findOne({
@@ -307,18 +306,12 @@ const deleteTimeSlot = async (req, res) => {
     });
 
     if (!slot) {
-      return res.status(404).json({
-        success: false,
-        message: 'Слот не найден'
-      });
+      return res.status(404).json({ success: false, message: 'Слот не найден' });
     }
 
-    // Нельзя удалить забронированный слот
+
     if (slot.status === 'booked') {
-      return res.status(400).json({
-        success: false,
-        message: 'Нельзя удалить забронированный слот'
-      });
+      return res.status(400).json({ success: false, message: 'Нельзя удалить забронированный слот' });
     }
 
     await slot.destroy({ transaction });
@@ -341,30 +334,25 @@ const deleteTimeSlot = async (req, res) => {
   }
 };
 
-/**
- * Пакетное создание слотов по расписанию
- * POST /api/timeslots/schedule
- */
 const createSchedule = async (req, res) => {
   try {
     const { date, start_time, end_time, slot_duration = 60 } = req.body;
 
-    const masterId = req.user?.master?.id;
+    const userId = req.user?.userId || req.user?.id;
+    if (!userId) {
+      return res.status(400).json({ success: false, message: 'Пользователь не найден' });
+    }
+
+    const masterId = await getMasterId(userId);
     if (!masterId) {
-      return res.status(400).json({
-        success: false,
-        message: 'Профиль мастера не найден'
-      });
+      return res.status(400).json({ success: false, message: 'Профиль мастера не найден' });
     }
 
     if (!date || !start_time || !end_time) {
-      return res.status(400).json({
-        success: false,
-        message: 'Необходимо указать date, start_time и end_time'
-      });
+      return res.status(400).json({ success: false, message: 'Необходимо указать date, start_time и end_time' });
     }
 
-    // Используем availabilityService для создания расписания и генерации слотов
+
     await availabilityService.setAvailability(
       masterId,
       date,
@@ -373,7 +361,7 @@ const createSchedule = async (req, res) => {
       parseInt(slot_duration)
     );
 
-    // Получаем расписание со слотами
+
     const result = await availabilityService.getAvailabilityWithSlots(masterId, date);
 
     logger.info('Расписание создано', { masterId, date, slotsCount: result.slots.length });

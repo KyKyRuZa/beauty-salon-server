@@ -5,10 +5,10 @@ const { Op } = require('sequelize');
 const { sequelize } = require('../../../config/database');
 const { createLogger } = require('../../../utils/logger');
 
-// Create a logger instance for this service
+
 const logger = createLogger('admin-auth-service');
 
-// Register a new admin
+
 const registerAdmin = async (adminData) => {
   logger.info('Регистрация нового администратора', { email: adminData.email });
 
@@ -19,7 +19,7 @@ const registerAdmin = async (adminData) => {
   const transaction = await sequelize.transaction();
 
   try {
-    // Check if phone or email already exists
+
     const existingUser = await User.findOne({
       where: {
         [Op.or]: [
@@ -38,8 +38,8 @@ const registerAdmin = async (adminData) => {
 
     logger.info('Создание пользователя с паролем', { userId: 'new_user', email });
 
-    // Create the user with admin role
-    // Пароль будет захеширован автоматически в хуках модели User
+
+
     const user = await User.create({
       phone,
       email,
@@ -51,7 +51,7 @@ const registerAdmin = async (adminData) => {
 
     logger.info('Пользователь с ролью администратора создан', { userId: user.id, email: user.email, role: user.role });
 
-    // Create corresponding admin record
+
     const admin = await Admin.create({
       user_id: user.id,
       role: 'admin',
@@ -65,7 +65,7 @@ const registerAdmin = async (adminData) => {
     await transaction.commit();
     logger.info('Регистрация администратора успешно завершена', { userId: user.id, adminId: admin.id });
 
-    // Return admin data without password
+
     const adminDataResponse = {
       user: {
         id: user.id,
@@ -88,11 +88,11 @@ const registerAdmin = async (adminData) => {
   }
 };
 
-// Login admin
+
 const loginAdmin = async (email, password) => {
   logger.info('Попытка входа администратора', { email });
 
-  // Find user by email
+
   const user = await User.findOne({ where: { email } });
   if (!user) {
     logger.warn('Пользователь не найден при входе администратора', { email });
@@ -106,7 +106,7 @@ const loginAdmin = async (email, password) => {
     throw new Error('Аккаунт деактивирован');
   }
 
-  // Check if user is an admin
+
   const admin = await Admin.findOne({ where: { user_id: user.id, is_active: true } });
   if (!admin) {
     logger.warn('Пользователь не является администратором', { userId: user.id, email, role: user.role });
@@ -115,7 +115,7 @@ const loginAdmin = async (email, password) => {
 
   logger.info('Найдена запись администратора', { adminId: admin.id, userId: user.id, adminRole: admin.role });
 
-  // Check password
+
   logger.info('Проверка пароля', { userId: user.id });
   const isValidPassword = await bcrypt.compare(password, user.password);
   logger.info('Результат проверки пароля', { userId: user.id, isValidPassword });
@@ -127,7 +127,7 @@ const loginAdmin = async (email, password) => {
 
   logger.info('Вход администратора успешен', { userId: user.id, email });
 
-  // Return admin data without password
+
   const adminDataResponse = {
     user: {
       id: user.id,

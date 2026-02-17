@@ -19,17 +19,17 @@ const sequelize = new Sequelize(
       idle: parseInt(process.env.DB_POOL_IDLE) || 10000
     },
 
-    // Установка схем по умолчанию для каждой области
-    schema: 'public', // основная схема, но мы будем переопределять в моделях
+
+    schema: 'public',
 
     logging: (msg) => dbLogger.debug(msg),
 
-    // Дополнительные настройки для работы в Docker
+
     retry: {
       max: parseInt(process.env.DB_RETRY_MAX) || 3
     },
     
-    // Настройки SSL (если требуется для production)
+
     dialectOptions: {
       ssl: process.env.DB_SSL === 'true' ? {
         require: true,
@@ -40,24 +40,24 @@ const sequelize = new Sequelize(
 );
 
 function importModels() {
-  // User models - import in the right order to respect foreign key constraints
+
   const User = require('../modules/user/models/User');
-  const Salon = require('../modules/user/models/Salon'); // Import first since other user models reference it
+  const Salon = require('../modules/user/models/Salon');
   const Client = require('../modules/user/models/Client');
   const Master = require('../modules/user/models/Master');
   const Review = require('../modules/user/models/Review');
   const Favorite = require('../modules/user/models/Favorite');
 
-  // Admin models
+
   const Admin = require('../modules/admin/models/Admin');
 
-  // Catalog models - import in the right order to respect foreign key constraints
-  const ServiceCategory = require('../modules/catalog/models/ServiceCategory'); // First import parent table
-  const ServiceSubcategory = require('../modules/catalog/models/ServiceSubcategory');
-  const MasterService = require('../modules/catalog/models/MasterService'); // Updated to use master-service relations
-  const TimeSlot = require('../modules/booking/models/TimeSlot'); // Time slots for bookings
 
-  // Booking models
+  const ServiceCategory = require('../modules/catalog/models/ServiceCategory');
+  const ServiceSubcategory = require('../modules/catalog/models/ServiceSubcategory');
+  const MasterService = require('../modules/catalog/models/MasterService');
+  const TimeSlot = require('../modules/booking/models/TimeSlot');
+
+
   const Booking = require('../modules/booking/models/Booking');
   const MasterAvailability = require('../modules/booking/models/MasterAvailability');
 

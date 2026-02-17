@@ -3,10 +3,6 @@ const { createLogger } = require('../../../utils/logger');
 
 const logger = createLogger('favorite-controller');
 
-/**
- * Получить список избранных мастеров
- * GET /api/favorites
- */
 const getFavorites = async (req, res) => {
   try {
     const userId = req.user?.id || req.user?.userId;
@@ -35,10 +31,6 @@ const getFavorites = async (req, res) => {
   }
 };
 
-/**
- * Добавить мастера в избранное
- * POST /api/favorites/:masterId
- */
 const addFavorite = async (req, res) => {
   try {
     const userId = req.user?.id || req.user?.userId;
@@ -77,10 +69,6 @@ const addFavorite = async (req, res) => {
   }
 };
 
-/**
- * Удалить мастера из избранного
- * DELETE /api/favorites/:masterId
- */
 const removeFavorite = async (req, res) => {
   try {
     const userId = req.user?.id || req.user?.userId;
@@ -118,10 +106,6 @@ const removeFavorite = async (req, res) => {
   }
 };
 
-/**
- * Переключить статус избранного
- * POST /api/favorites/:masterId/toggle
- */
 const toggleFavorite = async (req, res) => {
   try {
     const userId = req.user?.id || req.user?.userId;
@@ -152,10 +136,6 @@ const toggleFavorite = async (req, res) => {
   }
 };
 
-/**
- * Проверить, находится ли мастер в избранном
- * GET /api/favorites/:masterId/check
- */
 const checkFavorite = async (req, res) => {
   try {
     const userId = req.user?.id || req.user?.userId;

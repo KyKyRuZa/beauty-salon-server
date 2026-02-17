@@ -1,7 +1,7 @@
 const { z } = require('zod');
 const { BaseValidationSchema } = require('./base');
 
-// Схема валидации для создания/обновления клиента
+
 const clientValidationSchema = z.object({
   user_id: BaseValidationSchema.number,
   first_name: BaseValidationSchema.name,
@@ -9,7 +9,7 @@ const clientValidationSchema = z.object({
   image_url: BaseValidationSchema.url,
 });
 
-// Схема валидации для создания/обновления мастера
+
 const masterValidationSchema = z.object({
   user_id: BaseValidationSchema.number,
   first_name: BaseValidationSchema.name.optional(),
@@ -23,7 +23,7 @@ const masterValidationSchema = z.object({
   image_url: BaseValidationSchema.url,
 });
 
-// Схема валидации для создания/обновления салона
+
 const salonValidationSchema = z.object({
   user_id: BaseValidationSchema.number,
   name: z.string().min(2).max(255),
@@ -34,7 +34,7 @@ const salonValidationSchema = z.object({
   image_url: BaseValidationSchema.url,
 });
 
-// Схема валидации для создания отзыва
+
 const reviewValidationSchema = z.object({
   master_id: BaseValidationSchema.number.optional(),
   salon_id: BaseValidationSchema.number.optional(),

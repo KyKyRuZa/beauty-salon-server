@@ -4,7 +4,7 @@ const Master = require('../../user/models/Master');
 const Salon = require('../../user/models/Salon');
 const ServiceCategory = require('./ServiceCategory');
 
-// Модель для связи мастер-услуга (master_services)
+
 const MasterService = sequelize.define('MasterService', {
   id: {
     type: DataTypes.INTEGER,
@@ -14,7 +14,7 @@ const MasterService = sequelize.define('MasterService', {
   },
   master_id: {
     type: DataTypes.INTEGER,
-    allowNull: false, // Обязательно для услуги мастера
+    allowNull: false,
     field: 'master_id',
     references: {
       model: {
@@ -27,7 +27,7 @@ const MasterService = sequelize.define('MasterService', {
   },
   salon_id: {
     type: DataTypes.INTEGER,
-    allowNull: true, // Может быть null для услуг независимых мастеров
+    allowNull: true,
     field: 'salon_id',
     references: {
       model: {
@@ -40,7 +40,7 @@ const MasterService = sequelize.define('MasterService', {
   },
   category_id: {
     type: DataTypes.INTEGER,
-    allowNull: true, // Может быть null для услуг без категории
+    allowNull: true,
     field: 'category_id',
     references: {
       model: {
@@ -76,8 +76,8 @@ const MasterService = sequelize.define('MasterService', {
     field: 'description'
   },
   price: {
-    type: DataTypes.DECIMAL(10, 2), // переопределение цены
-    allowNull: true, // может быть null, чтобы использовать базовую цену
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: true,
     validate: {
       min: {
         args: [0],
@@ -96,8 +96,8 @@ const MasterService = sequelize.define('MasterService', {
     field: 'is_active'
   }
 }, {
-  tableName: 'master_services', // Таблица для связей мастер-услуга
-  schema: 'catalog_schema', // Указываем схему для каталога услуг
+  tableName: 'master_services',
+  schema: 'catalog_schema',
   indexes: [
     {
       fields: ['master_id'],
@@ -120,13 +120,13 @@ const MasterService = sequelize.define('MasterService', {
       name: 'master_service_is_active_index'
     }
   ],
-  paranoid: false, // связи не требуют мягкого удаления
-  timestamps: true, // Включаем автоматические метки времени
+  paranoid: false,
+  timestamps: true,
   createdAt: 'created_at',
-  updatedAt: false // Обновления не требуются для этой связи
+  updatedAt: false
 });
 
-// Определяем отношения
+
 MasterService.belongsTo(Master, {
   foreignKey: 'master_id',
   targetKey: 'id',

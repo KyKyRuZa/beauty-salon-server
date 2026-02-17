@@ -1,12 +1,12 @@
 const jwt = require('jsonwebtoken');
 const { createLogger } = require('../utils/logger');
 
-// Create a logger instance for this middleware
+
 const logger = createLogger('auth-middleware');
 
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
+  const token = authHeader && authHeader.split(' ')[1];
 
   if (!token) {
     logger.warn('Требуется токен доступа', { url: req.url, method: req.method, ip: req.ip });
@@ -41,10 +41,10 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
-// Middleware для проверки роли администратора
+
 const requireAdminRole = (req, res, next) => {
   const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
+  const token = authHeader && authHeader.split(' ')[1];
 
   if (!token) {
     logger.warn('Требуется токен доступа для доступа к админ-панели', { url: req.url, method: req.method, ip: req.ip });
@@ -68,7 +68,7 @@ const requireAdminRole = (req, res, next) => {
       });
     }
 
-    // Проверяем, что пользователь имеет роль администратора
+
     if (user.role !== 'admin' && user.role !== 'super_admin') {
       logger.warn('Доступ запрещен: недостаточно прав', {
         userId: user.userId || user.id,

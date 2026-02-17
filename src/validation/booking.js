@@ -1,7 +1,7 @@
 const { z } = require('zod');
 const { BaseValidationSchema } = require('./base');
 
-// Схема валидации для временного слота
+
 const timeSlotValidationSchema = z.object({
   master_id: BaseValidationSchema.number,
   start_time: z.string().datetime(),
@@ -11,7 +11,7 @@ const timeSlotValidationSchema = z.object({
   message: 'Время окончания должно быть позже времени начала',
 });
 
-// Схема валидации для бронирования
+
 const bookingValidationSchema = z.object({
   user_id: BaseValidationSchema.number,
   service_template_id: BaseValidationSchema.number,
@@ -23,7 +23,7 @@ const bookingValidationSchema = z.object({
   message: 'Время окончания должно быть позже времени начала',
 });
 
-// Схема валидации для заказа
+
 const orderValidationSchema = z.object({
   user_id: BaseValidationSchema.number,
   service_template_id: BaseValidationSchema.number,
@@ -32,7 +32,7 @@ const orderValidationSchema = z.object({
   status: z.enum(['pending', 'confirmed', 'cancelled', 'completed', 'refunded']).default('pending'),
 });
 
-// Схема валидации для доступности мастера
+
 const masterAvailabilityValidationSchema = z.object({
   master_id: BaseValidationSchema.number,
   service_template_id: BaseValidationSchema.number,
@@ -41,7 +41,7 @@ const masterAvailabilityValidationSchema = z.object({
   end_time: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, 'Время должно быть в формате HH:MM'),
   is_available: z.boolean().default(true),
 }).refine((data) => {
-  // Проверка, что end_time позже start_time
+
   const [startHours, startMinutes] = data.start_time.split(':').map(Number);
   const [endHours, endMinutes] = data.end_time.split(':').map(Number);
   

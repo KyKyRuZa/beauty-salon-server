@@ -5,7 +5,7 @@ const Master = require('../../user/models/Master');
 const Salon = require('../../user/models/Salon');
 const { Op } = require('sequelize');
 
-// Get all active service categories from catalog
+
 const getAllCatalogCategories = async ({ category = null, search = null, sortBy = 'name', order = 'ASC', limit = null, offset = 0 }) => {
   const whereClause = { is_active: true };
 
@@ -20,7 +20,7 @@ const getAllCatalogCategories = async ({ category = null, search = null, sortBy 
     ];
   }
 
-  // Map the attribute names to match the database field names
+
   let sortField = sortBy;
   if (sortBy === 'createdAt') {
     sortField = 'created_at';
@@ -41,12 +41,12 @@ const getAllCatalogCategories = async ({ category = null, search = null, sortBy 
   return await ServiceCategory.findAndCountAll(options);
 };
 
-// Get service category by ID from catalog
+
 const getCatalogCategoryById = async (id) => {
   return await ServiceCategory.findByPk(id);
 };
 
-// Get popular service categories
+
 const getPopularCategories = async (limit = 10) => {
   return await ServiceCategory.findAll({
     where: {
@@ -58,13 +58,13 @@ const getPopularCategories = async (limit = 10) => {
   });
 };
 
-// Create a new service category in catalog
+
 const createCatalogCategory = async (categoryData) => {
   const category = await ServiceCategory.create(categoryData);
   return await ServiceCategory.findByPk(category.id);
 };
 
-// Update service category in catalog
+
 const updateCatalogCategory = async (id, updateData) => {
   const category = await ServiceCategory.findByPk(id);
   if (!category) {
@@ -75,7 +75,7 @@ const updateCatalogCategory = async (id, updateData) => {
   return await ServiceCategory.findByPk(id);
 };
 
-// Delete service category from catalog
+
 const deleteCatalogCategory = async (id) => {
   const category = await ServiceCategory.findByPk(id);
   if (!category) {
@@ -86,7 +86,7 @@ const deleteCatalogCategory = async (id) => {
   return true;
 };
 
-// Get master services by catalog category
+
 const getServiceVariationsByCategory = async (categoryId, { masterId = null, salonId = null, is_active = true, limit = 20 }) => {
   const whereClause = {
     is_active: is_active
@@ -96,14 +96,14 @@ const getServiceVariationsByCategory = async (categoryId, { masterId = null, sal
     whereClause.master_id = masterId;
   }
 
-  // Note: salonId is not applicable for MasterService, as it's specifically for masters
+
 
   return await MasterService.findAll({
     where: whereClause,
     include: [
       {
         model: Master,
-        as: 'master',  // <-- добавляем алиас
+        as: 'master',
         attributes: ['first_name', 'last_name', 'specialization']
       }
     ],
@@ -111,7 +111,7 @@ const getServiceVariationsByCategory = async (categoryId, { masterId = null, sal
   });
 };
 
-// Get service variations by service
+
 const getServiceVariations = async (serviceId, { masterId = null, salonId = null, is_active = true, limit = 20 }) => {
   const whereClause = {
     id: serviceId,
@@ -122,14 +122,14 @@ const getServiceVariations = async (serviceId, { masterId = null, salonId = null
     whereClause.master_id = masterId;
   }
 
-  // Note: salonId is not applicable for MasterService, as it's specifically for masters
+
 
   return await MasterService.findAll({
     where: whereClause,
     include: [
       {
         model: Master,
-        as: 'master',  // <-- добавляем алиас
+        as: 'master',
         attributes: ['first_name', 'last_name', 'specialization']
       }
     ],
@@ -137,9 +137,9 @@ const getServiceVariations = async (serviceId, { masterId = null, salonId = null
   });
 };
 
-// Get all services in catalog with detailed information
+
 const getAllCatalogServices = async ({ category = null, search = null, masterId = null, salonId = null, sortBy = 'name', order = 'ASC', limit = null, offset = 0 }) => {
-  // Map the attribute names to match the database field names
+
   let sortField = sortBy;
   if (sortBy === 'createdAt') {
     sortField = 'created_at';
@@ -160,14 +160,14 @@ const getAllCatalogServices = async ({ category = null, search = null, masterId 
     whereClause.master_id = masterId;
   }
 
-  // Note: salonId is not applicable for MasterService, as it's specifically for masters
+
 
   const options = {
     where: whereClause,
     include: [
       {
         model: Master,
-        as: 'master',  // <-- добавляем алиас
+        as: 'master',
         attributes: ['first_name', 'last_name', 'specialization']
       }
     ],
@@ -182,13 +182,13 @@ const getAllCatalogServices = async ({ category = null, search = null, masterId 
   return await MasterService.findAndCountAll(options);
 };
 
-// Get service variation by ID from catalog
+
 const getCatalogServiceById = async (id) => {
   return await MasterService.findByPk(id, {
     include: [
       {
         model: Master,
-        as: 'master',  // <-- добавляем алиас
+        as: 'master',
         attributes: ['first_name', 'last_name', 'specialization']
       }
     ]
@@ -196,10 +196,10 @@ const getCatalogServiceById = async (id) => {
 };
 
 const createCatalogService = async (serviceData) => {
-  // Create a catalog service with master_id = null (representing a base catalog service)
+
   const catalogServiceData = {
     ...serviceData,
-    master_id: null  // null indicates this is a base catalog service, not tied to a specific master
+    master_id: null
   };
 
   const service = await MasterService.create(catalogServiceData);
@@ -207,14 +207,14 @@ const createCatalogService = async (serviceData) => {
     include: [
       {
         model: Master,
-        as: 'master',  // <-- добавляем алиас
+        as: 'master',
         attributes: ['first_name', 'last_name', 'specialization']
       }
     ]
   });
 };
 
-// Update service variation in catalog
+
 const updateCatalogService = async (id, updateData) => {
   const service = await MasterService.findByPk(id);
   if (!service) {
@@ -226,14 +226,14 @@ const updateCatalogService = async (id, updateData) => {
     include: [
       {
         model: Master,
-        as: 'master',  // <-- добавляем алиас
+        as: 'master',
         attributes: ['first_name', 'last_name', 'specialization']
       }
     ]
   });
 };
 
-// Delete service variation from catalog
+
 const deleteCatalogService = async (id) => {
   const service = await MasterService.findByPk(id);
   if (!service) {
@@ -244,15 +244,15 @@ const deleteCatalogService = async (id) => {
   return true;
 };
 
-// Create a master service for a specific master
+
 const createMasterService = async (masterId, serviceData) => {
-  // Verify that the master exists
+
   const master = await Master.findByPk(masterId);
   if (!master) {
     throw new Error('Master not found');
   }
 
-  // Add master_id to the service data
+
   const serviceWithMaster = {
     ...serviceData,
     master_id: masterId
@@ -263,33 +263,33 @@ const createMasterService = async (masterId, serviceData) => {
     include: [
       {
         model: Master,
-        as: 'master',  // <-- добавляем алиас
+        as: 'master',
         attributes: ['first_name', 'last_name', 'specialization']
       }
     ]
   });
 };
 
-// Create a service for a specific salon
-// Note: Since MasterService model is specifically for master-service relationships,
-// we would typically handle salon services differently or extend the model.
-// For now, we'll keep the function but note that it doesn't fit the MasterService model well.
+
+
+
+
 const createSalonService = async (salonId, serviceData) => {
-  // Verify that the salon exists
+
   const salon = await Salon.findByPk(salonId);
   if (!salon) {
     throw new Error('Salon not found');
   }
 
-  // For salon services, we would need a separate model similar to MasterService
-  // Since we're using MasterService model which is specific to masters,
-  // we'll throw an error indicating this limitation
+
+
+
   throw new Error('Salon services are not supported with the current MasterService model. A separate model for salon services would be needed.');
 };
 
-// Get service variations created by a specific master
+
 const getMasterServices = async (masterId, { category = null, search = null, is_active = true, limit = 20, offset = 0 }) => {
-  // Verify that the master exists
+
   const master = await Master.findByPk(masterId);
   if (!master) {
     throw new Error('Master not found');
@@ -300,7 +300,7 @@ const getMasterServices = async (masterId, { category = null, search = null, is_
     is_active: is_active
   };
 
-  // Add category filtering
+
   if (category) {
     const catalogCategory = await ServiceCategory.findOne({ where: { name: { [Op.iLike]: `%${category}%` } } });
     if (catalogCategory) {
@@ -308,7 +308,7 @@ const getMasterServices = async (masterId, { category = null, search = null, is_
     }
   }
 
-  // Add search functionality for name and description
+
   if (search) {
     whereClause[Op.or] = [
       { name: { [Op.iLike]: `%${search}%` } },
@@ -321,7 +321,7 @@ const getMasterServices = async (masterId, { category = null, search = null, is_
     include: [
       {
         model: Master,
-        as: 'master',  // <-- добавляем алиас
+        as: 'master',
         attributes: ['first_name', 'last_name', 'specialization']
       }
     ],
@@ -335,9 +335,9 @@ const getMasterServices = async (masterId, { category = null, search = null, is_
   return await MasterService.findAndCountAll(options);
 };
 
-// Get service variations created by a specific salon
+
 const getSalonServices = async (salonId, { category = null, search = null, is_active = true, limit = 20, offset = 0 }) => {
-  // Verify that the salon exists
+
   const salon = await Salon.findByPk(salonId);
   if (!salon) {
     throw new Error('Salon not found');
@@ -367,17 +367,17 @@ const getSalonServices = async (salonId, { category = null, search = null, is_ac
     include: [
       {
         model: ServiceTemplate,
-        as: 'catalog',  // <-- добавляем алиас
+        as: 'catalog',
         attributes: ['name', 'category', 'subcategory']
       },
       {
         model: Master,
-        as: 'master',  // <-- добавляем алиас
+        as: 'master',
         attributes: ['first_name', 'last_name', 'specialization']
       },
       {
         model: Salon,
-        as: 'salon',  // <-- добавляем алиас
+        as: 'salon',
         attributes: ['name']
       }
     ],
@@ -391,7 +391,7 @@ const getSalonServices = async (salonId, { category = null, search = null, is_ac
   return await ServiceVariation.findAndCountAll(options);
 };
 
-// Update a service variation owned by a specific master
+
 const updateMasterService = async (masterId, serviceId, updateData) => {
   const service = await MasterService.findOne({
     where: {
@@ -409,14 +409,14 @@ const updateMasterService = async (masterId, serviceId, updateData) => {
     include: [
       {
         model: Master,
-        as: 'master',  // <-- добавляем алиас
+        as: 'master',
         attributes: ['first_name', 'last_name', 'specialization']
       }
     ]
   });
 };
 
-// Update a service variation owned by a specific salon
+
 const updateSalonService = async (salonId, serviceId, updateData) => {
   const service = await ServiceVariation.findOne({
     where: {
@@ -429,7 +429,7 @@ const updateSalonService = async (salonId, serviceId, updateData) => {
     return null;
   }
 
-  // If catalog_id is provided, verify that the catalog category exists
+
   if (updateData.catalog_id) {
     const catalogCategory = await ServiceTemplate.findByPk(updateData.catalog_id);
     if (!catalogCategory) {
@@ -437,7 +437,7 @@ const updateSalonService = async (salonId, serviceId, updateData) => {
     }
   }
 
-  // Validate time slot
+
   if (updateData.time_slot_start && updateData.time_slot_end) {
     const start = new Date(`1970-01-01T${updateData.time_slot_start}`);
     const end = new Date(`1970-01-01T${updateData.time_slot_end}`);
@@ -446,7 +446,7 @@ const updateSalonService = async (salonId, serviceId, updateData) => {
       throw new Error('Время окончания должно быть позже времени начала');
     }
     
-    // Calculate duration in minutes
+
     const durationMs = end - start;
     const durationMinutes = Math.round(durationMs / (1000 * 60));
     updateData.duration_minutes = durationMinutes;
@@ -457,24 +457,24 @@ const updateSalonService = async (salonId, serviceId, updateData) => {
     include: [
       {
         model: ServiceTemplate,
-        as: 'catalog',  // <-- добавляем алиас
+        as: 'catalog',
         attributes: ['name', 'category', 'subcategory']
       },
       {
         model: Master,
-        as: 'master',  // <-- добавляем алиас
+        as: 'master',
         attributes: ['first_name', 'last_name', 'specialization']
       },
       {
         model: Salon,
-        as: 'salon',  // <-- добавляем алиас
+        as: 'salon',
         attributes: ['name']
       }
     ]
   });
 };
 
-// Delete a service variation owned by a specific master
+
 const deleteMasterService = async (masterId, serviceId) => {
   const service = await MasterService.findOne({
     where: {
@@ -491,7 +491,7 @@ const deleteMasterService = async (masterId, serviceId) => {
   return true;
 };
 
-// Delete a service variation owned by a specific salon
+
 const deleteSalonService = async (salonId, serviceId) => {
   const service = await ServiceVariation.findOne({
     where: {
@@ -515,7 +515,7 @@ module.exports = {
   createCatalogCategory,
   updateCatalogCategory,
   deleteCatalogCategory,
-  getServiceVariationsByCategory,  // Исправлено: было getServicesByCategory
+  getServiceVariationsByCategory,
   getServiceVariations,
   getAllCatalogServices,
   getCatalogServiceById,

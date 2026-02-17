@@ -1,7 +1,7 @@
 const { DataTypes } = require('sequelize');
 const { sequelize } = require('../../../config/database');
 
-// Модель для администраторов
+
 const Admin = sequelize.define('Admin', {
   id: {
     type: DataTypes.INTEGER,
@@ -35,13 +35,13 @@ const Admin = sequelize.define('Admin', {
     field: 'role'
   },
   permissions: {
-    type: DataTypes.JSONB, // JSONB для хранения разрешений
+    type: DataTypes.JSONB,
     allowNull: true,
     field: 'permissions'
   },
   first_name: {
     type: DataTypes.STRING,
-    field: 'first_name', // Указывает, что поле в базе данных будет first_name
+    field: 'first_name',
     validate: {
       len: {
         args: [2, 100],
@@ -56,7 +56,7 @@ const Admin = sequelize.define('Admin', {
   },
   last_name: {
     type: DataTypes.STRING,
-    field: 'last_name', // Указывает, что поле в базе данных будет last_name
+    field: 'last_name',
     validate: {
       len: {
         args: [2, 100],
@@ -75,8 +75,8 @@ const Admin = sequelize.define('Admin', {
     field: 'is_active'
   }
 }, {
-  tableName: 'admins', // Таблица для администраторов
-  schema: 'user_schema', // Используем ту же схему, что и для других пользователей
+  tableName: 'admins',
+  schema: 'user_schema',
   indexes: [
     {
       fields: ['user_id'],
@@ -91,14 +91,14 @@ const Admin = sequelize.define('Admin', {
       name: 'admin_is_active_index'
     }
   ],
-  paranoid: true, // Включаем мягкое удаление
-  timestamps: true, // Включаем автоматические метки времени
+  paranoid: true,
+  timestamps: true,
   createdAt: 'created_at',
   updatedAt: 'updated_at',
-  deletedAt: 'deletedAt' // Указываем имя поля для мягкого удаления
+  deletedAt: 'deletedAt'
 });
 
-// Определяем отношения
+
 Admin.associate = function(models) {
   Admin.belongsTo(models.User, {
     foreignKey: 'user_id',

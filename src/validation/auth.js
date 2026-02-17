@@ -1,7 +1,7 @@
 const { z } = require('zod');
 const { BaseValidationSchema } = require('./base');
 
-// Схема валидации для регистрации
+
 const registerValidationSchema = z.object({
   email: BaseValidationSchema.email,
   password: BaseValidationSchema.password,
@@ -10,28 +10,28 @@ const registerValidationSchema = z.object({
   isActive: z.boolean().optional(),
 });
 
-// Схема валидации для входа
+
 const loginValidationSchema = z.object({
   email: BaseValidationSchema.email,
   password: z.string().min(1, 'Пароль обязателен'),
 });
 
-// Схема валидации для обновления профиля
+
 const updateProfileValidationSchema = z.object({
   email: BaseValidationSchema.email.optional(),
   phone: BaseValidationSchema.phone.optional(),
   firstName: BaseValidationSchema.name.optional(),
   lastName: BaseValidationSchema.name.optional(),
-  avatar: z.any().optional(), // Используем z.any() для файлов, так как они могут быть проблематичны для валидации в форме
-  deleteAvatar: z.boolean().optional(), // Поле для удаления аватара
-  // Поля для салона
-  name: z.string().optional(), // Для салонов - это название салона
-  salonName: z.string().optional(), // Альтернативное поле для названия салона
+  avatar: z.any().optional(),
+  deleteAvatar: z.boolean().optional(),
+
+  name: z.string().optional(),
+  salonName: z.string().optional(),
   address: z.string().optional(),
   inn: z.preprocess(
     (val) => {
       if (typeof val === 'string') {
-        // Удаляем все нецифровые символы из ИНН
+
         return val.replace(/\D/g, '');
       }
       return val;
@@ -39,7 +39,7 @@ const updateProfileValidationSchema = z.object({
     z.string().regex(/^\d{10}$|^\d{12}$/, 'ИНН должен содержать только цифры и быть длиной 10 или 12 символов').optional()
   ),
   description: z.string().optional(),
-  // Поля для мастера
+
   specialization: z.string().optional(),
   experience: z.preprocess(
     (val) => {
@@ -66,9 +66,9 @@ const updateProfileValidationSchema = z.object({
   data.specialization !== undefined ||
   data.experience !== undefined, {
   message: 'Должно быть указано хотя бы одно поле для обновления',
-}).passthrough(); // Разрешаем передачу дополнительных полей
+}).passthrough();
 
-// Схема валидации для изменения пароля
+
 const changePasswordValidationSchema = z.object({
   currentPassword: z.string().min(1, 'Текущий пароль обязателен'),
   newPassword: BaseValidationSchema.password,

@@ -15,14 +15,10 @@ const io = socketIo(server, {
   }
 });
 
-// Чат-функциональность отключена до настройки соответствующих таблиц
-// const { handleConnection } = require('./modules/chat/socket/chatHandler');
 
 io.use((socket, next) => {
   next();
 });
-
-// io.on('connection', handleConnection);
 
 const PORT = process.env.PORT || 5000;
 

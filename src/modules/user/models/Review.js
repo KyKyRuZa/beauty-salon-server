@@ -152,5 +152,5 @@ const Review = sequelize.define('Review', {
   }
 });
 
-// Ассоциации будут определены в associations.js
+
 module.exports = Review;

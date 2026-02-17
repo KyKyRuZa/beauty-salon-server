@@ -12,19 +12,19 @@ const {
 const { Op } = require('sequelize');
 const Admin = require('../models/Admin');
 
-// Create a logger instance for this controller
+
 const logger = createLogger('admin-controller');
 
-// Get admin dashboard statistics
+
 const getDashboardStats = async (req, res) => {
   logger.info('Получение статистики админ-панели', { userId: req.user?.userId || req.user?.id, ip: req.ip });
 
   try {
-    // Проверяем, что пользователь является администратором
+
     let admin = await Admin.findOne({ where: { user_id: req.user.userId || req.user.id, is_active: true } });
     logger.info('Проверка администратора', { userId: req.user.userId || req.user.id, adminFound: !!admin, userRole: req.user.role });
     
-    // Если у пользователя роль admin, но нет записи в таблице администраторов, создаем её
+
     if (!admin && req.user.role === 'admin') {
       logger.info('Создание записи администратора для пользователя', { userId: req.user.userId || req.user.id });
       try {
@@ -36,7 +36,7 @@ const getDashboardStats = async (req, res) => {
         logger.info('Запись администратора успешно создана', { adminId: admin.id, userId: req.user.userId || req.user.id });
       } catch (creationError) {
         logger.error('Ошибка создания записи администратора', { error: creationError.message, userId: req.user.userId || req.user.id });
-        // Повторная попытка найти администратора (возможно, запись была создана другим запросом)
+
         admin = await Admin.findOne({ where: { user_id: req.user.userId || req.user.id, is_active: true } });
       }
     }
@@ -49,7 +49,7 @@ const getDashboardStats = async (req, res) => {
       });
     }
 
-    // Получаем статистику через сервис
+
     const stats = await getStatsService();
 
     logger.info('Статистика админ-панели успешно получена', { userId: req.user?.userId || req.user?.id, ip: req.ip });
@@ -67,16 +67,16 @@ const getDashboardStats = async (req, res) => {
   }
 };
 
-// Get all users with pagination
+
 const getAllUsers = async (req, res) => {
   logger.info('Получение списка пользователей', { userId: req.user?.userId || req.user?.id, ip: req.ip });
 
   try {
-    // Проверяем, что пользователь является администратором
+
     let admin = await Admin.findOne({ where: { user_id: req.user.userId || req.user.id, is_active: true } });
     logger.info('Проверка администратора', { userId: req.user.userId || req.user.id, adminFound: !!admin, userRole: req.user.role });
     
-    // Если у пользователя роль admin, но нет записи в таблице администраторов, создаем её
+
     if (!admin && req.user.role === 'admin') {
       logger.info('Создание записи администратора для пользователя', { userId: req.user.userId || req.user.id });
       try {
@@ -88,7 +88,7 @@ const getAllUsers = async (req, res) => {
         logger.info('Запись администратора успешно создана', { adminId: admin.id, userId: req.user.userId || req.user.id });
       } catch (creationError) {
         logger.error('Ошибка создания записи администратора', { error: creationError.message, userId: req.user.userId || req.user.id });
-        // Повторная попытка найти администратора (возможно, запись была создана другим запросом)
+
         admin = await Admin.findOne({ where: { user_id: req.user.userId || req.user.id, is_active: true } });
       }
     }
@@ -126,15 +126,15 @@ const getAllUsers = async (req, res) => {
   }
 };
 
-// Get all service categories with pagination
+
 const getAllCategories = async (req, res) => {
   logger.info('Получение списка категорий услуг', { userId: req.user?.userId || req.user?.id, ip: req.ip });
 
   try {
-    // Проверяем, что пользователь является администратором
+
     let admin = await Admin.findOne({ where: { user_id: req.user.userId || req.user.id, is_active: true } });
     
-    // Если у пользователя роль admin, но нет записи в таблице администраторов, создаем её
+
     if (!admin && req.user.role === 'admin') {
       admin = await Admin.create({
         user_id: req.user.userId || req.user.id,
@@ -175,15 +175,15 @@ const getAllCategories = async (req, res) => {
   }
 };
 
-// Create a new service category
+
 const createCategory = async (req, res) => {
   logger.info('Создание новой категории услуги', { userId: req.user?.userId || req.user?.id, ip: req.ip });
 
   try {
-    // Проверяем, что пользователь является администратором
+
     let admin = await Admin.findOne({ where: { user_id: req.user.userId || req.user.id, is_active: true } });
     
-    // Если у пользователя роль admin, но нет записи в таблице администраторов, создаем её
+
     if (!admin && req.user.role === 'admin') {
       admin = await Admin.create({
         user_id: req.user.userId || req.user.id,
@@ -219,15 +219,15 @@ const createCategory = async (req, res) => {
   }
 };
 
-// Update a service category
+
 const updateCategory = async (req, res) => {
   logger.info('Обновление категории услуги', { categoryId: req.params.id, userId: req.user?.userId || req.user?.id, ip: req.ip });
 
   try {
-    // Проверяем, что пользователь является администратором
+
     let admin = await Admin.findOne({ where: { user_id: req.user.userId || req.user.id, is_active: true } });
     
-    // Если у пользователя роль admin, но нет записи в таблице администраторов, создаем её
+
     if (!admin && req.user.role === 'admin') {
       admin = await Admin.create({
         user_id: req.user.userId || req.user.id,
@@ -263,15 +263,15 @@ const updateCategory = async (req, res) => {
   }
 };
 
-// Delete a service category
+
 const deleteCategory = async (req, res) => {
   logger.info('Удаление категории услуги', { categoryId: req.params.id, userId: req.user?.userId || req.user?.id, ip: req.ip });
 
   try {
-    // Проверяем, что пользователь является администратором
+
     let admin = await Admin.findOne({ where: { user_id: req.user.userId || req.user.id, is_active: true } });
     
-    // Если у пользователя роль admin, но нет записи в таблице администраторов, создаем её
+
     if (!admin && req.user.role === 'admin') {
       admin = await Admin.create({
         user_id: req.user.userId || req.user.id,
@@ -314,12 +314,12 @@ const deleteCategory = async (req, res) => {
   }
 };
 
-// Create a new admin
+
 const createAdmin = async (req, res) => {
   logger.info('Создание нового администратора', { userId: req.user?.userId || req.user?.id, ip: req.ip });
 
   try {
-    // Проверяем, что текущий пользователь является суперадминистратором
+
     let currentAdmin = await Admin.findOne({
       where: {
         user_id: req.user.userId || req.user.id,
@@ -327,7 +327,7 @@ const createAdmin = async (req, res) => {
       }
     });
 
-    // Если у пользователя роль admin, но нет записи в таблице администраторов, создаем её
+
     if (!currentAdmin && req.user.role === 'admin') {
       currentAdmin = await Admin.create({
         user_id: req.user.userId || req.user.id,
@@ -349,7 +349,7 @@ const createAdmin = async (req, res) => {
 
     logger.info('Новый администратор успешно создан', { adminId: newAdmin.id, userId: adminData.user_id, ip: req.ip });
 
-    // Формируем ответ с явным указанием полей, включая first_name и last_name
+
     const formattedData = {
       id: newAdmin.id,
       user_id: newAdmin.user_id,
@@ -373,16 +373,16 @@ const createAdmin = async (req, res) => {
   }
 };
 
-// Get all admins
+
 const getAllAdmins = async (req, res) => {
   logger.info('Получение списка администраторов', { userId: req.user?.userId || req.user?.id, ip: req.ip });
 
   try {
-    // Проверяем, что пользователь является администратором
+
     let admin = await Admin.findOne({ where: { user_id: req.user.userId || req.user.id, is_active: true } });
     logger.info('Проверка администратора', { userId: req.user.userId || req.user.id, adminFound: !!admin, userRole: req.user.role });
 
-    // Если у пользователя роль admin, но нет записи в таблице администраторов, создаем её
+
     if (!admin && req.user.role === 'admin') {
       logger.info('Создание записи администратора для пользователя', { userId: req.user.userId || req.user.id });
       try {
@@ -394,7 +394,7 @@ const getAllAdmins = async (req, res) => {
         logger.info('Запись администратора успешно создана', { adminId: admin.id, userId: req.user.userId || req.user.id });
       } catch (creationError) {
         logger.error('Ошибка создания записи администратора', { error: creationError.message, userId: req.user.userId || req.user.id });
-        // Повторная попытка найти администратора (возможно, запись была создана другим запросом)
+
         admin = await Admin.findOne({ where: { user_id: req.user.userId || req.user.id, is_active: true } });
       }
     }
@@ -413,7 +413,7 @@ const getAllAdmins = async (req, res) => {
 
     logger.info('Список администраторов успешно получен', { count: result.rows.length, total: result.count, ip: req.ip });
 
-    // Формируем ответ с явным указанием полей, включая first_name и last_name
+
     const formattedData = result.rows.map(admin => ({
       id: admin.id,
       user_id: admin.user_id,
@@ -443,16 +443,16 @@ const getAllAdmins = async (req, res) => {
   }
 };
 
-// Get current admin profile
+
 const getCurrentAdmin = async (req, res) => {
   logger.info('Получение профиля текущего администратора', { userId: req.user?.userId || req.user?.id, ip: req.ip });
 
   try {
-    // Проверяем, что пользователь является администратором
+
     let admin = await Admin.findOne({ where: { user_id: req.user.userId || req.user.id, is_active: true } });
     logger.info('Проверка администратора', { userId: req.user.userId || req.user.id, adminFound: !!admin, userRole: req.user.role });
 
-    // Если у пользователя роль admin, но нет записи в таблице администраторов, создаем её
+
     if (!admin && req.user.role === 'admin') {
       logger.info('Создание записи администратора для пользователя', { userId: req.user.userId || req.user.id });
       try {
@@ -464,7 +464,7 @@ const getCurrentAdmin = async (req, res) => {
         logger.info('Запись администратора успешно создана', { adminId: admin.id, userId: req.user.userId || req.user.id });
       } catch (creationError) {
         logger.error('Ошибка создания записи администратора', { error: creationError.message, userId: req.user.userId || req.user.id });
-        // Повторная попытка найти администратора (возможно, запись была создана другим запросом)
+
         admin = await Admin.findOne({ where: { user_id: req.user.userId || req.user.id, is_active: true } });
       }
     }
@@ -479,7 +479,7 @@ const getCurrentAdmin = async (req, res) => {
 
     logger.info('Профиль администратора успешно получен', { adminId: admin.id, ip: req.ip });
 
-    // Формируем ответ с явным указанием полей, включая first_name и last_name
+
     const formattedData = {
       id: admin.id,
       user_id: admin.user_id,
@@ -504,16 +504,16 @@ const getCurrentAdmin = async (req, res) => {
   }
 };
 
-// Update current admin profile
+
 const updateCurrentAdmin = async (req, res) => {
   logger.info('Обновление профиля текущего администратора', { userId: req.user?.userId || req.user?.id, ip: req.ip });
 
   try {
-    // Проверяем, что пользователь является администратором
+
     let admin = await Admin.findOne({ where: { user_id: req.user.userId || req.user.id, is_active: true } });
     logger.info('Проверка администратора', { userId: req.user.userId || req.user.id, adminFound: !!admin, userRole: req.user.role });
 
-    // Если у пользователя роль admin, но нет записи в таблице администраторов, создаем её
+
     if (!admin && req.user.role === 'admin') {
       logger.info('Создание записи администратора для пользователя', { userId: req.user.userId || req.user.id });
       try {
@@ -525,7 +525,7 @@ const updateCurrentAdmin = async (req, res) => {
         logger.info('Запись администратора успешно создана', { adminId: admin.id, userId: req.user.userId || req.user.id });
       } catch (creationError) {
         logger.error('Ошибка создания записи администратора', { error: creationError.message, userId: req.user.userId || req.user.id });
-        // Повторная попытка найти администратора (возможно, запись была создана другим запросом)
+
         admin = await Admin.findOne({ where: { user_id: req.user.userId || req.user.id, is_active: true } });
       }
     }
@@ -540,7 +540,7 @@ const updateCurrentAdmin = async (req, res) => {
 
     const { first_name, last_name } = req.body;
 
-    // Обновляем администратора
+
     await admin.update({
       first_name,
       last_name
@@ -548,7 +548,7 @@ const updateCurrentAdmin = async (req, res) => {
 
     logger.info('Профиль администратора успешно обновлен', { adminId: admin.id, ip: req.ip });
 
-    // Формируем ответ с явным указанием полей, включая first_name и last_name
+
     const formattedData = {
       id: admin.id,
       user_id: admin.user_id,

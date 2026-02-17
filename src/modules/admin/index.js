@@ -1,4 +1,4 @@
-// Модуль администратора
+
 
 module.exports = {
   Admin: require('./models/Admin'),

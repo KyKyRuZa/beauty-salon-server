@@ -7,7 +7,7 @@ const {
   adminLoginValidationSchema
 } = require('../../../validation');
 
-// Маршруты для аутентификации администраторов
+
 router.post('/register', validate(adminRegisterValidationSchema, 'body'), register);
 router.post('/login', validate(adminLoginValidationSchema, 'body'), login);
 

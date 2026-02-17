@@ -2,10 +2,10 @@ const Master = require('../models/Master');
 const Salon = require('../models/Salon');
 const { createLogger } = require('../../../utils/logger');
 
-// Create a logger instance for this controller
+
 const logger = createLogger('provider-controller');
 
-// Get master by ID
+
 const getMasterById = async (req, res) => {
   logger.info('Получение данных мастера по ID', { masterId: req.params.id, ip: req.ip });
 
@@ -49,7 +49,7 @@ const getMasterById = async (req, res) => {
   }
 };
 
-// Get salon by ID
+
 const getSalonById = async (req, res) => {
   logger.info('Получение данных салона по ID', { salonId: req.params.id, ip: req.ip });
 

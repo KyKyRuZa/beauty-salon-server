@@ -1,8 +1,8 @@
-// Определение ассоциаций между моделями
-const defineAssociations = (models) => {
-  const { User, Client, Master, Salon, ServiceCategory, ServiceSubcategory, MasterService, TimeSlot, Admin, Booking, Order, MasterAvailability, Review, Favorite } = models;
 
-  // Связи пользователя
+const defineAssociations = (models) => {
+  const { User, Client, Master, Salon, ServiceCategory, ServiceSubcategory, MasterService, TimeSlot, Admin, Booking, MasterAvailability, Review, Favorite } = models;
+
+
   User.hasOne(Client, {
     foreignKey: {
       name: 'user_id',
@@ -60,9 +60,9 @@ const defineAssociations = (models) => {
     as: 'user'
   });
 
-  // Связи администратора - определены в модели Admin
 
-  // Связи мастера
+
+
   Master.belongsTo(Salon, {
     foreignKey: {
       name: 'salon_id',
@@ -82,31 +82,31 @@ const defineAssociations = (models) => {
     as: 'masters'
   });
 
-  // Новые связи для MasterService (связь мастер-услуга)
+
   MasterService.belongsTo(Master, {
     foreignKey: {
       name: 'master_id',
-      allowNull: false  // Изменил на false, чтобы соответствовать модели
+      allowNull: false
     },
     onDelete: 'CASCADE',
     hooks: true,
     targetKey: 'id',
-    as: 'master_provider'  // Изменил алиас, чтобы избежать конфликта
+    as: 'master_provider'
   });
   Master.hasMany(MasterService, {
     foreignKey: {
       name: 'master_id',
-      allowNull: false  // Изменил на false, чтобы соответствовать модели
+      allowNull: false
     },
     sourceKey: 'id',
     as: 'services'
   });
 
-  // Связи MasterService с салоном
+
   MasterService.belongsTo(Salon, {
     foreignKey: {
       name: 'salon_id',
-      allowNull: true  // Может быть null для услуг независимых мастеров
+      allowNull: true
     },
     onDelete: 'CASCADE',
     hooks: true,
@@ -116,17 +116,17 @@ const defineAssociations = (models) => {
   Salon.hasMany(MasterService, {
     foreignKey: {
       name: 'salon_id',
-      allowNull: true  // Может быть null для услуг независимых мастеров
+      allowNull: true
     },
     sourceKey: 'id',
     as: 'master_services'
   });
 
-  // Связи MasterService с категорией услуг
+
   MasterService.belongsTo(ServiceCategory, {
     foreignKey: {
       name: 'category_id',
-      allowNull: true  // Может быть null для услуг без категории
+      allowNull: true
     },
     onDelete: 'SET NULL',
     hooks: true,
@@ -136,16 +136,16 @@ const defineAssociations = (models) => {
   ServiceCategory.hasMany(MasterService, {
     foreignKey: {
       name: 'category_id',
-      allowNull: true  // Может быть null для услуг без категории
+      allowNull: true
     },
     sourceKey: 'id',
     as: 'master_services_by_category'
   });
 
 
-  // Связи категорий услуг - ассоциации определены в самих моделях
 
-  // Связи временных слотов
+
+
   TimeSlot.belongsTo(Master, {
     foreignKey: {
       name: 'master_id',
@@ -154,7 +154,7 @@ const defineAssociations = (models) => {
     onDelete: 'CASCADE',
     hooks: true,
     targetKey: 'id',
-    as: 'time_slot_master'  // Изменил алиас, чтобы избежать конфликта
+    as: 'time_slot_master'
   });
   Master.hasMany(TimeSlot, {
     foreignKey: {
@@ -165,7 +165,7 @@ const defineAssociations = (models) => {
     as: 'time_slots'
   });
 
-  // Связи бронирования (обновлённые)
+
   Booking.belongsTo(Client, {
     foreignKey: {
       name: 'client_id',
@@ -241,33 +241,7 @@ const defineAssociations = (models) => {
     sourceKey: 'id',
     as: 'bookings'
   });
-  
 
-  // Связи заказов
-  Order.belongsTo(User, {
-    foreignKey: {
-      name: 'user_id',
-      allowNull: false
-    },
-    onDelete: 'CASCADE',
-    hooks: true,
-    targetKey: 'id',
-    as: 'order_user'
-  });
-  
-  
-  Order.belongsTo(Booking, {
-    foreignKey: {
-      name: 'booking_id',
-      allowNull: true
-    },
-    onDelete: 'SET NULL',
-    hooks: true,
-    targetKey: 'id',
-    as: 'order_booking'
-  });
-
-  // Связи доступности мастеров
   MasterAvailability.belongsTo(Master, {
     foreignKey: {
       name: 'master_id',
@@ -280,7 +254,7 @@ const defineAssociations = (models) => {
   });
   
 
-  // Связи администратора
+
   User.hasOne(Admin, {
     foreignKey: {
       name: 'user_id',
@@ -292,9 +266,9 @@ const defineAssociations = (models) => {
     as: 'admin_profile'
   });
 
-  // Связи отзывов
+
   if (Review) {
-    // Связи от Review к другим моделям
+
     Review.belongsTo(User, {
       foreignKey: {
         name: 'user_id',
@@ -331,7 +305,7 @@ const defineAssociations = (models) => {
       as: 'booking'
     });
 
-    // Обратные связи
+
     User.hasMany(Review, {
       foreignKey: {
         name: 'user_id',
@@ -369,9 +343,9 @@ const defineAssociations = (models) => {
     });
   }
 
-  // Связи избранных мастеров
+
   if (Favorite) {
-    // Связи от Favorite к другим моделям
+
     Favorite.belongsTo(User, {
       foreignKey: {
         name: 'user_id',
@@ -390,7 +364,7 @@ const defineAssociations = (models) => {
       as: 'favorite_master'
     });
 
-    // Обратные связи
+
     User.hasMany(Favorite, {
       foreignKey: {
         name: 'user_id',

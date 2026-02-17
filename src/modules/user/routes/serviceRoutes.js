@@ -7,10 +7,10 @@ const {
   masterServiceValidationSchema
 } = require('../../../validation');
 
-// Apply authentication to service routes
+
 router.use(authenticateToken);
 
-// Service routes
+
 router.get('/', serviceController.getAllServices);
 router.get('/:id', serviceController.getServiceById);
 router.post('/', validate(masterServiceValidationSchema, 'body'), serviceController.createService);

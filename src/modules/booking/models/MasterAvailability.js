@@ -1,11 +1,6 @@
 const { DataTypes } = require('sequelize');
 const { sequelize } = require('../../../config/database');
 
-/**
- * MasterAvailability — Рабочие часы мастера
- * Мастер указывает, когда он работает в конкретную дату
- * На основе этих записей генерируются TimeSlot
- */
 const MasterAvailability = sequelize.define('MasterAvailability', {
   id: {
     type: DataTypes.INTEGER,
@@ -63,7 +58,7 @@ const MasterAvailability = sequelize.define('MasterAvailability', {
       name: 'idx_availability_status'
     }
   ],
-  paranoid: true, // мягкое удаление
+  paranoid: true,
   timestamps: true,
   createdAt: 'created_at',
   updatedAt: 'updated_at',
@@ -71,7 +66,7 @@ const MasterAvailability = sequelize.define('MasterAvailability', {
   hooks: {
     beforeValidate: (availability) => {
       if (availability.start_time && availability.end_time) {
-        // Сравниваем время как строки (формат HH:MM:SS)
+
         if (availability.start_time >= availability.end_time) {
           throw new Error('Время окончания должно быть позже времени начала');
         }
@@ -80,5 +75,5 @@ const MasterAvailability = sequelize.define('MasterAvailability', {
   }
 });
 
-// Ассоциации будут определены в associations.js
+
 module.exports = MasterAvailability;

@@ -4,10 +4,6 @@ const { reviewValidationSchema } = require('../../../validation/user');
 
 const logger = createLogger('review-controller');
 
-/**
- * Создать отзыв
- * POST /api/reviews
- */
 const createReview = async (req, res) => {
   try {
     logger.info('Попытка создания отзыва', { userId: req.user?.id, body: req.body });
@@ -22,7 +18,7 @@ const createReview = async (req, res) => {
       });
     }
 
-    // Валидация данных
+
     const validationResult = reviewValidationSchema.safeParse(req.body);
     if (!validationResult.success) {
       logger.warn('Ошибка валидации отзыва', { errors: validationResult.error.errors });
@@ -71,10 +67,6 @@ const createReview = async (req, res) => {
   }
 };
 
-/**
- * Получить отзывы мастера
- * GET /api/reviews/master/:masterId
- */
 const getMasterReviews = async (req, res) => {
   try {
     const { masterId } = req.params;
@@ -103,10 +95,6 @@ const getMasterReviews = async (req, res) => {
   }
 };
 
-/**
- * Получить отзывы салона
- * GET /api/reviews/salon/:salonId
- */
 const getSalonReviews = async (req, res) => {
   try {
     const { salonId } = req.params;
@@ -135,10 +123,6 @@ const getSalonReviews = async (req, res) => {
   }
 };
 
-/**
- * Получить отзыв по ID
- * GET /api/reviews/:id
- */
 const getReviewById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -167,10 +151,6 @@ const getReviewById = async (req, res) => {
   }
 };
 
-/**
- * Обновить отзыв
- * PUT /api/reviews/:id
- */
 const updateReview = async (req, res) => {
   try {
     const { id } = req.params;
@@ -178,7 +158,7 @@ const updateReview = async (req, res) => {
 
     logger.info('Попытка обновления отзыва', { id, userId: req.user?.id });
 
-    // Проверка прав доступа (только автор или админ)
+
     const existingReview = await reviewService.getReviewById(id);
     if (!existingReview) {
       return res.status(404).json({
@@ -187,7 +167,7 @@ const updateReview = async (req, res) => {
       });
     }
 
-    // Проверка: только автор может редактировать свой отзыв
+
     if (existingReview.user_id !== req.user?.id && req.user?.role !== 'admin') {
       logger.warn('Попытка редактирования чужого отзыва', { id, userId: req.user?.id });
       return res.status(403).json({
@@ -229,17 +209,13 @@ const updateReview = async (req, res) => {
   }
 };
 
-/**
- * Удалить отзыв
- * DELETE /api/reviews/:id
- */
 const deleteReview = async (req, res) => {
   try {
     const { id } = req.params;
 
     logger.info('Попытка удаления отзыва', { id, userId: req.user?.id });
 
-    // Проверка прав доступа (только автор или админ)
+
     const existingReview = await reviewService.getReviewById(id);
     if (!existingReview) {
       return res.status(404).json({
@@ -273,11 +249,6 @@ const deleteReview = async (req, res) => {
   }
 };
 
-/**
- * Получить статистику отзывов
- * GET /api/reviews/stats/master/:masterId
- * GET /api/reviews/stats/salon/:salonId
- */
 const getReviewStats = async (req, res) => {
   try {
     const { masterId, salonId } = req.params;

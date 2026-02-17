@@ -31,36 +31,36 @@ const {
 } = require('./admin');
 
 module.exports = {
-  // Базовые валидации
+
   BaseValidationSchema,
 
-  // Валидации аутентификации
+
   registerValidationSchema,
   loginValidationSchema,
   updateProfileValidationSchema,
 
-  // Валидации аутентификации администратора
+
   adminRegisterValidationSchema,
   adminLoginValidationSchema,
 
-  // Валидации пользователей
+
   clientValidationSchema,
   masterValidationSchema,
   salonValidationSchema,
 
-  // Валидации каталога
+
   serviceCategoryValidationSchema,
   serviceSubcategoryValidationSchema,
   serviceTemplateValidationSchema,
   masterServiceValidationSchema,
   updateMasterServiceValidationSchema,
 
-  // Валидации бронирования
+
   timeSlotValidationSchema,
   bookingValidationSchema,
   orderValidationSchema,
   masterAvailabilityValidationSchema,
 
-  // Валидации администратора
+
   adminValidationSchema,
 };

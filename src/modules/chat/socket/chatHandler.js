@@ -5,21 +5,21 @@ let connectedUsers = {};
 const handleConnection = (socket) => {
   console.log('User connected:', socket.id);
   
-  // Handle user authentication
+
   socket.on('authenticate', (token) => {
-    // Here you would typically verify the JWT token
-    // For simplicity, we'll skip this in the example
-    socket.userId = token.userId; // Assuming token was decoded elsewhere
+
+
+    socket.userId = token.userId;
     connectedUsers[socket.userId] = socket.id;
   });
   
-  // Handle incoming messages
+
   socket.on('sendMessage', async (data) => {
     try {
       const { receiverId, content, messageType = 'text' } = data;
       const senderId = socket.userId;
       
-      // Save message to database
+
       const message = await Message.create({
         senderId,
         receiverId,
@@ -27,7 +27,7 @@ const handleConnection = (socket) => {
         messageType
       });
       
-      // Send message to recipient if they're online
+
       const recipientSocketId = connectedUsers[receiverId];
       if (recipientSocketId) {
         socket.to(recipientSocketId).emit('receiveMessage', {
@@ -39,7 +39,7 @@ const handleConnection = (socket) => {
         });
       }
       
-      // Send confirmation back to sender
+
       socket.emit('messageSent', {
         id: message.id,
         receiverId,
@@ -52,10 +52,10 @@ const handleConnection = (socket) => {
     }
   });
   
-  // Handle user disconnection
+
   socket.on('disconnect', () => {
     console.log('User disconnected:', socket.id);
-    // Remove user from connected users
+
     for (const userId in connectedUsers) {
       if (connectedUsers[userId] === socket.id) {
         delete connectedUsers[userId];

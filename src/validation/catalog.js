@@ -1,7 +1,7 @@
 const { z } = require('zod');
 const { BaseValidationSchema } = require('./base');
 
-// Схема валидации для категории услуги
+
 const serviceCategoryValidationSchema = z.object({
   name: z.string().min(2).max(255),
   description: z.string().max(1000).optional(),
@@ -9,7 +9,7 @@ const serviceCategoryValidationSchema = z.object({
   is_popular: z.boolean().optional(),
 });
 
-// Схема валидации для подкатегории услуги
+
 const serviceSubcategoryValidationSchema = z.object({
   category_id: BaseValidationSchema.number,
   name: z.string().min(2).max(255),
@@ -17,9 +17,9 @@ const serviceSubcategoryValidationSchema = z.object({
   is_active: z.boolean().optional(),
 });
 
-// Схема валидации для связи мастер-услуга (новая версия без шаблонов)
+
 const masterServiceValidationSchema = z.object({
-  master_id: BaseValidationSchema.number, // обязательное поле при создании
+  master_id: BaseValidationSchema.number,
   salon_id: BaseValidationSchema.number.optional(),
   category_id: BaseValidationSchema.number.optional(),
   name: z.string().min(2).max(255),
@@ -30,9 +30,9 @@ const masterServiceValidationSchema = z.object({
   is_active: z.boolean().optional(),
 });
 
-// Схема валидации для обновления услуги мастера
+
 const updateMasterServiceValidationSchema = z.object({
-  master_id: BaseValidationSchema.number.optional(), // опциональное поле при обновлении
+  master_id: BaseValidationSchema.number.optional(),
   salon_id: BaseValidationSchema.number.optional(),
   category_id: BaseValidationSchema.number.optional(),
   name: z.string().min(2).max(255).optional(),

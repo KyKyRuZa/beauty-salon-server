@@ -7,20 +7,23 @@ const { createLogger } = require('../../../utils/logger');
 
 const logger = createLogger('availability-service');
 
-/**
- * Создать или обновить расписание мастера на дату
- */
 const setAvailability = async (masterId, date, startTime, endTime, slotDuration = 60) => {
+  logger.info('setAvailability вызов', { masterId, date, startTime, endTime, slotDuration });
+  
   const transaction = await sequelize.transaction();
 
   try {
-    // Проверяем существующую запись
     const existing = await MasterAvailability.findOne({
       where: { master_id: masterId, date }
     });
 
+    logger.info('setAvailability поиск существующего расписания', { 
+      masterId, 
+      date, 
+      found: !!existing 
+    });
+
     if (existing) {
-      // Обновляем существующую запись
       await existing.update({
         start_time: startTime,
         end_time: endTime,
@@ -28,7 +31,6 @@ const setAvailability = async (masterId, date, startTime, endTime, slotDuration 
         is_available: true
       }, { transaction });
 
-      // Удаляем старые слоты для этой даты
       await TimeSlot.destroy({
         where: {
           master_id: masterId,
@@ -40,8 +42,7 @@ const setAvailability = async (masterId, date, startTime, endTime, slotDuration 
         transaction
       });
     } else {
-      // Создаём новую запись
-      await MasterAvailability.create({
+      const newAvailability = await MasterAvailability.create({
         master_id: masterId,
         date,
         start_time: startTime,
@@ -49,9 +50,14 @@ const setAvailability = async (masterId, date, startTime, endTime, slotDuration 
         slot_duration: slotDuration,
         is_available: true
       }, { transaction });
+      
+      logger.info('setAvailability создано новое расписание', { 
+        masterId, 
+        date, 
+        availabilityId: newAvailability.id 
+      });
     }
 
-    // Генерируем слоты
     await generateTimeSlots(masterId, date, startTime, endTime, slotDuration, transaction);
 
     await transaction.commit();
@@ -66,9 +72,6 @@ const setAvailability = async (masterId, date, startTime, endTime, slotDuration 
   }
 };
 
-/**
- * Получить расписание мастера
- */
 const getAvailability = async (masterId, startDate, endDate) => {
   const where = { master_id: masterId };
 
@@ -89,9 +92,6 @@ const getAvailability = async (masterId, startDate, endDate) => {
   return availability;
 };
 
-/**
- * Обновить расписание
- */
 const updateAvailability = async (availabilityId, masterId, updateData) => {
   const transaction = await sequelize.transaction();
 
@@ -106,9 +106,9 @@ const updateAvailability = async (availabilityId, masterId, updateData) => {
 
     await availability.update(updateData, { transaction });
 
-    // Если изменилось время или длительность слота, перегенерируем слоты
+
     if (updateData.start_time || updateData.end_time || updateData.slot_duration) {
-      // Удаляем старые слоты
+
       await TimeSlot.destroy({
         where: {
           master_id: masterId,
@@ -120,7 +120,7 @@ const updateAvailability = async (availabilityId, masterId, updateData) => {
         transaction
       });
 
-      // Генерируем новые
+
       await generateTimeSlots(
         masterId,
         availability.date,
@@ -131,7 +131,7 @@ const updateAvailability = async (availabilityId, masterId, updateData) => {
       );
     }
 
-    // Если is_available = false, блокируем все слоты
+
     if (updateData.is_available === false) {
       await TimeSlot.update(
         { status: 'blocked' },
@@ -160,9 +160,6 @@ const updateAvailability = async (availabilityId, masterId, updateData) => {
   }
 };
 
-/**
- * Удалить расписание
- */
 const deleteAvailability = async (availabilityId, masterId) => {
   const transaction = await sequelize.transaction();
 
@@ -175,7 +172,7 @@ const deleteAvailability = async (availabilityId, masterId) => {
       throw new Error('Расписание не найдено');
     }
 
-    // Удаляем слоты, которые не забронированы
+
     await TimeSlot.destroy({
       where: {
         master_id: masterId,
@@ -188,7 +185,7 @@ const deleteAvailability = async (availabilityId, masterId) => {
       transaction
     });
 
-    // Удаляем расписание
+
     await availability.destroy({ transaction });
 
     await transaction.commit();
@@ -203,9 +200,6 @@ const deleteAvailability = async (availabilityId, masterId) => {
   }
 };
 
-/**
- * Сгенерировать временные слоты из расписания
- */
 const generateTimeSlots = async (masterId, date, startTime, endTime, slotDuration, transaction) => {
   try {
     const baseDate = new Date(date + 'T00:00:00');
@@ -222,7 +216,7 @@ const generateTimeSlots = async (masterId, date, startTime, endTime, slotDuratio
       throw new Error('Время окончания должно быть позже времени начала');
     }
 
-    const durationMs = slotDuration * 60000; // минуты в миллисекунды
+    const durationMs = slotDuration * 60000;
     const slots = [];
 
     let currentTime = new Date(dayStart);
@@ -256,17 +250,19 @@ const generateTimeSlots = async (masterId, date, startTime, endTime, slotDuratio
   }
 };
 
-/**
- * Получить расписание мастера с слотами
- */
 const getAvailabilityWithSlots = async (masterId, date) => {
+  logger.info('getAvailabilityWithSlots вызов', { masterId, date });
+  
   const availability = await MasterAvailability.findOne({
     where: { master_id: masterId, date }
   });
 
-  if (!availability) {
-    return null;
-  }
+  logger.info('getAvailabilityWithSlots результат поиска расписания', { 
+    masterId, 
+    date, 
+    found: !!availability,
+    availabilityData: availability ? availability.toJSON() : null 
+  });
 
   const startOfDay = new Date(date + 'T00:00:00');
   const endOfDay = new Date(date + 'T23:59:59');
@@ -282,15 +278,23 @@ const getAvailabilityWithSlots = async (masterId, date) => {
     order: [['start_time', 'ASC']]
   });
 
+  logger.info('getAvailabilityWithSlots результат поиска слотов', { 
+    masterId, 
+    date, 
+    slotsCount: slots.length 
+  });
+
+  // Если расписания нет, но слоты есть - возвращаем их
+  if (!availability && slots.length === 0) {
+    return null;
+  }
+
   return {
-    ...availability.toJSON(),
+    ...(availability ? availability.toJSON() : { master_id: masterId, date }),
     slots
   };
 };
 
-/**
- * Перегенерировать слоты для даты
- */
 const regenerateSlotsForDate = async (masterId, date) => {
   const transaction = await sequelize.transaction();
 
@@ -303,7 +307,7 @@ const regenerateSlotsForDate = async (masterId, date) => {
       throw new Error('Расписание не найдено');
     }
 
-    // Сохраняем забронированные слоты
+
     const bookedSlots = await TimeSlot.findAll({
       where: {
         master_id: masterId,
@@ -316,7 +320,7 @@ const regenerateSlotsForDate = async (masterId, date) => {
       transaction
     });
 
-    // Удаляем все слоты кроме забронированных
+
     await TimeSlot.destroy({
       where: {
         master_id: masterId,
@@ -329,7 +333,7 @@ const regenerateSlotsForDate = async (masterId, date) => {
       transaction
     });
 
-    // Генерируем новые слоты
+
     await generateTimeSlots(
       masterId,
       date,

@@ -129,7 +129,7 @@ const Booking = sequelize.define('Booking', {
       name: 'booking_master_time_idx'
     }
   ],
-  paranoid: true, // мягкое удаление
+  paranoid: true,
   timestamps: true,
   createdAt: 'created_at',
   updatedAt: 'updated_at',
@@ -153,5 +153,5 @@ const Booking = sequelize.define('Booking', {
   }
 });
 
-// Ассоциации будут определены в associations.js
+
 module.exports = Booking;

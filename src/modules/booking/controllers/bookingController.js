@@ -3,10 +3,6 @@ const { createLogger } = require('../../../utils/logger');
 
 const logger = createLogger('booking-controller');
 
-/**
- * Создать бронирование
- * POST /api/booking
- */
 const createBooking = async (req, res) => {
   try {
     logger.info('Запрос на создание бронирования', { userId: req.user?.id });
@@ -20,7 +16,7 @@ const createBooking = async (req, res) => {
       comment
     } = req.body;
 
-    // Получаем client_id из профиля пользователя
+
     const client_id = req.user?.client?.id;
     if (!client_id) {
       return res.status(400).json({
@@ -29,7 +25,7 @@ const createBooking = async (req, res) => {
       });
     }
 
-    // Валидация обязательных полей
+
     if (!master_id || !master_service_id || !start_time || !end_time) {
       return res.status(400).json({
         success: false,
@@ -64,13 +60,9 @@ const createBooking = async (req, res) => {
   }
 };
 
-/**
- * Получить мои записи (для клиента)
- * GET /api/booking/my
- */
 const getMyBookings = async (req, res) => {
   try {
-    // Получаем client_id из токена пользователя
+
     const userId = req.user?.id || req.user?.userId;
     if (!userId) {
       return res.status(400).json({
@@ -81,7 +73,7 @@ const getMyBookings = async (req, res) => {
 
     const { status } = req.query;
 
-    // Получаем client_id из профиля пользователя
+
     const Client = require('../../user/models/Client');
     const client = await Client.findOne({ where: { user_id: userId } });
     
@@ -92,7 +84,7 @@ const getMyBookings = async (req, res) => {
       });
     }
 
-    // Обработка множественных статусов (pending,confirmed)
+
     let statusFilter = null;
     if (status) {
       if (status.includes(',')) {
@@ -121,10 +113,6 @@ const getMyBookings = async (req, res) => {
   }
 };
 
-/**
- * Получить записи мастера
- * GET /api/booking/master
- */
 const getMasterBookings = async (req, res) => {
   try {
     const master_id = req.user?.master?.id;
@@ -154,10 +142,6 @@ const getMasterBookings = async (req, res) => {
   }
 };
 
-/**
- * Получить бронирование по ID
- * GET /api/booking/:id
- */
 const getBookingById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -177,10 +161,6 @@ const getBookingById = async (req, res) => {
   }
 };
 
-/**
- * Обновить бронирование
- * PUT /api/booking/:id
- */
 const updateBooking = async (req, res) => {
   try {
     const { id } = req.params;
@@ -204,10 +184,6 @@ const updateBooking = async (req, res) => {
   }
 };
 
-/**
- * Отменить бронирование
- * POST /api/booking/:id/cancel
- */
 const cancelBooking = async (req, res) => {
   try {
     const { id } = req.params;
@@ -230,10 +206,6 @@ const cancelBooking = async (req, res) => {
   }
 };
 
-/**
- * Подтвердить бронирование (для мастера)
- * POST /api/booking/:id/confirm
- */
 const confirmBooking = async (req, res) => {
   try {
     const { id } = req.params;
@@ -256,10 +228,6 @@ const confirmBooking = async (req, res) => {
   }
 };
 
-/**
- * Получить доступные слоты
- * GET /api/booking/available-slots
- */
 const getAvailableSlots = async (req, res) => {
   try {
     const { master_id, date, service_id } = req.query;
@@ -286,10 +254,6 @@ const getAvailableSlots = async (req, res) => {
   }
 };
 
-/**
- * Получить свободные окна
- * GET /api/booking/free-windows
- */
 const getFreeWindows = async (req, res) => {
   try {
     const { master_id, date, duration = 60 } = req.query;

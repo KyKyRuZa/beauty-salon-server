@@ -1,12 +1,12 @@
 const authService = require('../services/authService');
 const jwt = require('jsonwebtoken');
 
-// Register a new user
+
 const register = async (req, res) => {
   try {
     const userData = req.body;
 
-    // Валидация данных на уровне контроллера
+
     if (!userData.username || !userData.password) {
       return res.status(400).json({
         success: false,
@@ -14,7 +14,7 @@ const register = async (req, res) => {
       });
     }
 
-    // Проверка длины имени пользователя
+
     if (userData.username.length < 3 || userData.username.length > 50) {
       return res.status(400).json({
         success: false,
@@ -22,7 +22,7 @@ const register = async (req, res) => {
       });
     }
 
-    // Проверка формата имени пользователя
+
     const usernameRegex = /^[A-Za-z0-9]+$/;
     if (!usernameRegex.test(userData.username)) {
       return res.status(400).json({
@@ -31,7 +31,7 @@ const register = async (req, res) => {
       });
     }
 
-    // Проверка длины пароля
+
     if (userData.password.length < 6) {
       return res.status(400).json({
         success: false,
@@ -39,7 +39,7 @@ const register = async (req, res) => {
       });
     }
 
-    // Проверка email, если он предоставлен
+
     if (userData.email) {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(userData.email)) {
@@ -52,7 +52,7 @@ const register = async (req, res) => {
 
     const user = await authService.register(userData);
 
-    // Generate JWT token
+
     const token = jwt.sign(
       { userId: user.id, username: user.username },
       process.env.JWT_SECRET || 'fallback_secret_key',
@@ -70,7 +70,7 @@ const register = async (req, res) => {
       }
     });
   } catch (error) {
-    // Обработка ошибок валидации
+
     if (error.name === 'SequelizeValidationError' || error.name === 'SequelizeUniqueConstraintError') {
       return res.status(400).json({
         success: false,
@@ -85,7 +85,7 @@ const register = async (req, res) => {
   }
 };
 
-// Login user
+
 const login = async (req, res) => {
   try {
     const { username, password } = req.body;
@@ -99,7 +99,7 @@ const login = async (req, res) => {
       });
     }
     
-    // Generate JWT token
+
     const token = jwt.sign(
       { userId: user.id, username: user.username },
       process.env.JWT_SECRET || 'fallback_secret_key',

@@ -51,8 +51,8 @@ const ServiceSubcategory = sequelize.define('ServiceSubcategory', {
     field: 'is_active'
   }
 }, {
-  tableName: 'service_subcategories', // Таблица для подкатегорий услуг
-  schema: 'catalog_schema', // Указываем схему для каталога услуг
+  tableName: 'service_subcategories',
+  schema: 'catalog_schema',
   indexes: [
     {
       fields: ['category_id'],
@@ -63,14 +63,14 @@ const ServiceSubcategory = sequelize.define('ServiceSubcategory', {
       name: 'subcategory_is_active_index'
     }
   ],
-  paranoid: true, // Включаем мягкое удаление
-  timestamps: true, // Включаем автоматические метки времени
+  paranoid: true,
+  timestamps: true,
   createdAt: 'created_at',
   updatedAt: 'updated_at',
-  deletedAt: 'deletedAt' // Указываем имя поля для мягкого удаления
+  deletedAt: 'deletedAt'
 });
 
-// Определяем отношения
+
 ServiceSubcategory.belongsTo(ServiceCategory, {
   foreignKey: 'category_id',
   targetKey: 'id',

@@ -1,10 +1,6 @@
 const { DataTypes } = require('sequelize');
 const { sequelize } = require('../../../config/database');
 
-/**
- * TimeSlot — Временные слоты для записи
- * Генерируются автоматически из MasterAvailability или создаются вручную
- */
 const TimeSlot = sequelize.define('TimeSlot', {
   id: {
     type: DataTypes.INTEGER,
@@ -77,5 +73,5 @@ const TimeSlot = sequelize.define('TimeSlot', {
   }
 });
 
-// Ассоциации будут определены в associations.js
+
 module.exports = TimeSlot;

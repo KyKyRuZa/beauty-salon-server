@@ -5,22 +5,22 @@ const jwt = require('jsonwebtoken');
 const { createLogger } = require('../../../utils/logger');
 const { registerValidationSchema, updateProfileValidationSchema, changePasswordValidationSchema } = require('../../../validation');
 
-// Create a logger instance for this controller
+
 const logger = createLogger('auth-controller');
 
-// Register a new user
+
 const register = async (req, res) => {
   logger.info('Получен запрос на регистрацию', { ip: req.ip, userAgent: req.get('User-Agent') });
 
   try {
     const userData = req.body;
 
-    // Данные уже валидированы через middleware, но дополнительно проверим
+
     const validatedUserData = registerValidationSchema.parse(userData);
 
     const user = await authService.register(validatedUserData);
 
-    // Generate JWT token
+
     const token = jwt.sign(
       { userId: user.id, email: user.email, role: user.role },
       process.env.JWT_SECRET || 'fallback_secret_key',
@@ -43,7 +43,7 @@ const register = async (req, res) => {
   } catch (error) {
     logger.error('Ошибка регистрации пользователя', { error: error.message, ip: req.ip });
 
-    // Обработка ошибок валидации Zod
+
     if (error.isEmpty === false) {
       return res.status(400).json({
         success: false,
@@ -55,7 +55,7 @@ const register = async (req, res) => {
       });
     }
 
-    // Обработка ошибок валидации Sequelize
+
     if (error.name === 'SequelizeValidationError' || error.name === 'SequelizeUniqueConstraintError') {
       return res.status(400).json({
         success: false,
@@ -70,7 +70,7 @@ const register = async (req, res) => {
   }
 };
 
-// Login user
+
 const login = async (req, res) => {
   logger.info('Получен запрос на вход', { ip: req.ip, userAgent: req.get('User-Agent') });
 
@@ -87,7 +87,7 @@ const login = async (req, res) => {
       });
     }
 
-    // Generate JWT token
+
     const token = jwt.sign(
       { userId: user.id, email: user.email, role: user.role },
       process.env.JWT_SECRET || 'fallback_secret_key',
@@ -110,7 +110,7 @@ const login = async (req, res) => {
   } catch (error) {
     logger.error('Ошибка входа пользователя', { error: error.message, ip: req.ip });
     
-    // Обработка ошибок валидации Zod
+
     if (error.isEmpty === false) {
       return res.status(400).json({
         success: false,
@@ -129,12 +129,12 @@ const login = async (req, res) => {
   }
 };
 
-// Get user profile
+
 const getProfile = async (req, res) => {
   logger.info('Получен запрос на получение профиля', { userId: req.user.userId || req.user.id, ip: req.ip });
 
   try {
-    const userId = req.user.userId || req.user.id; // assuming user info is attached to req by auth middleware
+    const userId = req.user.userId || req.user.id;
 
     const profile = await userService.getProfile(userId);
 
@@ -161,7 +161,7 @@ const getProfile = async (req, res) => {
   }
 };
 
-// Edit user profile
+
 const editProfile = async (req, res) => {
   logger.info('Получен запрос на редактирование профиля', { 
     userId: req.user.userId || req.user.id, 
@@ -171,18 +171,18 @@ const editProfile = async (req, res) => {
   });
 
   try {
-    const userId = req.user.userId || req.user.id; // assuming user info is attached to req by auth middleware
+    const userId = req.user.userId || req.user.id;
     const profileData = req.body;
 
-    // Проверяем, есть ли хотя бы одно поле для обновления в теле запроса
+
     const hasUpdateData = Object.keys(profileData).some(key => 
       key !== 'createProfile' && profileData[key] !== undefined && profileData[key] !== ''
     );
 
-    // Проверяем, есть ли файл аватара (multer сохраняет его в req.file)
+
     const hasAvatarFile = req.file !== undefined;
 
-    // Если нет данных для обновления и нет файла, возвращаем ошибку
+
     if (!hasUpdateData && !hasAvatarFile) {
       return res.status(400).json({
         success: false,
@@ -190,34 +190,34 @@ const editProfile = async (req, res) => {
       });
     }
 
-    // Если есть файл аватара, добавляем его путь в данные профиля для дальнейшей обработки
+
     if (req.file) {
       profileData.avatar = req.file.path;
     }
 
-    // Создаем копию данных для валидации, исключая поля, которые не должны проходить валидацию
+
     const profileDataForValidation = { ...profileData };
     
-    // Удаляем avatar из данных валидации, если это строка (путь к файлу), т.к. валидационная схема не ожидает пути к файлам
-    // Но мы уже проверили наличие файла, так что это не повлияет на проверку наличия данных для обновления
+
+
     if (typeof profileDataForValidation.avatar === 'string') {
       delete profileDataForValidation.avatar;
     }
 
-    // Валидируем данные (кроме поля avatar, которое мы обрабатываем отдельно)
+
     const { updateProfileValidationSchema } = require('../../../validation');
     
-    // Если в данных для валидации нет полей, но есть файл аватара, создаем минимальный объект для валидации
+
     let validatedProfileData;
     if (Object.keys(profileDataForValidation).length === 0 && req.file) {
-      // Если нет других полей, но есть файл аватара, валидируем пустой объект
-      // Валидационная схема с настройкой passthrough позволит это
+
+
       validatedProfileData = {};
     } else {
       validatedProfileData = updateProfileValidationSchema.parse(profileDataForValidation);
     }
     
-    // Добавляем avatar обратно в валидированные данные, если файл был загружен
+
     if (req.file) {
       validatedProfileData.avatar = req.file.path;
     }
@@ -234,7 +234,7 @@ const editProfile = async (req, res) => {
   } catch (error) {
     logger.error('Ошибка обновления профиля', { error: error.message, userId: req.user.userId || req.user.id, ip: req.ip });
 
-    // Обработка ошибок валидации Zod
+
     if (error && error.issues) {
       return res.status(400).json({
         success: false,
@@ -246,7 +246,7 @@ const editProfile = async (req, res) => {
       });
     }
 
-    // Обработка ошибов валидации Sequelize
+
     if (error.name === 'SequelizeValidationError' || error.name === 'SequelizeUniqueConstraintError') {
       return res.status(400).json({
         success: false,
@@ -261,7 +261,7 @@ const editProfile = async (req, res) => {
   }
 };
 
-// Change user password
+
 const changePassword = async (req, res) => {
   logger.info('Получен запрос на изменение пароля', { userId: req.user.userId || req.user.id, ip: req.ip });
 
@@ -269,10 +269,10 @@ const changePassword = async (req, res) => {
     const userId = req.user.userId || req.user.id;
     const { currentPassword, newPassword } = req.body;
 
-    // Валидация данных уже выполнена через middleware
+
     const validatedData = changePasswordValidationSchema.parse(req.body);
 
-    // Получаем текущего пользователя
+
     const user = await userService.findById(userId);
     if (!user) {
       logger.warn('Пользователь не найден для изменения пароля', { userId, ip: req.ip });
@@ -282,7 +282,7 @@ const changePassword = async (req, res) => {
       });
     }
 
-    // Проверяем текущий пароль
+
     const isCurrentPasswordValid = await bcrypt.compare(currentPassword, user.password);
     if (!isCurrentPasswordValid) {
       logger.warn('Неверный текущий пароль при попытке изменения', { userId, ip: req.ip });
@@ -292,10 +292,10 @@ const changePassword = async (req, res) => {
       });
     }
 
-    // Хешируем новый пароль
+
     const hashedNewPassword = await bcrypt.hash(newPassword, 10);
 
-    // Обновляем пароль пользователя
+
     await user.update({ password: hashedNewPassword });
 
     logger.info('Пароль успешно изменен', { userId, ip: req.ip });
@@ -307,7 +307,7 @@ const changePassword = async (req, res) => {
   } catch (error) {
     logger.error('Ошибка изменения пароля', { error: error.message, userId: req.user.userId || req.user.id, ip: req.ip });
 
-    // Обработка ошибок валидации Zod
+
     if (error && error.issues) {
       return res.status(400).json({
         success: false,
