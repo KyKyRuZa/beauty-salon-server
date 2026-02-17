@@ -1,0 +1,53 @@
+services:
+  postgres:
+    image: postgres:17.7-alpine
+    container_name: beauty_vite_postgres
+    environment:
+      POSTGRES_DB: beauty_vite_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: CBxdskXBs1y
+    ports:
+      - "5433:5432"
+    volumes:
+      - ./init:/docker-entrypoint-initdb.d  # Добавляем том для инициализации схем
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  pgbouncer:
+    image: edoburu/pgbouncer:latest
+    container_name: beauty_vite_pgbouncer
+    ports:
+      - "6432:6432"
+    volumes:
+      - ./pgbouncer_config/pgbouncer.ini:/etc/pgbouncer/pgbouncer.ini
+      - ./pgbouncer_config/userlist.txt:/etc/pgbouncer/userlist.txt
+    depends_on:
+      - postgres
+    restart: unless-stopped
+
+  app:
+    build: .
+    container_name: beauty_vite_app
+    ports:
+      - "5000:5000"
+    environment:
+      NODE_ENV: production
+      DB_HOST: pgbouncer  # Подключаемся через PgBouncer
+      DB_PORT: 6432       # Используем порт PgBouncer
+      DB_NAME: beauty_vite_db
+      DB_USER: postgres
+      DB_PASSWORD: CBxdskXBs1y
+      DB_DIALECT: postgres
+      # REDIS_URL: redis://redis:6379  # Временно отключен
+      JWT_SECRET: ${JWT_SECRET:-fallback_secret_key_for_development}
+      CLIENT_URL: ${CLIENT_URL:-http://localhost:5173}
+      LOG_LEVEL: info
+    volumes:
+      - ./uploads:/app/uploads  # Монтируем папку для загрузки файлов
+    depends_on:
+      - postgres
+      - pgbouncer
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
