@@ -51,7 +51,7 @@ const createBooking = async (bookingData) => {
     const overlappingBooking = await Booking.findOne({
       where: {
         master_id,
-        status: { [Op.in]: ['pending', 'confirmed'] },
+        status: { [Op.in]: ['confirmed'] },
         [Op.or]: [
           {
             start_time: { [Op.lt]: end_time },
@@ -86,7 +86,7 @@ const createBooking = async (bookingData) => {
       time_slot_id,
       start_time,
       end_time,
-      status: 'pending',
+      status: 'confirmed',
       comment,
       price: service.price
     }, { transaction });
@@ -127,7 +127,8 @@ const getClientBookings = async (clientId, options = {}) => {
       },
       {
         model: Master,
-        as: 'booking_master'
+        as: 'booking_master',
+        attributes: ['id', 'first_name', 'last_name', 'specialization', 'rating']
       }
     ],
     order: [['start_time', 'ASC']],
@@ -198,7 +199,7 @@ const getBookingById = async (bookingId) => {
 };
 
 const updateBookingStatus = async (bookingId, status) => {
-  const validStatuses = ['pending', 'confirmed', 'cancelled', 'completed'];
+  const validStatuses = ['confirmed', 'cancelled', 'completed'];
   if (!validStatuses.includes(status)) {
     throw new Error('Неверный статус');
   }
@@ -242,7 +243,7 @@ const updateBooking = async (bookingId, updateData) => {
       where: {
         master_id: booking.master_id,
         id: { [Op.ne]: bookingId },
-        status: { [Op.in]: ['pending', 'confirmed'] },
+        status: { [Op.in]: ['confirmed'] },
         [Op.or]: [
           {
             start_time: { [Op.lt]: endTime },
@@ -272,31 +273,61 @@ const confirmBooking = async (bookingId) => {
 };
 
 const getAvailableSlots = async (masterId, date, serviceId) => {
-  const startOfDay = new Date(date);
-  startOfDay.setHours(0, 0, 0, 0);
-  const endOfDay = new Date(date);
-  endOfDay.setHours(23, 59, 59, 999);
+  // Парсим дату как локальную, а не UTC
+  // date приходит в формате YYYY-MM-DD
+  const [year, month, day] = date.split('-');
+  const startOfDay = new Date(parseInt(year), parseInt(month) - 1, parseInt(day), 0, 0, 0, 0);
+  const endOfDay = new Date(parseInt(year), parseInt(month) - 1, parseInt(day), 23, 59, 59, 999);
 
   try {
+    const logger = require('../../../utils/logger').createLogger('booking-service');
+    logger.info('getAvailableSlots вызов', { masterId, date, serviceId });
+    
+    // Получаем длительность услуги, если указан service_id
+    let serviceDuration = 60; // По умолчанию 60 минут
+    if (serviceId) {
+      const MasterService = require('../../catalog/models/MasterService');
+      const service = await MasterService.findByPk(serviceId);
+      if (service && service.duration) {
+        serviceDuration = service.duration;
+      }
+    }
+
+    // Сначала ищем слоты в БД
+    const slotsWhere = {
+      master_id: masterId,
+      start_time: {
+        [Op.gte]: startOfDay,
+        [Op.lte]: endOfDay
+      },
+      status: 'free'
+    };
+
+    // Если указан service_id, фильтруем по нему или по null (универсальные слоты)
+    if (serviceId) {
+      slotsWhere[Op.or] = [
+        { service_id: serviceId },
+        { service_id: null }
+      ];
+    }
+
+    logger.info('getAvailableSlots поиск слотов', { slotsWhere, serviceId });
 
     const slots = await TimeSlot.findAll({
-      where: {
-        master_id: masterId,
-        start_time: {
-          [Op.gte]: startOfDay,
-          [Op.lte]: endOfDay
-        },
-        status: 'free'
-      }
+      where: slotsWhere
     });
+
+    logger.info('getAvailableSlots найдено слотов', { count: slots.length, serviceId });
 
 
     if (slots.length > 0) {
+      // Фильтруем слоты по длительности услуги
+      const serviceDurationMs = serviceDuration * 60000;
 
       const bookings = await Booking.findAll({
         where: {
-          master_id,
-          status: { [Op.in]: ['pending', 'confirmed'] },
+          master_id: masterId,
+          status: { [Op.in]: ['confirmed'] },
           start_time: {
             [Op.gte]: startOfDay,
             [Op.lte]: endOfDay
@@ -304,10 +335,15 @@ const getAvailableSlots = async (masterId, date, serviceId) => {
         }
       });
 
-
       const availableSlots = slots.filter(slot => {
         const slotStart = new Date(slot.start_time);
         const slotEnd = new Date(slot.end_time);
+
+        // Проверяем, что слот подходит по длительности
+        const slotDuration = slotEnd - slotStart;
+        if (slotDuration < serviceDurationMs) {
+          return false;
+        }
 
         return !bookings.some(booking => {
           const bookingStart = new Date(booking.start_time);
@@ -316,7 +352,7 @@ const getAvailableSlots = async (masterId, date, serviceId) => {
         });
       });
 
-      logger.info('Получены доступные слоты из БД', { masterId, date, count: availableSlots.length });
+      logger.info('Получены доступные слоты из БД', { masterId, date, count: availableSlots.length, serviceId, serviceDuration });
       return availableSlots;
     }
 
@@ -330,6 +366,8 @@ const getAvailableSlots = async (masterId, date, serviceId) => {
     });
 
     if (availability) {
+      // Получаем длительность из расписания или используем длительность услуги
+      const slotDuration = availability.slot_duration || serviceDuration;
 
       const availabilityService = require('./availabilityService');
       await availabilityService.generateTimeSlots(
@@ -337,44 +375,56 @@ const getAvailableSlots = async (masterId, date, serviceId) => {
         date,
         availability.start_time,
         availability.end_time,
-        availability.slot_duration
+        slotDuration,
+        undefined, // transaction
+        serviceId // передаём service_id для генерации слотов
       );
 
+      // Ищем сгенерированные слоты с фильтрацией по service_id если указано
+      const newSlotsWhere = {
+        master_id: masterId,
+        start_time: {
+          [Op.gte]: startOfDay,
+          [Op.lte]: endOfDay
+        },
+        status: 'free'
+      };
+      
+      // Если указан service_id, фильтруем по нему или по null (универсальные)
+      if (serviceId) {
+        newSlotsWhere[Op.or] = [
+          { service_id: serviceId },
+          { service_id: null }
+        ];
+      }
 
       const newSlots = await TimeSlot.findAll({
-        where: {
-          master_id: masterId,
-          start_time: {
-            [Op.gte]: startOfDay,
-            [Op.lte]: endOfDay
-          },
-          status: 'free'
-        }
+        where: newSlotsWhere
       });
 
-      logger.info('Слоты сгенерированы из расписания', { masterId, date, count: newSlots.length });
+      logger.info('Слоты сгенерированы из расписания', { masterId, date, count: newSlots.length, serviceId });
       return newSlots;
     }
+    
+    logger.info('Возвращаем слоты', { masterId, date, count: slots.length, serviceId });
+    return slots;
   } catch (error) {
-    logger.warn('Ошибка получения слотов', { error: error.message });
+    logger.error('Ошибка получения слотов', { error: error.message, masterId, date, serviceId });
+    return [];
   }
-
-
-  logger.info('Нет расписания или слотов', { masterId, date });
-  return [];
 };
 
 const getFreeTimeWindows = async (masterId, date, serviceDuration = 60) => {
-  const startOfDay = new Date(date);
-  startOfDay.setHours(0, 0, 0, 0);
-  const endOfDay = new Date(date);
-  endOfDay.setHours(23, 59, 59, 999);
+  // Парсим дату как локальную
+  const [year, month, day] = date.split('-');
+  const startOfDay = new Date(parseInt(year), parseInt(month) - 1, parseInt(day), 0, 0, 0, 0);
+  const endOfDay = new Date(parseInt(year), parseInt(month) - 1, parseInt(day), 23, 59, 59, 999);
 
 
   const bookings = await Booking.findAll({
     where: {
       master_id: masterId,
-      status: { [Op.in]: ['pending', 'confirmed'] },
+      status: { [Op.in]: ['confirmed'] },
       start_time: {
         [Op.gte]: startOfDay,
         [Op.lte]: endOfDay

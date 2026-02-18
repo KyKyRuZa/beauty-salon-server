@@ -25,20 +25,24 @@ const getMasterId = async (userId) => {
 
 const getMasterSlots = async (req, res) => {
   try {
-    const { date } = req.query;
+    const { date, master_id } = req.query;
 
     if (!date) {
       return res.status(400).json({ success: false, message: 'Необходимо указать дату' });
     }
 
-    const userId = req.user?.userId || req.user?.id;
-    if (!userId) {
-      return res.status(400).json({ success: false, message: 'Пользователь не найден' });
+    // Если master_id не передан, пытаемся получить из токена (для мастеров)
+    let effectiveMasterId = master_id ? parseInt(master_id) : null;
+    
+    if (!effectiveMasterId) {
+      const userId = req.user?.userId || req.user?.id;
+      if (userId) {
+        effectiveMasterId = await getMasterId(userId);
+      }
     }
 
-    const masterId = await getMasterId(userId);
-    if (!masterId) {
-      return res.status(400).json({ success: false, message: 'Профиль мастера не найден' });
+    if (!effectiveMasterId) {
+      return res.status(400).json({ success: false, message: 'Необходимо указать master_id' });
     }
 
     const startOfDay = new Date(date);
@@ -48,7 +52,7 @@ const getMasterSlots = async (req, res) => {
 
     const slots = await TimeSlot.findAll({
       where: {
-        master_id: masterId,
+        master_id: effectiveMasterId,
         start_time: {
           [Op.gte]: startOfDay,
           [Op.lte]: endOfDay
@@ -57,7 +61,7 @@ const getMasterSlots = async (req, res) => {
       order: [['start_time', 'ASC']]
     });
 
-    logger.info('Получены слоты мастера', { masterId, date, count: slots.length });
+    logger.info('Получены слоты мастера', { masterId: effectiveMasterId, date, count: slots.length });
 
     res.json({
       success: true,
@@ -123,7 +127,7 @@ const createTimeSlot = async (req, res) => {
     const overlappingBooking = await Booking.findOne({
       where: {
         master_id: masterId,
-        status: { [Op.in]: ['pending', 'confirmed'] },
+        status: { [Op.in]: ['confirmed'] },
         [Op.or]: [
           {
             start_time: { [Op.lt]: end },
@@ -239,7 +243,7 @@ const updateTimeSlot = async (req, res) => {
       const overlappingBooking = await Booking.findOne({
         where: {
           master_id: masterId,
-          status: { [Op.in]: ['pending', 'confirmed'] },
+          status: { [Op.in]: ['confirmed'] },
           [Op.or]: [
             {
               start_time: { [Op.lt]: end },

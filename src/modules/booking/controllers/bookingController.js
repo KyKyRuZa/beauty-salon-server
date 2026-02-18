@@ -5,7 +5,7 @@ const logger = createLogger('booking-controller');
 
 const createBooking = async (req, res) => {
   try {
-    logger.info('Запрос на создание бронирования', { userId: req.user?.id });
+    logger.info('Запрос на создание бронирования', { userId: req.user?.userId || req.user?.id });
 
     const {
       master_id,
@@ -16,15 +16,19 @@ const createBooking = async (req, res) => {
       comment
     } = req.body;
 
-
-    const client_id = req.user?.client?.id;
-    if (!client_id) {
+    // Получаем client_id из профиля клиента
+    const userId = req.user?.userId || req.user?.id;
+    const Client = require('../../user/models/Client');
+    const client = await Client.findOne({ where: { user_id: userId } });
+    
+    if (!client) {
       return res.status(400).json({
         success: false,
         message: 'Профиль клиента не найден'
       });
     }
-
+    
+    const client_id = client.id;
 
     if (!master_id || !master_service_id || !start_time || !end_time) {
       return res.status(400).json({

@@ -7,9 +7,52 @@ const { createLogger } = require('../../../utils/logger');
 
 const logger = createLogger('availability-service');
 
-const setAvailability = async (masterId, date, startTime, endTime, slotDuration = 60) => {
-  logger.info('setAvailability вызов', { masterId, date, startTime, endTime, slotDuration });
-  
+// Получить доступные даты мастера
+const getAvailableDates = async (masterId, serviceId = null, startDate = null, endDate = null) => {
+  const where = {
+    master_id: masterId,
+    is_available: true
+  };
+
+  // Если указан service_id, ищем расписание для этой услуги или универсальное
+  if (serviceId) {
+    where[Op.or] = [
+      { service_id: serviceId },
+      { service_id: null }
+    ];
+  }
+
+  // Фильтр по датам
+  if (startDate && endDate) {
+    where.date = {
+      [Op.gte]: startDate,
+      [Op.lte]: endDate
+    };
+  } else if (startDate) {
+    where.date = { [Op.gte]: startDate };
+  } else if (endDate) {
+    where.date = { [Op.lte]: endDate };
+  }
+
+  const availability = await MasterAvailability.findAll({
+    where,
+    attributes: ['date', 'start_time', 'end_time', 'slot_duration', 'service_id'],
+    order: [['date', 'ASC']]
+  });
+
+  // Возвращаем только даты
+  return availability.map(a => ({
+    date: a.date,
+    start_time: a.start_time,
+    end_time: a.end_time,
+    slot_duration: a.slot_duration,
+    service_id: a.service_id
+  }));
+};
+
+const setAvailability = async (masterId, date, startTime, endTime, slotDuration = 60, serviceId = null) => {
+  logger.info('setAvailability вызов', { masterId, date, startTime, endTime, slotDuration, serviceId });
+
   const transaction = await sequelize.transaction();
 
   try {
@@ -17,10 +60,10 @@ const setAvailability = async (masterId, date, startTime, endTime, slotDuration 
       where: { master_id: masterId, date }
     });
 
-    logger.info('setAvailability поиск существующего расписания', { 
-      masterId, 
-      date, 
-      found: !!existing 
+    logger.info('setAvailability поиск существующего расписания', {
+      masterId,
+      date,
+      found: !!existing
     });
 
     if (existing) {
@@ -28,6 +71,7 @@ const setAvailability = async (masterId, date, startTime, endTime, slotDuration 
         start_time: startTime,
         end_time: endTime,
         slot_duration: slotDuration,
+        service_id: serviceId,
         is_available: true
       }, { transaction });
 
@@ -48,17 +92,19 @@ const setAvailability = async (masterId, date, startTime, endTime, slotDuration 
         start_time: startTime,
         end_time: endTime,
         slot_duration: slotDuration,
+        service_id: serviceId,
         is_available: true
       }, { transaction });
-      
-      logger.info('setAvailability создано новое расписание', { 
-        masterId, 
-        date, 
-        availabilityId: newAvailability.id 
+
+      logger.info('setAvailability создано новое расписание', {
+        masterId,
+        date,
+        availabilityId: newAvailability.id,
+        serviceId
       });
     }
 
-    await generateTimeSlots(masterId, date, startTime, endTime, slotDuration, transaction);
+    await generateTimeSlots(masterId, date, startTime, endTime, slotDuration, transaction, serviceId);
 
     await transaction.commit();
 
@@ -107,7 +153,7 @@ const updateAvailability = async (availabilityId, masterId, updateData) => {
     await availability.update(updateData, { transaction });
 
 
-    if (updateData.start_time || updateData.end_time || updateData.slot_duration) {
+    if (updateData.start_time || updateData.end_time || updateData.slot_duration || updateData.service_id) {
 
       await TimeSlot.destroy({
         where: {
@@ -127,7 +173,8 @@ const updateAvailability = async (availabilityId, masterId, updateData) => {
         updateData.start_time || availability.start_time,
         updateData.end_time || availability.end_time,
         updateData.slot_duration || availability.slot_duration,
-        transaction
+        transaction,
+        updateData.service_id !== undefined ? updateData.service_id : availability.service_id
       );
     }
 
@@ -200,7 +247,7 @@ const deleteAvailability = async (availabilityId, masterId) => {
   }
 };
 
-const generateTimeSlots = async (masterId, date, startTime, endTime, slotDuration, transaction) => {
+const generateTimeSlots = async (masterId, date, startTime, endTime, slotDuration, transaction, serviceId = null) => {
   try {
     const baseDate = new Date(date + 'T00:00:00');
     const [startHour, startMin, startSec] = startTime.split(':').map(Number);
@@ -226,10 +273,23 @@ const generateTimeSlots = async (masterId, date, startTime, endTime, slotDuratio
 
       if (slotEnd > dayEnd) break;
 
+      // Сохраняем время в локальном формате (без конвертации в UTC)
+      // Формат: YYYY-MM-DDTHH:mm:ss
+      const formatLocalTime = (date) => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        const seconds = String(date.getSeconds()).padStart(2, '0');
+        return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+      };
+
       slots.push({
         master_id: masterId,
-        start_time: currentTime.toISOString(),
-        end_time: slotEnd.toISOString(),
+        service_id: serviceId, // Привязка к услуге
+        start_time: formatLocalTime(currentTime),
+        end_time: formatLocalTime(slotEnd),
         status: 'free',
         source: 'auto',
         created_at: new Date()
@@ -340,7 +400,8 @@ const regenerateSlotsForDate = async (masterId, date) => {
       availability.start_time,
       availability.end_time,
       availability.slot_duration,
-      transaction
+      transaction,
+      availability.service_id
     );
 
     await transaction.commit();
@@ -362,5 +423,6 @@ module.exports = {
   deleteAvailability,
   generateTimeSlots,
   getAvailabilityWithSlots,
-  regenerateSlotsForDate
+  regenerateSlotsForDate,
+  getAvailableDates
 };

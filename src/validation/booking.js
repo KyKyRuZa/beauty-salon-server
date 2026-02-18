@@ -18,7 +18,7 @@ const bookingValidationSchema = z.object({
   master_id: BaseValidationSchema.number,
   start_time: z.string().datetime(),
   end_time: z.string().datetime(),
-  status: z.enum(['pending', 'confirmed', 'cancelled', 'completed']).default('confirmed'),
+  status: z.enum(['confirmed', 'cancelled', 'completed']).default('confirmed'),
 }).refine((data) => new Date(data.end_time) > new Date(data.start_time), {
   message: 'Время окончания должно быть позже времени начала',
 });
@@ -29,7 +29,7 @@ const orderValidationSchema = z.object({
   service_template_id: BaseValidationSchema.number,
   booking_id: BaseValidationSchema.number.optional(),
   total_amount: z.number().min(0),
-  status: z.enum(['pending', 'confirmed', 'cancelled', 'completed', 'refunded']).default('pending'),
+  status: z.enum(['confirmed', 'cancelled', 'completed', 'refunded']).default('confirmed'),
 });
 
 

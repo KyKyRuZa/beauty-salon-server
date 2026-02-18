@@ -73,10 +73,10 @@ const Booking = sequelize.define('Booking', {
     comment: 'Время окончания записи'
   },
   status: {
-    type: DataTypes.ENUM('pending', 'confirmed', 'cancelled', 'completed'),
-    defaultValue: 'pending',
+    type: DataTypes.ENUM('confirmed', 'cancelled', 'completed'),
+    defaultValue: 'confirmed',
     field: 'status',
-    comment: 'Статус: pending-ожидает, confirmed-подтверждено, cancelled-отменено, completed-завершено'
+    comment: 'Статус: confirmed-подтверждено, cancelled-отменено, completed-завершено'
   },
   comment: {
     type: DataTypes.TEXT,
@@ -145,7 +145,7 @@ const Booking = sequelize.define('Booking', {
       }
     },
     validStatus() {
-      const validStatuses = ['pending', 'confirmed', 'cancelled', 'completed'];
+      const validStatuses = ['confirmed', 'cancelled', 'completed'];
       if (this.status && !validStatuses.includes(this.status)) {
         throw new Error('Неверный статус бронирования');
       }
