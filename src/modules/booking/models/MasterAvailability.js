@@ -1,5 +1,6 @@
 const { DataTypes } = require('sequelize');
 const { sequelize } = require('../../../config/database');
+const MasterService = require('../../catalog/models/MasterService');
 
 const MasterAvailability = sequelize.define('MasterAvailability', {
   id: {
@@ -13,6 +14,20 @@ const MasterAvailability = sequelize.define('MasterAvailability', {
     allowNull: false,
     field: 'master_id',
     comment: 'ID мастера'
+  },
+  service_id: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    field: 'service_id',
+    comment: 'ID услуги',
+    references: {
+      model: {
+        schema: 'catalog_schema',
+        tableName: 'master_services'
+      },
+      key: 'id'
+    },
+    onDelete: 'SET NULL'
   },
   date: {
     type: DataTypes.DATEONLY,
@@ -54,6 +69,10 @@ const MasterAvailability = sequelize.define('MasterAvailability', {
       name: 'idx_availability_master_date'
     },
     {
+      fields: ['master_id', 'service_id', 'date'],
+      name: 'idx_availability_master_service_date'
+    },
+    {
       fields: ['is_available'],
       name: 'idx_availability_status'
     }
@@ -75,5 +94,10 @@ const MasterAvailability = sequelize.define('MasterAvailability', {
   }
 });
 
+MasterAvailability.belongsTo(MasterService, {
+  foreignKey: 'service_id',
+  targetKey: 'id',
+  as: 'service'
+});
 
 module.exports = MasterAvailability;

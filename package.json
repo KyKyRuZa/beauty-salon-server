@@ -7,7 +7,6 @@
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
     "test": "jest",
-    "create-users": "node create_base_users.js",
     "seed": "node seed_test_data.js",
     "docker-start": "node src/server.js",
     "docker-build": "docker build -t beauty-vite-app .",
