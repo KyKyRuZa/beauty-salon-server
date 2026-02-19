@@ -20,6 +20,11 @@ router.get('/by-category/:categoryId', catalogController.getServicesByCategory);
 router.get('/variations/:serviceId', catalogController.getServiceVariations);
 router.get('/:id', catalogController.getCatalogServiceById);
 
+// Поиск с использованием триграмм (GIN-индекс) - публичные endpoint'ы
+router.get('/search/categories', catalogController.searchCategories);
+router.get('/search/services', catalogController.searchMasterServices);
+router.get('/search/masters', catalogController.searchMasters);
+
 
 router.use(authenticateToken);
 

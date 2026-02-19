@@ -1,3 +1,6 @@
+const { sequelize } = require('../../../config/database');
+const { QueryTypes } = require('sequelize');
+
 const ServiceCategory = require('../models/ServiceCategory');
 const ServiceSubcategory = require('../models/ServiceSubcategory');
 const MasterService = require('../models/MasterService');
@@ -508,6 +511,115 @@ const deleteSalonService = async (salonId, serviceId) => {
   return true;
 };
 
+/**
+ * Поиск категорий с использованием триграмм (GIN-индекс)
+ * @param {string} searchQuery - Поисковый запрос
+ * @returns {Promise<Array>} - Массив найденных категорий с релевантностью
+ */
+const searchCategories = async (searchQuery) => {
+  if (!searchQuery || searchQuery.length < 2) {
+    return [];
+  }
+
+  const query = `
+    SELECT 
+      id, 
+      name, 
+      description,
+      similarity(name, :query) AS sim
+    FROM catalog_schema.service_categories
+    WHERE name ILIKE '%' || :query || '%'
+       OR similarity(name, :query) > 0.2
+    ORDER BY sim DESC
+    LIMIT 20
+  `;
+
+  const results = await sequelize.query(query, {
+    replacements: { query: searchQuery },
+    type: QueryTypes.SELECT
+  });
+
+  return results;
+};
+
+/**
+ * Поиск услуг мастеров с использованием триграмм (GIN-индекс)
+ * @param {string} searchQuery - Поисковый запрос
+ * @returns {Promise<Array>} - Массив найденных услуг с релевантностью
+ */
+const searchMasterServices = async (searchQuery) => {
+  if (!searchQuery || searchQuery.length < 2) {
+    return [];
+  }
+
+  const query = `
+    SELECT 
+      ms.id, 
+      ms.name, 
+      ms.description, 
+      ms.price,
+      ms.duration,
+      m.first_name,
+      m.last_name,
+      similarity(ms.name, :query) AS sim
+    FROM catalog_schema.master_services ms
+    LEFT JOIN user_schema.masters m ON ms.master_id = m.id
+    WHERE ms.name ILIKE '%' || :query || '%'
+       OR similarity(ms.name, :query) > 0.2
+    ORDER BY sim DESC
+    LIMIT 20
+  `;
+
+  const results = await sequelize.query(query, {
+    replacements: { query: searchQuery },
+    type: QueryTypes.SELECT
+  });
+
+  return results;
+};
+
+/**
+ * Поиск мастеров с использованием триграмм (GIN-индекс)
+ * @param {string} searchQuery - Поисковый запрос
+ * @returns {Promise<Array>} - Массив найденных мастеров с релевантностью
+ */
+const searchMasters = async (searchQuery) => {
+  if (!searchQuery || searchQuery.length < 2) {
+    return [];
+  }
+
+  const query = `
+    SELECT 
+      id,
+      first_name,
+      last_name,
+      specialization,
+      rating,
+      image_url,
+      GREATEST(
+        similarity(first_name, :query),
+        similarity(last_name, :query),
+        similarity(specialization, :query)
+      ) AS sim
+    FROM user_schema.masters
+    WHERE first_name ILIKE '%' || :query || '%'
+       OR last_name ILIKE '%' || :query || '%'
+       OR specialization ILIKE '%' || :query || '%'
+       OR similarity(first_name, :query) > 0.2
+       OR similarity(last_name, :query) > 0.2
+       OR similarity(specialization, :query) > 0.2
+    ORDER BY sim DESC
+    LIMIT 20
+  `;
+
+  const results = await sequelize.query(query, {
+    replacements: { query: searchQuery },
+    type: QueryTypes.SELECT
+  });
+
+  return results;
+};
+
 module.exports = {
   getAllCatalogCategories,
   getCatalogCategoryById,
@@ -529,5 +641,8 @@ module.exports = {
   updateMasterService,
   updateSalonService,
   deleteMasterService,
-  deleteSalonService
+  deleteSalonService,
+  searchCategories,
+  searchMasterServices,
+  searchMasters
 };

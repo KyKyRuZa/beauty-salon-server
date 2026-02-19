@@ -1028,6 +1028,108 @@ const deleteSalonService = async (req, res) => {
   }
 };
 
+/**
+ * Поиск категорий с использованием триграмм (GIN-индекс)
+ */
+const searchCategories = async (req, res) => {
+  try {
+    const { q } = req.query;
+
+    if (!q || q.length < 2) {
+      return res.json({
+        success: true,
+        data: [],
+        message: 'Поисковый запрос должен содержать не менее 2 символов'
+      });
+    }
+
+    logger.info('Поиск категорий с использованием триграмм', { query: q, ip: req.ip });
+
+    const results = await catalogService.searchCategories(q);
+
+    logger.info('Результаты поиска категорий', { count: results.length, query: q });
+
+    res.json({
+      success: true,
+      data: results
+    });
+  } catch (error) {
+    logger.error('Ошибка поиска категорий', { error: error.message, query: req.query.q });
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+/**
+ * Поиск услуг мастеров с использованием триграмм (GIN-индекс)
+ */
+const searchMasterServices = async (req, res) => {
+  try {
+    const { q } = req.query;
+
+    if (!q || q.length < 2) {
+      return res.json({
+        success: true,
+        data: [],
+        message: 'Поисковый запрос должен содержать не менее 2 символов'
+      });
+    }
+
+    logger.info('Поиск услуг мастеров с использованием триграмм', { query: q, ip: req.ip });
+
+    const results = await catalogService.searchMasterServices(q);
+
+    logger.info('Результаты поиска услуг мастеров', { count: results.length, query: q });
+
+    res.json({
+      success: true,
+      data: results
+    });
+  } catch (error) {
+    logger.error('Ошибка поиска услуг мастеров', { error: error.message, query: req.query.q });
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+/**
+ * Поиск мастеров с использованием триграмм (GIN-индекс)
+ */
+const searchMasters = async (req, res) => {
+  try {
+    const { q } = req.query;
+
+    if (!q || q.length < 2) {
+      return res.json({
+        success: true,
+        data: [],
+        message: 'Поисковый запрос должен содержать не менее 2 символов'
+      });
+    }
+
+    logger.info('Поиск мастеров с использованием триграмм', { query: q, ip: req.ip });
+
+    const results = await catalogService.searchMasters(q);
+
+    logger.info('Результаты поиска мастеров', { count: results.length, query: q });
+
+    res.json({
+      success: true,
+      data: results
+    });
+  } catch (error) {
+    logger.error('Ошибка поиска мастеров', { error: error.message, query: req.query.q });
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
 module.exports = {
   getAllCatalogCategories,
   getCatalogCategoryById,
@@ -1049,5 +1151,8 @@ module.exports = {
   updateMasterService,
   updateSalonService,
   deleteMasterService,
-  deleteSalonService
+  deleteSalonService,
+  searchCategories,
+  searchMasterServices,
+  searchMasters
 };
