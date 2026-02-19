@@ -1,6 +1,6 @@
 const express = require('express');
-const cors = require('cors');
 const { createLogger } = require('./utils/logger');
+const { applySecurityMiddleware } = require('./middleware/security');
 require('dotenv').config();
 
 const logger = createLogger('modular-monolith-app');
@@ -29,8 +29,10 @@ connectDB()
     logger.error('Ошибка инициализации базы данных:', error);
   });
 
+// Применение middleware безопасности
+applySecurityMiddleware(app);
 
-app.use(cors());
+// Парсинг JSON и URL-encoded данных
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
