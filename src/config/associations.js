@@ -1,6 +1,6 @@
 
 const defineAssociations = (models) => {
-  const { User, Client, Master, Salon, ServiceCategory, ServiceSubcategory, MasterService, TimeSlot, Admin, Booking, MasterAvailability, Review, Favorite } = models;
+  const { User, Client, Master, Salon, ServiceCategory, ServiceSubcategory, MasterService, TimeSlot, Admin, Booking, MasterAvailability, Review, Favorite, MasterSkill, MasterPortfolio } = models;
 
 
   User.hasOne(Client, {
@@ -381,6 +381,52 @@ const defineAssociations = (models) => {
       },
       sourceKey: 'id',
       as: 'master_favorites'
+    });
+  }
+
+
+  // === Связи для навыков и портфолио мастеров ===
+  if (MasterSkill) {
+    MasterSkill.belongsTo(Master, {
+      foreignKey: {
+        name: 'master_id',
+        allowNull: false
+      },
+      targetKey: 'id',
+      as: 'master',
+      onDelete: 'CASCADE'
+    });
+
+    Master.hasMany(MasterSkill, {
+      foreignKey: {
+        name: 'master_id',
+        allowNull: false
+      },
+      sourceKey: 'id',
+      as: 'skills',
+      onDelete: 'CASCADE'
+    });
+  }
+
+  if (MasterPortfolio) {
+    MasterPortfolio.belongsTo(Master, {
+      foreignKey: {
+        name: 'master_id',
+        allowNull: false
+      },
+      targetKey: 'id',
+      as: 'master',
+      onDelete: 'CASCADE'
+    });
+
+    Master.hasMany(MasterPortfolio, {
+      foreignKey: {
+        name: 'master_id',
+        allowNull: false
+      },
+      sourceKey: 'id',
+      as: 'portfolio',
+      onDelete: 'CASCADE'
     });
   }
 };

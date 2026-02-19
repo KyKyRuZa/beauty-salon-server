@@ -111,9 +111,9 @@ const getAvailability = async (req, res) => {
 const getAvailabilityWithSlots = async (req, res) => {
   try {
     const { date } = req.params;
-    const { master_id } = req.query; // master_id из параметров запроса для публичного доступа
-    
-    logger.info('getAvailabilityWithSlots запрос:', { date, master_id, userId: req.user?.userId || req.user?.id });
+    const { master_id, service_id } = req.query; // master_id и service_id из параметров запроса
+
+    logger.info('getAvailabilityWithSlots запрос:', { date, master_id, service_id, userId: req.user?.userId || req.user?.id });
 
     if (!date) {
       return res.status(400).json({ success: false, message: 'Необходимо указать дату' });
@@ -121,7 +121,7 @@ const getAvailabilityWithSlots = async (req, res) => {
 
     // Если master_id не передан, пытаемся получить из токена (для мастеров)
     let effectiveMasterId = master_id ? parseInt(master_id) : null;
-    
+
     if (!effectiveMasterId) {
       const userId = req.user?.userId || req.user?.id;
       if (userId) {
@@ -133,9 +133,13 @@ const getAvailabilityWithSlots = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Необходимо указать master_id' });
     }
 
-    logger.info('getAvailabilityWithSlots masterId:', { masterId: effectiveMasterId, date });
+    logger.info('getAvailabilityWithSlots masterId:', { masterId: effectiveMasterId, date, serviceId: service_id });
 
-    const result = await availabilityService.getAvailabilityWithSlots(effectiveMasterId, date);
+    const result = await availabilityService.getAvailabilityWithSlots(
+      effectiveMasterId,
+      date,
+      service_id ? parseInt(service_id) : null
+    );
 
     if (!result) {
       return res.json({

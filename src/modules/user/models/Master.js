@@ -1,6 +1,15 @@
 const { DataTypes } = require('sequelize');
 const { sequelize } = require('../../../config/database');
 
+/**
+ * Модель Мастера
+ * 
+ * Поля:
+ * - address: адрес (атомарное значение, НФ1 соблюдается)
+ * - has_training: флаг наличия обучения (boolean)
+ * - skills: вынесено в отдельную таблицу MasterSkill (связь 1:M)
+ * - portfolio: вынесено в отдельную таблицу MasterPortfolio (связь 1:M)
+ */
 const Master = sequelize.define('Master', {
   id: {
     type: DataTypes.INTEGER,
@@ -23,8 +32,11 @@ const Master = sequelize.define('Master', {
       key: 'id'
     }
   },
+  
+  // === Личная информация ===
   first_name: {
     type: DataTypes.STRING,
+    allowNull: false,
     validate: {
       len: {
         args: [2, 100],
@@ -36,10 +48,12 @@ const Master = sequelize.define('Master', {
         }
       }
     },
-    field: 'first_name'
+    field: 'first_name',
+    comment: 'Имя мастера'
   },
   last_name: {
     type: DataTypes.STRING,
+    allowNull: false,
     validate: {
       len: {
         args: [2, 100],
@@ -51,8 +65,11 @@ const Master = sequelize.define('Master', {
         }
       }
     },
-    field: 'last_name'
+    field: 'last_name',
+    comment: 'Фамилия мастера'
   },
+  
+  // === Профессиональная информация ===
   specialization: {
     type: DataTypes.STRING,
     validate: {
@@ -60,7 +77,9 @@ const Master = sequelize.define('Master', {
         args: [2, 255],
         msg: 'Специализация должна содержать от 2 до 255 символов'
       }
-    }
+    },
+    field: 'specialization',
+    comment: 'Основная специализация'
   },
   experience: {
     type: DataTypes.INTEGER,
@@ -73,8 +92,45 @@ const Master = sequelize.define('Master', {
         args: [50],
         msg: 'Опыт не может превышать 50 лет'
       }
-    }
+    },
+    field: 'experience',
+    comment: 'Опыт работы в годах'
   },
+  
+  // === Адрес и местоположение ===
+  address: {
+    type: DataTypes.STRING,
+    validate: {
+      len: {
+        args: [0, 500],
+        msg: 'Адрес не должен превышать 500 символов'
+      }
+    },
+    field: 'address',
+    comment: 'Адрес приема (город, улица, дом)'
+  },
+  salon_id: {
+    type: DataTypes.INTEGER,
+    references: {
+      model: {
+        schema: 'user_schema',
+        tableName: 'salons'
+      },
+      key: 'id'
+    },
+    field: 'salon_id',
+    comment: 'ID салона, если работает в салоне'
+  },
+  
+  // === Обучение и развитие ===
+  has_training: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+    field: 'has_training',
+    comment: 'Проводит ли обучение (true/false)'
+  },
+  
+  // === Рейтинг и доступность ===
   rating: {
     type: DataTypes.DECIMAL(3, 2),
     defaultValue: 0.00,
@@ -87,27 +143,18 @@ const Master = sequelize.define('Master', {
         args: [5.00],
         msg: 'Рейтинг не может быть больше 5'
       }
-    }
-  },
-  salon_id: {
-    type: DataTypes.INTEGER,
-    references: {
-      model: {
-        schema: 'user_schema',
-        tableName: 'salons'
-      },
-      key: 'id'
     },
-    field: 'salon_id'
-  },
-  bio: {
-    type: DataTypes.TEXT
+    field: 'rating',
+    comment: 'Средний рейтинг (1-5)'
   },
   is_available: {
     type: DataTypes.BOOLEAN,
     defaultValue: true,
-    field: 'is_available'
+    field: 'is_available',
+    comment: 'Доступен для записи'
   },
+  
+  // === Медиа ===
   image_url: {
     type: DataTypes.STRING,
     field: 'image_url',
@@ -116,7 +163,15 @@ const Master = sequelize.define('Master', {
         args: /^(https?:\/\/|\/)/i,
         msg: 'Изображение должно быть действительным URL или относительным путем'
       }
-    }
+    },
+    comment: 'URL фото профиля'
+  },
+  
+  // === Дополнительная информация ===
+  bio: {
+    type: DataTypes.TEXT,
+    field: 'bio',
+    comment: 'О себе, достижения, информация'
   }
 }, {
   tableName: 'masters',
@@ -130,12 +185,26 @@ const Master = sequelize.define('Master', {
     {
       fields: ['specialization'],
       name: 'masters_specialization_index'
+    },
+    {
+      fields: ['salon_id'],
+      name: 'masters_salon_id_index'
+    },
+    {
+      fields: ['rating'],
+      name: 'masters_rating_index'
+    },
+    {
+      fields: ['has_training'],
+      name: 'masters_has_training_index'
     }
   ],
   paranoid: true,
   timestamps: true,
   createdAt: 'created_at',
   updatedAt: 'updated_at',
+  deletedAt: 'deleted_at',
+  comment: 'Профили мастеров-исполнителей',
   getterMethods: {
     firstName() {
       return this.getDataValue('first_name');

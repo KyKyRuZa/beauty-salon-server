@@ -56,13 +56,19 @@ const setAvailability = async (masterId, date, startTime, endTime, slotDuration 
   const transaction = await sequelize.transaction();
 
   try {
+    // Ищем расписание для той же даты И той же услуги (или null если serviceId не указан)
     const existing = await MasterAvailability.findOne({
-      where: { master_id: masterId, date }
+      where: {
+        master_id: masterId,
+        date,
+        service_id: serviceId
+      }
     });
 
     logger.info('setAvailability поиск существующего расписания', {
       masterId,
       date,
+      serviceId,
       found: !!existing
     });
 
@@ -71,7 +77,6 @@ const setAvailability = async (masterId, date, startTime, endTime, slotDuration 
         start_time: startTime,
         end_time: endTime,
         slot_duration: slotDuration,
-        service_id: serviceId,
         is_available: true
       }, { transaction });
 
@@ -81,9 +86,21 @@ const setAvailability = async (masterId, date, startTime, endTime, slotDuration 
           start_time: {
             [Op.gte]: new Date(date + 'T00:00:00'),
             [Op.lt]: new Date(date + 'T23:59:59')
-          }
+          },
+          // Удаляем только слоты для этой услуги или универсальные
+          [Op.or]: [
+            { service_id: serviceId },
+            { service_id: null }
+          ]
         },
         transaction
+      });
+
+      logger.info('setAvailability обновлено существующее расписание', {
+        masterId,
+        date,
+        availabilityId: existing.id,
+        serviceId
       });
     } else {
       const newAvailability = await MasterAvailability.create({
@@ -108,7 +125,7 @@ const setAvailability = async (masterId, date, startTime, endTime, slotDuration 
 
     await transaction.commit();
 
-    logger.info('Расписание установлено', { masterId, date, startTime, endTime });
+    logger.info('Расписание установлено', { masterId, date, startTime, endTime, serviceId });
 
     return true;
   } catch (error) {
@@ -310,38 +327,65 @@ const generateTimeSlots = async (masterId, date, startTime, endTime, slotDuratio
   }
 };
 
-const getAvailabilityWithSlots = async (masterId, date) => {
-  logger.info('getAvailabilityWithSlots вызов', { masterId, date });
+const getAvailabilityWithSlots = async (masterId, date, serviceId = null) => {
+  logger.info('getAvailabilityWithSlots вызов', { masterId, date, serviceId });
+
+  // Если serviceId указан, ищем конкретное расписание, иначе - все расписания на дату
+  const whereCondition = {
+    master_id: masterId,
+    date
+  };
   
+  if (serviceId !== null && serviceId !== undefined) {
+    // Ищем расписание для конкретной услуги или универсальное (без услуги)
+    whereCondition[Op.or] = [
+      { service_id: serviceId },
+      { service_id: null }
+    ];
+  }
+
   const availability = await MasterAvailability.findOne({
-    where: { master_id: masterId, date }
+    where: whereCondition,
+    order: [['service_id', 'DESC']] // Приоритет расписанию с услугой перед универсальным
   });
 
-  logger.info('getAvailabilityWithSlots результат поиска расписания', { 
-    masterId, 
-    date, 
+  logger.info('getAvailabilityWithSlots результат поиска расписания', {
+    masterId,
+    date,
+    serviceId,
     found: !!availability,
-    availabilityData: availability ? availability.toJSON() : null 
+    availabilityData: availability ? availability.toJSON() : null
   });
 
   const startOfDay = new Date(date + 'T00:00:00');
   const endOfDay = new Date(date + 'T23:59:59');
 
+  // Фильтр слотов по услуге
+  const slotsWhere = {
+    master_id: masterId,
+    start_time: {
+      [Op.gte]: startOfDay,
+      [Op.lte]: endOfDay
+    }
+  };
+  
+  if (serviceId !== null && serviceId !== undefined) {
+    slotsWhere[Op.or] = [
+      { service_id: serviceId },
+      { service_id: null }
+    ];
+  }
+
   const slots = await TimeSlot.findAll({
-    where: {
-      master_id: masterId,
-      start_time: {
-        [Op.gte]: startOfDay,
-        [Op.lte]: endOfDay
-      }
-    },
+    where: slotsWhere,
     order: [['start_time', 'ASC']]
   });
 
-  logger.info('getAvailabilityWithSlots результат поиска слотов', { 
-    masterId, 
-    date, 
-    slotsCount: slots.length 
+  logger.info('getAvailabilityWithSlots результат поиска слотов', {
+    masterId,
+    date,
+    serviceId,
+    slotsCount: slots.length
   });
 
   // Если расписания нет, но слоты есть - возвращаем их

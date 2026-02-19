@@ -47,6 +47,8 @@ function importModels() {
   const Master = require('../modules/user/models/Master');
   const Review = require('../modules/user/models/Review');
   const Favorite = require('../modules/user/models/Favorite');
+  const MasterSkill = require('../modules/user/models/MasterSkill');
+  const MasterPortfolio = require('../modules/user/models/MasterPortfolio');
 
 
   const Admin = require('../modules/admin/models/Admin');
@@ -61,7 +63,7 @@ function importModels() {
   const Booking = require('../modules/booking/models/Booking');
   const MasterAvailability = require('../modules/booking/models/MasterAvailability');
 
-  return { User, Client, Master, Salon, Admin, ServiceCategory, ServiceSubcategory, MasterService, TimeSlot, Booking, MasterAvailability, Review, Favorite };
+  return { User, Client, Master, Salon, Admin, ServiceCategory, ServiceSubcategory, MasterService, TimeSlot, Booking, MasterAvailability, Review, Favorite, MasterSkill, MasterPortfolio };
 }
 
 function defineAssociations(models) {
@@ -101,6 +103,9 @@ const connectDB = async () => {
     await models.Review.sync();
 
     await models.Favorite.sync();
+
+    await models.MasterSkill.sync();
+    await models.MasterPortfolio.sync();
 
     dbLogger.info('База данных синхронизирована.');
   } catch (error) {
