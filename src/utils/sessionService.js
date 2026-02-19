@@ -4,19 +4,12 @@ const crypto = require('crypto');
 
 const logger = createLogger('session-service');
 
-/**
- * Сервис для управления сессиями пользователей в Redis
- * Время жизни сессии: 1 час
- */
 
-/**
- * Создать новую сессию для пользователя
- * @param {Object} user - Данные пользователя
- * @returns {Promise<Object>} - { token, expiresAt }
- */
+
+
 const createSession = async (user) => {
   try {
-    // Генерируем уникальный токен сессии
+    
     const token = crypto.randomBytes(32).toString('hex');
     const expiresAt = Date.now() + (CACHE_TTL.SESSION * 1000);
 
@@ -29,7 +22,7 @@ const createSession = async (user) => {
       lastActivity: Date.now()
     };
 
-    // Сохраняем сессию в Redis
+    
     await cache.set(KEYS.SESSION(token), sessionData, CACHE_TTL.SESSION);
 
     logger.info(`Сессия создана для пользователя ${sessionData.email} (токен: ${token.substring(0, 8)}...)`);
@@ -45,11 +38,7 @@ const createSession = async (user) => {
   }
 };
 
-/**
- * Получить сессию по токену
- * @param {string} token - Токен сессии
- * @returns {Promise<Object|null>} - Данные сессии или null
- */
+
 const getSession = async (token) => {
   try {
     if (!token) {
@@ -63,14 +52,14 @@ const getSession = async (token) => {
       return null;
     }
 
-    // Проверяем, не истекла ли сессия
+    
     if (Date.now() > session.expiresAt) {
       logger.info(`Сессия истекла для пользователя ${session.email}`);
       await destroySession(token);
       return null;
     }
 
-    // Обновляем время последней активности
+    
     session.lastActivity = Date.now();
     await cache.set(KEYS.SESSION(token), session, CACHE_TTL.SESSION);
 
@@ -81,11 +70,7 @@ const getSession = async (token) => {
   }
 };
 
-/**
- * Обновить сессию (продлить время жизни)
- * @param {string} token - Токен сессии
- * @returns {Promise<boolean>}
- */
+
 const renewSession = async (token) => {
   try {
     const session = await getSession(token);
@@ -94,7 +79,7 @@ const renewSession = async (token) => {
       return false;
     }
 
-    // Продлеваем сессию
+    
     session.expiresAt = Date.now() + (CACHE_TTL.SESSION * 1000);
     session.lastActivity = Date.now();
 
@@ -109,11 +94,7 @@ const renewSession = async (token) => {
   }
 };
 
-/**
- * Уничтожить сессию (logout)
- * @param {string} token - Токен сессии
- * @returns {Promise<boolean>}
- */
+
 const destroySession = async (token) => {
   try {
     if (!token) {
@@ -135,15 +116,11 @@ const destroySession = async (token) => {
   }
 };
 
-/**
- * Уничтожить все сессии пользователя
- * @param {number} userId - ID пользователя
- * @returns {Promise<number>} - Количество удаленных сессий
- */
+
 const destroyAllUserSessions = async (userId) => {
   try {
-    // В текущей реализации у пользователя одна сессия
-    // Можно расширить для поддержки нескольких сессий
+    
+    
     const pattern = `session:*`;
     const keys = await redis.keys(pattern);
 
@@ -165,10 +142,7 @@ const destroyAllUserSessions = async (userId) => {
   }
 };
 
-/**
- * Получить статистику сессий
- * @returns {Promise<Object>}
- */
+
 const getSessionStats = async () => {
   try {
     const pattern = `session:*`;
@@ -202,7 +176,7 @@ const getSessionStats = async () => {
   }
 };
 
-// Импортируем redis из cacheService
+
 const { redis } = require('./cacheService');
 
 module.exports = {

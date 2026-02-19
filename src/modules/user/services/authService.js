@@ -141,19 +141,14 @@ const login = async (email, password) => {
   return userWithoutPassword;
 };
 
-/**
- * Вход пользователя с созданием сессии в Redis
- * @param {string} email
- * @param {string} password
- * @returns {Promise<Object>} - { user, session: { token, expiresAt, expiresIn } }
- */
+
 const loginWithSession = async (email, password) => {
   logger.info('Попытка входа с созданием сессии', { email });
 
-  // Выполняем обычный вход
+  
   const user = await login(email, password);
 
-  // Создаем сессию в Redis
+  
   const session = await sessionService.createSession(user);
 
   logger.info('Сессия создана', { userId: user.id, email, sessionId: session.token.substring(0, 8) + '...' });

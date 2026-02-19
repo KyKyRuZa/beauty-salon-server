@@ -36,7 +36,7 @@ redis.on('reconnecting', (delay) => {
   logger.info(`Redis reconnecting in ${delay}ms`);
 });
 
-// Проверка подключения при загрузке
+
 redis.connect().catch((err) => {
   logger.error('Failed to connect to Redis:', err.message);
 });

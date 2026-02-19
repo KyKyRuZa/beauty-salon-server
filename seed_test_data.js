@@ -16,7 +16,7 @@ async function seedTestData() {
     await sequelize.authenticate();
     console.log('✅ Подключение к базе данных установлено.\n');
 
-    // Очистка всех таблиц в правильном порядке (сначала дочерние)
+    
     console.log('🗑️  Очистка базы данных...');
     await MasterPortfolio.destroy({ where: {}, truncate: true, cascade: true, force: true });
     await MasterSkill.destroy({ where: {}, truncate: true, cascade: true, force: true });
@@ -32,7 +32,7 @@ async function seedTestData() {
 
     const testData = {
       users: [
-        // Администратор
+        
         {
           phone: '+7 (495) 000-00-01',
           email: 'admin@beauty-vite.ru',
@@ -40,7 +40,7 @@ async function seedTestData() {
           role: 'admin',
           isActive: true
         },
-        // Клиенты
+        
         {
           phone: '+7 (495) 123-45-67',
           email: 'ivan.petrov@example.com',
@@ -62,7 +62,7 @@ async function seedTestData() {
           role: 'client',
           isActive: true
         },
-        // Мастера
+        
         {
           phone: '+7 (495) 456-78-90',
           email: 'ekaterina.volkova@example.com',
@@ -84,7 +84,7 @@ async function seedTestData() {
           role: 'master',
           isActive: true
         },
-        // Салоны
+        
         {
           phone: '+7 (495) 789-01-23',
           email: 'beauty.salon@example.com',
@@ -192,7 +192,7 @@ async function seedTestData() {
         { name: 'Массаж', description: 'Все виды массажа' }
       ],
       masterServices: [
-        // Екатерина Волкова - парикмахер (masterIndex: 0)
+        
         {
           name: 'Стрижка женская (любая длина)',
           description: 'Стрижка с мытьем головы и укладкой',
@@ -221,7 +221,7 @@ async function seedTestData() {
           duration: 90,
           category_index: 0
         },
-        // Ольга Новикова - маникюр (masterIndex: 1)
+        
         {
           name: 'Маникюр комбинированный с покрытием',
           description: 'Комбинированный маникюр + покрытие гель-лак',
@@ -250,7 +250,7 @@ async function seedTestData() {
           duration: 30,
           category_index: 1
         },
-        // Дмитрий Соколов - барбер (masterIndex: 2)
+        
         {
           name: 'Мужская стрижка',
           description: 'Стрижка с мытьем головы и укладкой',
@@ -274,27 +274,27 @@ async function seedTestData() {
         }
       ],
       masterSkills: [
-        // Екатерина Волкова - парикмахер
+        
         { name: 'Укладка и причёски', sort_order: 1 },
         { name: 'Ламинирование и ботокс волос', sort_order: 2 },
         { name: 'Лечение волос и кожи головы', sort_order: 3 },
         { name: 'Сложные окрашивания', sort_order: 4 },
         { name: 'Стрижки любой сложности', sort_order: 5 },
-        // Ольга Новикова - маникюр
+        
         { name: 'Маникюр без покрытия', sort_order: 1 },
         { name: 'Маникюр с покрытием', sort_order: 2 },
         { name: 'Педикюр пальчики без покрытия', sort_order: 3 },
         { name: 'Дизайн ногтей', sort_order: 4 },
         { name: 'Ремонт одного ногтя', sort_order: 5 },
         { name: 'SPA-уход для рук и ног', sort_order: 6 },
-        // Дмитрий Соколов - барбер
+        
         { name: 'Мужские стрижки', sort_order: 1 },
         { name: 'Оформление бороды', sort_order: 2 },
         { name: 'Камуфляж седины', sort_order: 3 },
         { name: 'Детская стрижка', sort_order: 4 }
       ],
       masterPortfolio: [
-        // Екатерина Волкова - работы
+        
         {
           title: 'Сложное окрашивание Airtouch',
           description: 'Многоступенчатое окрашивание с растяжкой цвета',
@@ -313,7 +313,7 @@ async function seedTestData() {
           is_featured: true,
           is_visible: true
         },
-        // Ольга Новикова - работы
+        
         {
           title: 'Французский маникюр',
           description: 'Классический френч с нюдовой подложкой',
@@ -344,7 +344,7 @@ async function seedTestData() {
       ]
     };
 
-    // Создание пользователей
+    
     console.log('👥 Создание пользователей...');
     const createdUsers = [];
     for (const userData of testData.users) {
@@ -353,10 +353,10 @@ async function seedTestData() {
       console.log(`   ✓ ${user.email} (${user.role})`);
     }
 
-    // Создание администратора
+    
     console.log('\n👨‍💼 Создание администратора...');
     for (const adminData of testData.admins) {
-      // Находим пользователя-администратора по email
+      
       const adminUser = createdUsers.find(u => u.email === 'admin@beauty-vite.ru');
       if (adminUser) {
         const admin = await Admin.create({ ...adminData, user_id: adminUser.id });
@@ -364,7 +364,7 @@ async function seedTestData() {
       }
     }
 
-    // Создание клиентов
+    
     console.log('\n👤 Создание клиентов...');
     for (let i = 0; i < testData.clients.length; i++) {
       const clientData = { ...testData.clients[i], user_id: createdUsers[1 + i].id };
@@ -372,7 +372,7 @@ async function seedTestData() {
       console.log(`   ✓ ${client.first_name} ${client.last_name}`);
     }
 
-    // Создание салонов
+    
     console.log('\n🏢 Создание салонов...');
     const createdSalons = [];
     for (let i = 0; i < testData.salons.length; i++) {
@@ -382,12 +382,12 @@ async function seedTestData() {
       console.log(`   ✓ ${salon.name}`);
     }
 
-    // Создание мастеров
+    
     console.log('\n💇‍♀️ Создание мастеров...');
     const createdMasters = [];
     for (let i = 0; i < testData.masters.length; i++) {
       const masterData = { ...testData.masters[i], user_id: createdUsers[2 + i].id };
-      // Привязываем мастеров к салонам
+      
       if (createdSalons[i % createdSalons.length]) {
         masterData.salon_id = createdSalons[i % createdSalons.length].id;
       }
@@ -396,7 +396,7 @@ async function seedTestData() {
       console.log(`   ✓ ${master.first_name} ${master.last_name} (${master.specialization})`);
     }
 
-    // Создание категорий
+    
     console.log('\n📁 Создание категорий...');
     const createdCategories = [];
     for (const categoryData of testData.categories) {
@@ -405,12 +405,12 @@ async function seedTestData() {
       console.log(`   ✓ ${category.name}`);
     }
 
-    // Создание услуг мастеров
+    
     console.log('\n💰 Создание услуг мастеров...');
     const serviceConfigs = [
-      { masterIndex: 0, services: testData.masterServices.slice(0, 4) },    // Екатерина (4 услуги)
-      { masterIndex: 1, services: testData.masterServices.slice(4, 8) },    // Ольга (4 услуги)
-      { masterIndex: 2, services: testData.masterServices.slice(8, 11) }    // Дмитрий (3 услуги)
+      { masterIndex: 0, services: testData.masterServices.slice(0, 4) },    
+      { masterIndex: 1, services: testData.masterServices.slice(4, 8) },    
+      { masterIndex: 2, services: testData.masterServices.slice(8, 11) }    
     ];
     
     for (const { masterIndex, services } of serviceConfigs) {
@@ -426,12 +426,12 @@ async function seedTestData() {
       }
     }
 
-    // Создание навыков мастеров
+    
     console.log('\n⭐ Создание навыков мастеров...');
     const skillConfigs = [
-      { masterIndex: 0, count: 5 },  // Екатерина (5 навыков)
-      { masterIndex: 1, count: 6 },  // Ольга (6 навыков)
-      { masterIndex: 2, count: 4 }   // Дмитрий (4 навыка)
+      { masterIndex: 0, count: 5 },  
+      { masterIndex: 1, count: 6 },  
+      { masterIndex: 2, count: 4 }   
     ];
     
     let skillOffset = 0;
@@ -449,11 +449,11 @@ async function seedTestData() {
     const masterSkillCount = await MasterSkill.count();
     console.log(`   ✓ Создано навыков: ${masterSkillCount}`);
 
-    // Создание портфолио мастеров
+    
     console.log('\n🖼️ Создание портфолио мастеров...');
     const portfolioConfigs = [
-      { masterIndex: 0, count: 2 },  // Екатерина (2 работы)
-      { masterIndex: 1, count: 3 }   // Ольга (3 работы)
+      { masterIndex: 0, count: 2 },  
+      { masterIndex: 1, count: 3 }   
     ];
     
     let portfolioOffset = 0;
@@ -471,7 +471,7 @@ async function seedTestData() {
     const portfolioCount = await MasterPortfolio.count();
     console.log(`   ✓ Создано работ в портфолио: ${portfolioCount}`);
 
-    // Вывод учетных данных
+    
     console.log('\n' + '='.repeat(60));
     console.log('✅ ТЕСТОВЫЕ ДАННЫЕ УСПЕШНО СОЗДАНЫ!');
     console.log('='.repeat(60));

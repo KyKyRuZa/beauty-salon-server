@@ -1028,9 +1028,7 @@ const deleteSalonService = async (req, res) => {
   }
 };
 
-/**
- * Поиск категорий с использованием триграмм (GIN-индекс)
- */
+
 const searchCategories = async (req, res) => {
   try {
     const { q } = req.query;
@@ -1062,9 +1060,7 @@ const searchCategories = async (req, res) => {
   }
 };
 
-/**
- * Поиск услуг мастеров с использованием триграмм (GIN-индекс)
- */
+
 const searchMasterServices = async (req, res) => {
   try {
     const { q } = req.query;
@@ -1096,9 +1092,7 @@ const searchMasterServices = async (req, res) => {
   }
 };
 
-/**
- * Поиск мастеров с использованием триграмм (GIN-индекс)
- */
+
 const searchMasters = async (req, res) => {
   try {
     const { q } = req.query;

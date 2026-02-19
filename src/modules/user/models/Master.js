@@ -1,15 +1,7 @@
 const { DataTypes } = require('sequelize');
 const { sequelize } = require('../../../config/database');
 
-/**
- * Модель Мастера
- * 
- * Поля:
- * - address: адрес (атомарное значение, НФ1 соблюдается)
- * - has_training: флаг наличия обучения (boolean)
- * - skills: вынесено в отдельную таблицу MasterSkill (связь 1:M)
- * - portfolio: вынесено в отдельную таблицу MasterPortfolio (связь 1:M)
- */
+
 const Master = sequelize.define('Master', {
   id: {
     type: DataTypes.INTEGER,
@@ -33,7 +25,7 @@ const Master = sequelize.define('Master', {
     }
   },
   
-  // === Личная информация ===
+  
   first_name: {
     type: DataTypes.STRING,
     allowNull: false,
@@ -69,7 +61,7 @@ const Master = sequelize.define('Master', {
     comment: 'Фамилия мастера'
   },
   
-  // === Профессиональная информация ===
+  
   specialization: {
     type: DataTypes.STRING,
     validate: {
@@ -97,7 +89,7 @@ const Master = sequelize.define('Master', {
     comment: 'Опыт работы в годах'
   },
   
-  // === Адрес и местоположение ===
+  
   address: {
     type: DataTypes.STRING,
     validate: {
@@ -122,7 +114,7 @@ const Master = sequelize.define('Master', {
     comment: 'ID салона, если работает в салоне'
   },
   
-  // === Обучение и развитие ===
+  
   has_training: {
     type: DataTypes.BOOLEAN,
     defaultValue: false,
@@ -130,7 +122,7 @@ const Master = sequelize.define('Master', {
     comment: 'Проводит ли обучение (true/false)'
   },
   
-  // === Рейтинг и доступность ===
+  
   rating: {
     type: DataTypes.DECIMAL(3, 2),
     defaultValue: 0.00,
@@ -154,7 +146,7 @@ const Master = sequelize.define('Master', {
     comment: 'Доступен для записи'
   },
   
-  // === Медиа ===
+  
   image_url: {
     type: DataTypes.STRING,
     field: 'image_url',
@@ -167,7 +159,7 @@ const Master = sequelize.define('Master', {
     comment: 'URL фото профиля'
   },
   
-  // === Дополнительная информация ===
+  
   bio: {
     type: DataTypes.TEXT,
     field: 'bio',

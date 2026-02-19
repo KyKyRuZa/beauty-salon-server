@@ -11,7 +11,7 @@ const { Op } = require('sequelize');
 
 
 const getAllCatalogCategories = async ({ category = null, search = null, sortBy = 'name', order = 'ASC', limit = null, offset = 0 }) => {
-  // Кэшируем только если нет фильтрации и pagination
+  
   const useCache = !category && !search && !limit;
   
   if (useCache) {
@@ -54,7 +54,7 @@ const getAllCatalogCategories = async ({ category = null, search = null, sortBy 
 
   const result = await ServiceCategory.findAndCountAll(options);
 
-  // Сохраняем в кэш
+  
   if (useCache) {
     await cache.set(KEYS.CATEGORIES, result, CACHE_TTL.CATEGORIES);
   }
@@ -64,7 +64,7 @@ const getAllCatalogCategories = async ({ category = null, search = null, sortBy 
 
 
 const getCatalogCategoryById = async (id) => {
-  // Проверяем кэш
+  
   const cached = await cache.get(KEYS.CATEGORY_BY_ID(id));
   if (cached) {
     return cached;
@@ -72,7 +72,7 @@ const getCatalogCategoryById = async (id) => {
 
   const category = await ServiceCategory.findByPk(id);
   
-  // Сохраняем в кэш
+  
   if (category) {
     await cache.set(KEYS.CATEGORY_BY_ID(id), category, CACHE_TTL.CATALOG);
   }
@@ -96,7 +96,7 @@ const getPopularCategories = async (limit = 10) => {
 const createCatalogCategory = async (categoryData) => {
   const category = await ServiceCategory.create(categoryData);
   
-  // Очищаем кэш категорий
+  
   await cache.del(KEYS.CATEGORIES);
   
   return await ServiceCategory.findByPk(category.id);
@@ -111,7 +111,7 @@ const updateCatalogCategory = async (id, updateData) => {
 
   await category.update(updateData);
   
-  // Очищаем кэш
+  
   await cache.del(KEYS.CATEGORIES);
   await cache.del(KEYS.CATEGORY_BY_ID(id));
   
@@ -127,7 +127,7 @@ const deleteCatalogCategory = async (id) => {
 
   await category.destroy();
   
-  // Очищаем кэш
+  
   await cache.del(KEYS.CATEGORIES);
   await cache.del(KEYS.CATEGORY_BY_ID(id));
   
@@ -556,11 +556,7 @@ const deleteSalonService = async (salonId, serviceId) => {
   return true;
 };
 
-/**
- * Поиск категорий с использованием триграмм (GIN-индекс)
- * @param {string} searchQuery - Поисковый запрос
- * @returns {Promise<Array>} - Массив найденных категорий с релевантностью
- */
+
 const searchCategories = async (searchQuery) => {
   if (!searchQuery || searchQuery.length < 2) {
     return [];
@@ -587,11 +583,7 @@ const searchCategories = async (searchQuery) => {
   return results;
 };
 
-/**
- * Поиск услуг мастеров с использованием триграмм (GIN-индекс)
- * @param {string} searchQuery - Поисковый запрос
- * @returns {Promise<Array>} - Массив найденных услуг с релевантностью
- */
+
 const searchMasterServices = async (searchQuery) => {
   if (!searchQuery || searchQuery.length < 2) {
     return [];
@@ -623,11 +615,7 @@ const searchMasterServices = async (searchQuery) => {
   return results;
 };
 
-/**
- * Поиск мастеров с использованием триграмм (GIN-индекс)
- * @param {string} searchQuery - Поисковый запрос
- * @returns {Promise<Array>} - Массив найденных мастеров с релевантностью
- */
+
 const searchMasters = async (searchQuery) => {
   if (!searchQuery || searchQuery.length < 2) {
     return [];

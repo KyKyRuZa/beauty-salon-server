@@ -1,7 +1,4 @@
-/**
- * Скрипт применения миграции для GIN-индексов (триграммы)
- * Запуск: node apply-trigram-migration.js
- */
+
 
 const { sequelize } = require('./src/config/database');
 
@@ -9,7 +6,7 @@ async function applyTrigramMigration() {
   console.log('🚀 Применение миграции для GIN-индексов (триграммы)...\n');
 
   try {
-    // Проверяем, что pg_trgm включен
+    
     console.log('📋 Проверка расширения pg_trgm...');
     const [pgTrgmCheck] = await sequelize.query(`
       SELECT * FROM pg_extension WHERE extname = 'pg_trgm'
@@ -23,7 +20,7 @@ async function applyTrigramMigration() {
       console.log('✅ Расширение pg_trgm уже установлено\n');
     }
 
-    // Создаем индексы
+    
     console.log('📁 Создание GIN-индексов...\n');
 
     const indexes = [
@@ -80,7 +77,7 @@ async function applyTrigramMigration() {
       }
     }
 
-    // Проверяем созданные индексы
+    
     console.log('\n📊 Проверка созданных индексов...');
     const [indexList] = await sequelize.query(`
       SELECT indexname, tablename 

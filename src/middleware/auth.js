@@ -5,12 +5,7 @@ const { createLogger } = require('../utils/logger');
 
 const logger = createLogger('auth-middleware');
 
-/**
- * Middleware для проверки аутентификации
- * Поддерживает два типа токенов:
- * 1. JWT токен (для обратной совместимости)
- * 2. Токен сессии из Redis (новый способ)
- */
+
 const authenticateToken = async (req, res, next) => {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
@@ -24,11 +19,11 @@ const authenticateToken = async (req, res, next) => {
   }
 
   try {
-    // Сначала пробуем проверить сессию в Redis
+    
     const session = await sessionService.getSession(token);
 
     if (session) {
-      // Сессия найдена в Redis
+      
       req.user = {
         userId: session.userId,
         id: session.userId,
@@ -48,7 +43,7 @@ const authenticateToken = async (req, res, next) => {
       return next();
     }
 
-    // Если сессия не найдена, пробуем JWT (для обратной совместимости)
+    
     jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret_key', (err, user) => {
       if (err) {
         logger.warn('Неверный или просроченный токен', {

@@ -1,6 +1,6 @@
 const TimeSlot = require('../models/TimeSlot');
 const Booking = require('../models/Booking');
-const Master = require('../../user/models/Master'); // Правильный путь к модели Master
+const Master = require('../../user/models/Master'); 
 const availabilityService = require('../services/availabilityService');
 const { sequelize } = require('../../../config/database');
 const { Op } = require('sequelize');
@@ -31,7 +31,7 @@ const getMasterSlots = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Необходимо указать дату' });
     }
 
-    // Если master_id не передан, пытаемся получить из токена (для мастеров)
+    
     let effectiveMasterId = master_id ? parseInt(master_id) : null;
     
     if (!effectiveMasterId) {

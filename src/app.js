@@ -29,10 +29,10 @@ connectDB()
     logger.error('Ошибка инициализации базы данных:', error);
   });
 
-// Применение middleware безопасности
+
 applySecurityMiddleware(app);
 
-// Парсинг JSON и URL-encoded данных
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 

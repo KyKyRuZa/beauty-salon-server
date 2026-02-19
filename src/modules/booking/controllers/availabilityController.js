@@ -19,7 +19,7 @@ const getMasterId = async (userId) => {
   }
 };
 
-// Получить доступные даты мастера (публичный endpoint)
+
 const getAvailableDates = async (req, res) => {
   try {
     const { master_id, service_id, start_date, end_date } = req.query;
@@ -111,7 +111,7 @@ const getAvailability = async (req, res) => {
 const getAvailabilityWithSlots = async (req, res) => {
   try {
     const { date } = req.params;
-    const { master_id, service_id } = req.query; // master_id и service_id из параметров запроса
+    const { master_id, service_id } = req.query; 
 
     logger.info('getAvailabilityWithSlots запрос:', { date, master_id, service_id, userId: req.user?.userId || req.user?.id });
 
@@ -119,7 +119,7 @@ const getAvailabilityWithSlots = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Необходимо указать дату' });
     }
 
-    // Если master_id не передан, пытаемся получить из токена (для мастеров)
+    
     let effectiveMasterId = master_id ? parseInt(master_id) : null;
 
     if (!effectiveMasterId) {

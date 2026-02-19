@@ -16,7 +16,7 @@ const createBooking = async (req, res) => {
       comment
     } = req.body;
 
-    // Получаем client_id из профиля клиента
+    
     const userId = req.user?.userId || req.user?.id;
     const Client = require('../../user/models/Client');
     const client = await Client.findOne({ where: { user_id: userId } });

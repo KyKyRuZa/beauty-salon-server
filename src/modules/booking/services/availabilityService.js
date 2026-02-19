@@ -7,14 +7,14 @@ const { createLogger } = require('../../../utils/logger');
 
 const logger = createLogger('availability-service');
 
-// Получить доступные даты мастера
+
 const getAvailableDates = async (masterId, serviceId = null, startDate = null, endDate = null) => {
   const where = {
     master_id: masterId,
     is_available: true
   };
 
-  // Если указан service_id, ищем расписание для этой услуги или универсальное
+  
   if (serviceId) {
     where[Op.or] = [
       { service_id: serviceId },
@@ -22,7 +22,7 @@ const getAvailableDates = async (masterId, serviceId = null, startDate = null, e
     ];
   }
 
-  // Фильтр по датам
+  
   if (startDate && endDate) {
     where.date = {
       [Op.gte]: startDate,
@@ -40,7 +40,7 @@ const getAvailableDates = async (masterId, serviceId = null, startDate = null, e
     order: [['date', 'ASC']]
   });
 
-  // Возвращаем только даты
+  
   return availability.map(a => ({
     date: a.date,
     start_time: a.start_time,
@@ -56,7 +56,7 @@ const setAvailability = async (masterId, date, startTime, endTime, slotDuration 
   const transaction = await sequelize.transaction();
 
   try {
-    // Ищем расписание для той же даты И той же услуги (или null если serviceId не указан)
+    
     const existing = await MasterAvailability.findOne({
       where: {
         master_id: masterId,
@@ -87,7 +87,7 @@ const setAvailability = async (masterId, date, startTime, endTime, slotDuration 
             [Op.gte]: new Date(date + 'T00:00:00'),
             [Op.lt]: new Date(date + 'T23:59:59')
           },
-          // Удаляем только слоты для этой услуги или универсальные
+          
           [Op.or]: [
             { service_id: serviceId },
             { service_id: null }
@@ -290,8 +290,8 @@ const generateTimeSlots = async (masterId, date, startTime, endTime, slotDuratio
 
       if (slotEnd > dayEnd) break;
 
-      // Сохраняем время в локальном формате (без конвертации в UTC)
-      // Формат: YYYY-MM-DDTHH:mm:ss
+      
+      
       const formatLocalTime = (date) => {
         const year = date.getFullYear();
         const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -304,7 +304,7 @@ const generateTimeSlots = async (masterId, date, startTime, endTime, slotDuratio
 
       slots.push({
         master_id: masterId,
-        service_id: serviceId, // Привязка к услуге
+        service_id: serviceId, 
         start_time: formatLocalTime(currentTime),
         end_time: formatLocalTime(slotEnd),
         status: 'free',
@@ -330,14 +330,14 @@ const generateTimeSlots = async (masterId, date, startTime, endTime, slotDuratio
 const getAvailabilityWithSlots = async (masterId, date, serviceId = null) => {
   logger.info('getAvailabilityWithSlots вызов', { masterId, date, serviceId });
 
-  // Если serviceId указан, ищем конкретное расписание, иначе - все расписания на дату
+  
   const whereCondition = {
     master_id: masterId,
     date
   };
   
   if (serviceId !== null && serviceId !== undefined) {
-    // Ищем расписание для конкретной услуги или универсальное (без услуги)
+    
     whereCondition[Op.or] = [
       { service_id: serviceId },
       { service_id: null }
@@ -346,7 +346,7 @@ const getAvailabilityWithSlots = async (masterId, date, serviceId = null) => {
 
   const availability = await MasterAvailability.findOne({
     where: whereCondition,
-    order: [['service_id', 'DESC']] // Приоритет расписанию с услугой перед универсальным
+    order: [['service_id', 'DESC']] 
   });
 
   logger.info('getAvailabilityWithSlots результат поиска расписания', {
@@ -360,7 +360,7 @@ const getAvailabilityWithSlots = async (masterId, date, serviceId = null) => {
   const startOfDay = new Date(date + 'T00:00:00');
   const endOfDay = new Date(date + 'T23:59:59');
 
-  // Фильтр слотов по услуге
+  
   const slotsWhere = {
     master_id: masterId,
     start_time: {
@@ -388,7 +388,7 @@ const getAvailabilityWithSlots = async (masterId, date, serviceId = null) => {
     slotsCount: slots.length
   });
 
-  // Если расписания нет, но слоты есть - возвращаем их
+  
   if (!availability && slots.length === 0) {
     return null;
   }

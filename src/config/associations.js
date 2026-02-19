@@ -385,7 +385,7 @@ const defineAssociations = (models) => {
   }
 
 
-  // === Связи для навыков и портфолио мастеров ===
+  
   if (MasterSkill) {
     MasterSkill.belongsTo(Master, {
       foreignKey: {

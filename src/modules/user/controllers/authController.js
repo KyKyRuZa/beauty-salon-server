@@ -78,7 +78,7 @@ const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Используем вход с созданием сессии в Redis
+    
     const { user, session } = await authService.loginWithSession(email, password);
 
     logger.info('Вход пользователя успешен', { userId: user.id, email: user.email, sessionId: session.token.substring(0, 8) + '...' });
@@ -86,7 +86,7 @@ const login = async (req, res) => {
     res.status(200).json({
       success: true,
       message: 'Вход успешен',
-      token: session.token,  // Возвращаем токен сессии вместо JWT
+      token: session.token,  
       session: {
         expiresAt: session.expiresAt,
         expiresIn: session.expiresIn
@@ -317,17 +317,14 @@ const changePassword = async (req, res) => {
   }
 };
 
-/**
- * Выход пользователя (logout)
- * Очищает сессию в Redis
- */
+
 const logout = async (req, res) => {
   try {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
 
     if (token) {
-      // Очищаем сессию в Redis
+      
       await sessionService.destroySession(token);
       logger.info('Пользователь вышел (сессия очищена)', {
         ip: req.ip,
