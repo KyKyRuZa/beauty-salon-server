@@ -1,5 +1,6 @@
 const authService = require('../services/authService');
 const userService = require('../services/userService');
+const sessionService = require('../../../utils/sessionService');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { createLogger } = require('../../../utils/logger');
@@ -77,29 +78,19 @@ const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    const user = await authService.login(email, password);
+    // Используем вход с созданием сессии в Redis
+    const { user, session } = await authService.loginWithSession(email, password);
 
-    if (!user) {
-      logger.warn('Предоставлены неверные учетные данные', { email, ip: req.ip });
-      return res.status(401).json({
-        success: false,
-        message: 'Неверные учетные данные'
-      });
-    }
-
-
-    const token = jwt.sign(
-      { userId: user.id, email: user.email, role: user.role },
-      process.env.JWT_SECRET || 'fallback_secret_key',
-      { expiresIn: '24h' }
-    );
-
-    logger.info('Вход пользователя успешен', { userId: user.id, email: user.email });
+    logger.info('Вход пользователя успешен', { userId: user.id, email: user.email, sessionId: session.token.substring(0, 8) + '...' });
 
     res.status(200).json({
       success: true,
       message: 'Вход успешен',
-      token,
+      token: session.token,  // Возвращаем токен сессии вместо JWT
+      session: {
+        expiresAt: session.expiresAt,
+        expiresIn: session.expiresIn
+      },
       user: {
         id: user.id,
         email: user.email,
@@ -109,7 +100,7 @@ const login = async (req, res) => {
     });
   } catch (error) {
     logger.error('Ошибка входа пользователя', { error: error.message, ip: req.ip });
-    
+
 
     if (error.isEmpty === false) {
       return res.status(400).json({
@@ -326,10 +317,42 @@ const changePassword = async (req, res) => {
   }
 };
 
+/**
+ * Выход пользователя (logout)
+ * Очищает сессию в Redis
+ */
+const logout = async (req, res) => {
+  try {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+
+    if (token) {
+      // Очищаем сессию в Redis
+      await sessionService.destroySession(token);
+      logger.info('Пользователь вышел (сессия очищена)', {
+        ip: req.ip,
+        userAgent: req.get('User-Agent')
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Выход выполнен успешно'
+    });
+  } catch (error) {
+    logger.error('Ошибка выхода', { error: error.message, ip: req.ip });
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
 module.exports = {
   register,
   login,
   getProfile,
   editProfile,
-  changePassword
+  changePassword,
+  logout
 };

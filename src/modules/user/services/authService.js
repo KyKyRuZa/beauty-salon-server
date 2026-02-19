@@ -2,6 +2,7 @@ const User = require('../models/User');
 const Client = require('../models/Client');
 const Master = require('../models/Master');
 const Salon = require('../models/Salon');
+const sessionService = require('../../../utils/sessionService');
 const bcrypt = require('bcrypt');
 const { Op } = require('sequelize');
 const { sequelize } = require('../../../config/database');
@@ -140,7 +141,31 @@ const login = async (email, password) => {
   return userWithoutPassword;
 };
 
+/**
+ * Вход пользователя с созданием сессии в Redis
+ * @param {string} email
+ * @param {string} password
+ * @returns {Promise<Object>} - { user, session: { token, expiresAt, expiresIn } }
+ */
+const loginWithSession = async (email, password) => {
+  logger.info('Попытка входа с созданием сессии', { email });
+
+  // Выполняем обычный вход
+  const user = await login(email, password);
+
+  // Создаем сессию в Redis
+  const session = await sessionService.createSession(user);
+
+  logger.info('Сессия создана', { userId: user.id, email, sessionId: session.token.substring(0, 8) + '...' });
+
+  return {
+    user,
+    session
+  };
+};
+
 module.exports = {
   register,
-  login
+  login,
+  loginWithSession
 };

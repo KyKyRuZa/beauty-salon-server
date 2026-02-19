@@ -1,5 +1,6 @@
 const { sequelize } = require('../../../config/database');
 const { QueryTypes } = require('sequelize');
+const { cache, KEYS, CACHE_TTL } = require('../../../utils/cacheService');
 
 const ServiceCategory = require('../models/ServiceCategory');
 const ServiceSubcategory = require('../models/ServiceSubcategory');
@@ -10,6 +11,16 @@ const { Op } = require('sequelize');
 
 
 const getAllCatalogCategories = async ({ category = null, search = null, sortBy = 'name', order = 'ASC', limit = null, offset = 0 }) => {
+  // Кэшируем только если нет фильтрации и pagination
+  const useCache = !category && !search && !limit;
+  
+  if (useCache) {
+    const cached = await cache.get(KEYS.CATEGORIES);
+    if (cached) {
+      return cached;
+    }
+  }
+
   const whereClause = { is_active: true };
 
   if (category) {
@@ -41,12 +52,32 @@ const getAllCatalogCategories = async ({ category = null, search = null, sortBy 
     options.limit = parseInt(limit);
   }
 
-  return await ServiceCategory.findAndCountAll(options);
+  const result = await ServiceCategory.findAndCountAll(options);
+
+  // Сохраняем в кэш
+  if (useCache) {
+    await cache.set(KEYS.CATEGORIES, result, CACHE_TTL.CATEGORIES);
+  }
+
+  return result;
 };
 
 
 const getCatalogCategoryById = async (id) => {
-  return await ServiceCategory.findByPk(id);
+  // Проверяем кэш
+  const cached = await cache.get(KEYS.CATEGORY_BY_ID(id));
+  if (cached) {
+    return cached;
+  }
+
+  const category = await ServiceCategory.findByPk(id);
+  
+  // Сохраняем в кэш
+  if (category) {
+    await cache.set(KEYS.CATEGORY_BY_ID(id), category, CACHE_TTL.CATALOG);
+  }
+  
+  return category;
 };
 
 
@@ -64,6 +95,10 @@ const getPopularCategories = async (limit = 10) => {
 
 const createCatalogCategory = async (categoryData) => {
   const category = await ServiceCategory.create(categoryData);
+  
+  // Очищаем кэш категорий
+  await cache.del(KEYS.CATEGORIES);
+  
   return await ServiceCategory.findByPk(category.id);
 };
 
@@ -75,6 +110,11 @@ const updateCatalogCategory = async (id, updateData) => {
   }
 
   await category.update(updateData);
+  
+  // Очищаем кэш
+  await cache.del(KEYS.CATEGORIES);
+  await cache.del(KEYS.CATEGORY_BY_ID(id));
+  
   return await ServiceCategory.findByPk(id);
 };
 
@@ -86,6 +126,11 @@ const deleteCatalogCategory = async (id) => {
   }
 
   await category.destroy();
+  
+  // Очищаем кэш
+  await cache.del(KEYS.CATEGORIES);
+  await cache.del(KEYS.CATEGORY_BY_ID(id));
+  
   return true;
 };
 

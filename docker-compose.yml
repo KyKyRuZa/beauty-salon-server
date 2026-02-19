@@ -3,15 +3,22 @@ services:
     image: postgres:17.7-alpine
     container_name: beauty_vite_postgres
     environment:
-      POSTGRES_DB: beauty_vite_db
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: CBxdskXBs1y
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
     ports:
-      - "5433:5432"
+      - "5433:5432"  # для внешнего доступа (можно убрать, если не нужно)
     volumes:
-      - ./init:/docker-entrypoint-initdb.d  # Добавляем том для инициализации схем
+      - ./init:/docker-entrypoint-initdb.d
       - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
+    networks:
+      - beauty_vite_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   pgbouncer:
     image: edoburu/pgbouncer:latest
@@ -22,8 +29,31 @@ services:
       - ./pgbouncer_config/pgbouncer.ini:/etc/pgbouncer/pgbouncer.ini
       - ./pgbouncer_config/userlist.txt:/etc/pgbouncer/userlist.txt
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     restart: unless-stopped
+    networks:
+      - beauty_vite_network
+    # healthcheck для pgbouncer можно добавить по желанию
+
+  redis:
+    image: redis:8.2-alpine
+    container_name: beauty_vite_redis
+    ports:
+      - "6380:6379"  # Проброс на порт 6380 (чтобы не конфликтовал с Redis на хосте)
+    volumes:
+      - redis_data:/data
+    command: redis-server --requirepass ${REDIS_PASSWORD} --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    environment:
+      - REDISCLI_AUTH=${REDIS_PASSWORD}  # для healthcheck
+    restart: unless-stopped
+    networks:
+      - beauty_vite_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   app:
     build: .
@@ -31,23 +61,46 @@ services:
     ports:
       - "5000:5000"
     environment:
-      NODE_ENV: production
-      DB_HOST: pgbouncer  # Подключаемся через PgBouncer
-      DB_PORT: 6432       # Используем порт PgBouncer
-      DB_NAME: beauty_vite_db
-      DB_USER: postgres
-      DB_PASSWORD: CBxdskXBs1y
-      DB_DIALECT: postgres
-      # REDIS_URL: redis://redis:6379  # Временно отключен
-      JWT_SECRET: ${JWT_SECRET:-fallback_secret_key_for_development}
-      CLIENT_URL: ${CLIENT_URL:-http://localhost:5173}
-      LOG_LEVEL: info
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_DIALECT: ${DB_DIALECT}
+      DB_POOL_MAX: ${DB_POOL_MAX}
+      DB_POOL_MIN: ${DB_POOL_MIN}
+      DB_POOL_ACQUIRE: ${DB_POOL_ACQUIRE}
+      DB_POOL_IDLE: ${DB_POOL_IDLE}
+      DB_RETRY_MAX: ${DB_RETRY_MAX}
+      DB_SSL: ${DB_SSL}
+
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      REDIS_DB: ${REDIS_DB}
+
+      JWT_SECRET: ${JWT_SECRET}
+      CLIENT_URL: ${CLIENT_URL}
+
+      LOG_LEVEL: ${LOG_LEVEL}
+      NODE_ENV: ${NODE_ENV}
     volumes:
-      - ./uploads:/app/uploads  # Монтируем папку для загрузки файлов
+      - ./uploads:/app/uploads
     depends_on:
-      - postgres
-      - pgbouncer
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      pgbouncer:
+        condition: service_started
     restart: unless-stopped
+    networks:
+      - beauty_vite_network
 
 volumes:
   postgres_data:
+  redis_data:
+
+networks:
+  beauty_vite_network:
+    driver: bridge

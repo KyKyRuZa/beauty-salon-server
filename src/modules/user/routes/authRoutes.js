@@ -13,6 +13,7 @@ const {
 
 router.post('/register', validate(registerValidationSchema, 'body'), authController.register);
 router.post('/login', validate(loginValidationSchema, 'body'), authController.login);
+router.post('/logout', authController.logout);
 
 
 router.use(authenticateToken);
