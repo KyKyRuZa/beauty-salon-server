@@ -1,6 +1,3 @@
--- Инициализация схем для PostgreSQL 17.7
--- Этот скрипт создает необходимые схемы в базе данных
-
 -- Создание схем для организации базы данных
 CREATE SCHEMA IF NOT EXISTS user_schema;
 CREATE SCHEMA IF NOT EXISTS catalog_schema;

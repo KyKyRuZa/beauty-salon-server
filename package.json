@@ -12,7 +12,9 @@
     "docker-build": "docker build -t beauty-vite-app .",
     "docker-up": "docker compose up -d",
     "docker-down": "docker compose down",
-    "docker-restart": "docker compose down && docker compose build app && docker compose up -d"
+    "docker-restart": "docker compose down && docker compose build app && docker compose up -d",
+    "cleanup:slots": "node scripts/cleanupSlots.js",
+    "cleanup:slots:dry": "node scripts/cleanupSlots.js --dry-run"
   },
   "keywords": [
     "modular-monolith",
