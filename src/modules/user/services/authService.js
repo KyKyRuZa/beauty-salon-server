@@ -3,7 +3,7 @@ const Client = require('../models/Client');
 const Master = require('../models/Master');
 const Salon = require('../models/Salon');
 const sessionService = require('../../../utils/sessionService');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcrypt'); // Нужен для compare в login
 const { Op } = require('sequelize');
 const { sequelize } = require('../../../config/database');
 const { createLogger } = require('../../../utils/logger');
@@ -17,6 +17,8 @@ const register = async (userData) => {
 
   const { phone, email, password, role } = userData;
   
+  // НЕ хешируем пароль здесь - это сделает модель User в beforeCreate hook
+
 
   const { profileData, first_name, last_name, ...userDataWithoutProfile } = userData;
 
@@ -39,14 +41,10 @@ const register = async (userData) => {
     }
 
 
-    const saltRounds = 10;
-    const hashedPassword = await bcrypt.hash(password, saltRounds);
-
-
     const user = await User.create({
       phone,
       email,
-      password: hashedPassword,
+      password, // Передаём пароль как есть - модель захеширует его в beforeCreate
       role
     }, { transaction });
 
@@ -93,8 +91,7 @@ const register = async (userData) => {
     const userWithoutPassword = {
       id: user.id,
       email: user.email,
-      role: user.role,
-      profileCompleted: user.profileCompleted
+      role: user.role
     };
 
     return userWithoutPassword;
@@ -121,7 +118,6 @@ const login = async (email, password) => {
     throw new Error('Аккаунт деактивирован');
   }
 
-
   const isValidPassword = await bcrypt.compare(password, user.password);
   if (!isValidPassword) {
     logger.warn('Предоставлен неверный пароль', { userId: user.id, email });
@@ -134,8 +130,7 @@ const login = async (email, password) => {
   const userWithoutPassword = {
     id: user.id,
     email: user.email,
-    role: user.role,
-    profileCompleted: user.profileCompleted
+    role: user.role
   };
 
   return userWithoutPassword;

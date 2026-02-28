@@ -8,7 +8,7 @@ const registerValidationSchema = z.object({
   phone: BaseValidationSchema.phone,
   role: BaseValidationSchema.role,
   isActive: z.boolean().optional(),
-});
+}).passthrough();
 
 
 const loginValidationSchema = z.object({

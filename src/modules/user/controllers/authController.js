@@ -37,8 +37,7 @@ const register = async (req, res) => {
       user: {
         id: user.id,
         email: user.email,
-        role: user.role,
-        profileCompleted: user.profileCompleted
+        role: user.role
       }
     });
   } catch (error) {
@@ -86,7 +85,7 @@ const login = async (req, res) => {
     res.status(200).json({
       success: true,
       message: 'Вход успешен',
-      token: session.token,  
+      token: session.token,
       session: {
         expiresAt: session.expiresAt,
         expiresIn: session.expiresIn
@@ -94,8 +93,7 @@ const login = async (req, res) => {
       user: {
         id: user.id,
         email: user.email,
-        role: user.role,
-        profileCompleted: user.profileCompleted
+        role: user.role
       }
     });
   } catch (error) {
