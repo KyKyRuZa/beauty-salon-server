@@ -60,7 +60,7 @@ const ServiceCategory = sequelize.define('ServiceCategory', {
   timestamps: true,
   createdAt: 'created_at',
   updatedAt: 'updated_at',
-  deletedAt: 'deletedAt'
+  deletedAt: 'deleted_at'
 });
 
 module.exports = ServiceCategory;

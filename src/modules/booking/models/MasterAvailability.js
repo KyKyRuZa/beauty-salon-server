@@ -94,10 +94,4 @@ const MasterAvailability = sequelize.define('MasterAvailability', {
   }
 });
 
-MasterAvailability.belongsTo(MasterService, {
-  foreignKey: 'service_id',
-  targetKey: 'id',
-  as: 'service'
-});
-
 module.exports = MasterAvailability;

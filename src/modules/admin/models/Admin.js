@@ -95,16 +95,7 @@ const Admin = sequelize.define('Admin', {
   timestamps: true,
   createdAt: 'created_at',
   updatedAt: 'updated_at',
-  deletedAt: 'deletedAt'
+  deletedAt: 'deleted_at'
 });
-
-
-Admin.associate = function(models) {
-  Admin.belongsTo(models.User, {
-    foreignKey: 'user_id',
-    targetKey: 'id',
-    as: 'user'
-  });
-};
 
 module.exports = Admin;

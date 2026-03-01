@@ -138,6 +138,7 @@ const Review = sequelize.define('Review', {
   timestamps: true,
   createdAt: 'created_at',
   updatedAt: 'updated_at',
+  deletedAt: 'deleted_at',
   validate: {
     hasMasterOrSalon() {
       if (!this.master_id && !this.salon_id) {

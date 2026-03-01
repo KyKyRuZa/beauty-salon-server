@@ -126,23 +126,4 @@ const MasterService = sequelize.define('MasterService', {
   updatedAt: false
 });
 
-
-MasterService.belongsTo(Master, {
-  foreignKey: 'master_id',
-  targetKey: 'id',
-  as: 'master'
-});
-
-MasterService.belongsTo(Salon, {
-  foreignKey: 'salon_id',
-  targetKey: 'id',
-  as: 'salon'
-});
-
-MasterService.belongsTo(ServiceCategory, {
-  foreignKey: 'category_id',
-  targetKey: 'id',
-  as: 'category'
-});
-
 module.exports = MasterService;

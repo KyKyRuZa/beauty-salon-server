@@ -92,6 +92,7 @@ const Client = sequelize.define('Client', {
   timestamps: true,
   createdAt: 'created_at',
   updatedAt: 'updated_at',
+  deletedAt: 'deleted_at',
   getterMethods: {
     firstName() {
       return this.getDataValue('first_name');

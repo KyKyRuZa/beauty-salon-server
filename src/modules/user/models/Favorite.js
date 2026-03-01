@@ -62,6 +62,7 @@ const Favorite = sequelize.define('Favorite', {
   timestamps: true,
   createdAt: 'created_at',
   updatedAt: 'updated_at',
+  deletedAt: 'deleted_at',
   validate: {
     userIsClient() {
 

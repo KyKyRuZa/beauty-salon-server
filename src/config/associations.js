@@ -82,64 +82,54 @@ const defineAssociations = (models) => {
     as: 'masters'
   });
 
-
+  // Связи MasterService (перенесены из модели)
   MasterService.belongsTo(Master, {
-    foreignKey: {
-      name: 'master_id',
-      allowNull: false
-    },
-    onDelete: 'CASCADE',
-    hooks: true,
+    foreignKey: 'master_id',
     targetKey: 'id',
-    as: 'master_provider'
+    as: 'master_provider',
+    onDelete: 'CASCADE'
   });
   Master.hasMany(MasterService, {
-    foreignKey: {
-      name: 'master_id',
-      allowNull: false
-    },
+    foreignKey: 'master_id',
     sourceKey: 'id',
-    as: 'services'
+    as: 'services',
+    onDelete: 'CASCADE'
   });
-
 
   MasterService.belongsTo(Salon, {
-    foreignKey: {
-      name: 'salon_id',
-      allowNull: true
-    },
-    onDelete: 'CASCADE',
-    hooks: true,
+    foreignKey: 'salon_id',
     targetKey: 'id',
-    as: 'master_service_salon'
+    as: 'salon',
+    onDelete: 'CASCADE'
   });
   Salon.hasMany(MasterService, {
-    foreignKey: {
-      name: 'salon_id',
-      allowNull: true
-    },
+    foreignKey: 'salon_id',
     sourceKey: 'id',
-    as: 'master_services'
+    as: 'master_services',
+    onDelete: 'CASCADE'
   });
-
 
   MasterService.belongsTo(ServiceCategory, {
-    foreignKey: {
-      name: 'category_id',
-      allowNull: true
-    },
-    onDelete: 'SET NULL',
-    hooks: true,
+    foreignKey: 'category_id',
     targetKey: 'id',
-    as: 'service_category'
+    as: 'category',
+    onDelete: 'SET NULL'
   });
-  ServiceCategory.hasMany(MasterService, {
-    foreignKey: {
-      name: 'category_id',
-      allowNull: true
-    },
-    sourceKey: 'id',
-    as: 'master_services_by_category'
+
+  // Связи TimeSlot (перенесены из модели)
+  TimeSlot.belongsTo(MasterService, {
+    foreignKey: 'service_id',
+    targetKey: 'id',
+    as: 'service',
+    onDelete: 'SET NULL'
+  });
+
+  // Связи MasterAvailability (перенесены из модели)
+  MasterAvailability.belongsTo(MasterService, {
+    foreignKey: 'service_id',
+    targetKey: 'id',
+    as: 'service',
+    onDelete: 'SET NULL'
   });
 
 
@@ -252,6 +242,18 @@ const defineAssociations = (models) => {
     targetKey: 'id',
     as: 'availability_master'
   });
+
+  // Связь MasterAvailability ↔ TimeSlot
+  MasterAvailability.hasMany(TimeSlot, {
+    foreignKey: 'master_availability_id',
+    sourceKey: 'id',
+    as: 'slots'
+  });
+  TimeSlot.belongsTo(MasterAvailability, {
+    foreignKey: 'master_availability_id',
+    targetKey: 'id',
+    as: 'master_availability'
+  });
   
 
 
@@ -264,6 +266,14 @@ const defineAssociations = (models) => {
     hooks: true,
     targetKey: 'id',
     as: 'admin_profile'
+  });
+
+  // Связь Admin (перенесена из модели)
+  Admin.belongsTo(User, {
+    foreignKey: 'user_id',
+    targetKey: 'id',
+    as: 'user',
+    onDelete: 'CASCADE'
   });
 
 

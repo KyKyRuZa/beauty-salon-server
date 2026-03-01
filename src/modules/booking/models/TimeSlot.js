@@ -1,6 +1,7 @@
 const { DataTypes } = require('sequelize');
 const { sequelize } = require('../../../config/database');
 const MasterService = require('../../catalog/models/MasterService');
+const MasterAvailability = require('./MasterAvailability');
 
 const TimeSlot = sequelize.define('TimeSlot', {
   id: {
@@ -24,6 +25,20 @@ const TimeSlot = sequelize.define('TimeSlot', {
       model: {
         schema: 'catalog_schema',
         tableName: 'master_services'
+      },
+      key: 'id'
+    },
+    onDelete: 'SET NULL'
+  },
+  master_availability_id: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    field: 'master_availability_id',
+    comment: 'ID записи расписания мастера, из которого создан слот',
+    references: {
+      model: {
+        schema: 'booking_schema',
+        tableName: 'master_availability'
       },
       key: 'id'
     },
@@ -72,6 +87,10 @@ const TimeSlot = sequelize.define('TimeSlot', {
     {
       fields: ['master_id', 'status'],
       name: 'idx_slots_master_status'
+    },
+    {
+      fields: ['master_availability_id'],
+      name: 'idx_slots_master_availability_id'
     }
   ],
   paranoid: false,
@@ -90,12 +109,6 @@ const TimeSlot = sequelize.define('TimeSlot', {
       }
     }
   }
-});
-
-TimeSlot.belongsTo(MasterService, {
-  foreignKey: 'service_id',
-  targetKey: 'id',
-  as: 'service'
 });
 
 module.exports = TimeSlot;

@@ -67,14 +67,7 @@ const ServiceSubcategory = sequelize.define('ServiceSubcategory', {
   timestamps: true,
   createdAt: 'created_at',
   updatedAt: 'updated_at',
-  deletedAt: 'deletedAt'
-});
-
-
-ServiceSubcategory.belongsTo(ServiceCategory, {
-  foreignKey: 'category_id',
-  targetKey: 'id',
-  as: 'category'
+  deletedAt: 'deleted_at'
 });
 
 module.exports = ServiceSubcategory;

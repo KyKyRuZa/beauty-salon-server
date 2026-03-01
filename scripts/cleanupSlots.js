@@ -1,13 +1,3 @@
-/**
- * Скрипт для очистки старых слотов записи
- * Удаляет слоты из таблицы booking_schema.slots, у которых created_at старше текущей даты
- * 
- * Использование:
- *   node scripts/cleanupSlots.js           - очистка слотов за все прошедшие дни
- *   node scripts/cleanupSlots.js --days=3  - очистка слотов старше 3 дней
- *   node scripts/cleanupSlots.js --dry-run - тестовый режим (покажет количество без удаления)
- */
-
 const { sequelize } = require('../src/config/database');
 
 async function cleanupSlots(options = {}) {

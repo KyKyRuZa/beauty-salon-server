@@ -123,7 +123,8 @@ const User = sequelize.define('User', {
   paranoid: true,
   timestamps: true,
   createdAt: 'created_at',
-  updatedAt: 'updated_at'
+  updatedAt: 'updated_at',
+  deletedAt: 'deleted_at'
 });
 
 module.exports = User;

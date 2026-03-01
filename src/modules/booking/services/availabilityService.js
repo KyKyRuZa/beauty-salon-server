@@ -56,7 +56,7 @@ const setAvailability = async (masterId, date, startTime, endTime, slotDuration 
   const transaction = await sequelize.transaction();
 
   try {
-    
+
     const existing = await MasterAvailability.findOne({
       where: {
         master_id: masterId,
@@ -71,6 +71,8 @@ const setAvailability = async (masterId, date, startTime, endTime, slotDuration 
       serviceId,
       found: !!existing
     });
+
+    let availabilityId;
 
     if (existing) {
       await existing.update({
@@ -87,7 +89,7 @@ const setAvailability = async (masterId, date, startTime, endTime, slotDuration 
             [Op.gte]: new Date(date + 'T00:00:00'),
             [Op.lt]: new Date(date + 'T23:59:59')
           },
-          
+
           [Op.or]: [
             { service_id: serviceId },
             { service_id: null }
@@ -96,10 +98,12 @@ const setAvailability = async (masterId, date, startTime, endTime, slotDuration 
         transaction
       });
 
+      availabilityId = existing.id;
+
       logger.info('setAvailability обновлено существующее расписание', {
         masterId,
         date,
-        availabilityId: existing.id,
+        availabilityId,
         serviceId
       });
     } else {
@@ -113,15 +117,17 @@ const setAvailability = async (masterId, date, startTime, endTime, slotDuration 
         is_available: true
       }, { transaction });
 
+      availabilityId = newAvailability.id;
+
       logger.info('setAvailability создано новое расписание', {
         masterId,
         date,
-        availabilityId: newAvailability.id,
+        availabilityId,
         serviceId
       });
     }
 
-    await generateTimeSlots(masterId, date, startTime, endTime, slotDuration, transaction, serviceId);
+    await generateTimeSlots(masterId, date, startTime, endTime, slotDuration, transaction, serviceId, availabilityId);
 
     await transaction.commit();
 
@@ -191,7 +197,8 @@ const updateAvailability = async (availabilityId, masterId, updateData) => {
         updateData.end_time || availability.end_time,
         updateData.slot_duration || availability.slot_duration,
         transaction,
-        updateData.service_id !== undefined ? updateData.service_id : availability.service_id
+        updateData.service_id !== undefined ? updateData.service_id : availability.service_id,
+        availability.id  // ✅ Передаём existing availabilityId
       );
     }
 
@@ -264,7 +271,7 @@ const deleteAvailability = async (availabilityId, masterId) => {
   }
 };
 
-const generateTimeSlots = async (masterId, date, startTime, endTime, slotDuration, transaction, serviceId = null) => {
+const generateTimeSlots = async (masterId, date, startTime, endTime, slotDuration, transaction, serviceId = null, availabilityId = null) => {
   try {
     const baseDate = new Date(date + 'T00:00:00');
     const [startHour, startMin, startSec] = startTime.split(':').map(Number);
@@ -290,8 +297,8 @@ const generateTimeSlots = async (masterId, date, startTime, endTime, slotDuratio
 
       if (slotEnd > dayEnd) break;
 
-      
-      
+
+
       const formatLocalTime = (date) => {
         const year = date.getFullYear();
         const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -304,7 +311,8 @@ const generateTimeSlots = async (masterId, date, startTime, endTime, slotDuratio
 
       slots.push({
         master_id: masterId,
-        service_id: serviceId, 
+        service_id: serviceId,
+        master_availability_id: availabilityId,  // ✅ Добавляем связь с расписанием
         start_time: formatLocalTime(currentTime),
         end_time: formatLocalTime(slotEnd),
         status: 'free',
@@ -317,7 +325,7 @@ const generateTimeSlots = async (masterId, date, startTime, endTime, slotDuratio
 
     if (slots.length > 0) {
       await TimeSlot.bulkCreate(slots, { transaction });
-      logger.info('Слоты сгенерированы', { masterId, date, count: slots.length });
+      logger.info('Слоты сгенерированы', { masterId, date, count: slots.length, availabilityId });
     }
 
     return slots;
@@ -445,7 +453,8 @@ const regenerateSlotsForDate = async (masterId, date) => {
       availability.end_time,
       availability.slot_duration,
       transaction,
-      availability.service_id
+      availability.service_id,
+      availability.id  // ✅ Передаём availabilityId
     );
 
     await transaction.commit();
