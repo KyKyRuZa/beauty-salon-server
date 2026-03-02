@@ -9,7 +9,7 @@ const getAllActiveServices = async () => {
     include: [
       {
         model: Master,
-        as: 'master',
+        as: 'master_provider',
         attributes: ['first_name', 'last_name', 'specialization']
       }
     ]
@@ -22,7 +22,7 @@ const getServiceById = async (id) => {
     include: [
       {
         model: Master,
-        as: 'master',
+        as: 'master_provider',
         attributes: ['first_name', 'last_name', 'specialization']
       }
     ]
@@ -44,7 +44,7 @@ const createService = async (serviceData) => {
     include: [
       {
         model: Master,
-        as: 'master',
+        as: 'master_provider',
         attributes: ['first_name', 'last_name', 'specialization']
       }
     ]
@@ -63,7 +63,7 @@ const updateService = async (id, updateData) => {
     include: [
       {
         model: Master,
-        as: 'master',
+        as: 'master_provider',
         attributes: ['first_name', 'last_name', 'specialization']
       }
     ]

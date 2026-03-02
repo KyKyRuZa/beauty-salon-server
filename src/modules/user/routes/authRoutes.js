@@ -27,7 +27,8 @@ router.put('/edit-profile', upload.single('avatar'), (req, res, next) => {
 
 
   if (req.file) {
-    req.body.avatar = req.file.path;
+    // Делаем путь относительным (убираем /app/ если есть)
+    req.body.avatar = req.file.path.replace('/app/', '');
   }
 
 

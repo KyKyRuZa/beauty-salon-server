@@ -151,8 +151,8 @@ const getServiceVariationsByCategory = async (categoryId, { masterId = null, sal
     include: [
       {
         model: Master,
-        as: 'master',
-        attributes: ['first_name', 'last_name', 'specialization']
+        as: 'master_provider',
+        attributes: ['first_name', 'last_name', 'specialization', 'rating']
       }
     ],
     limit: parseInt(limit)
@@ -177,8 +177,8 @@ const getServiceVariations = async (serviceId, { masterId = null, salonId = null
     include: [
       {
         model: Master,
-        as: 'master',
-        attributes: ['first_name', 'last_name', 'specialization']
+        as: 'master_provider',
+        attributes: ['first_name', 'last_name', 'specialization', 'rating']
       }
     ],
     limit: parseInt(limit)
@@ -215,8 +215,8 @@ const getAllCatalogServices = async ({ category = null, search = null, masterId 
     include: [
       {
         model: Master,
-        as: 'master',
-        attributes: ['first_name', 'last_name', 'specialization']
+        as: 'master_provider',
+        attributes: ['first_name', 'last_name', 'specialization', 'rating']
       }
     ],
     order: [[sortField, order]],
@@ -236,8 +236,8 @@ const getCatalogServiceById = async (id) => {
     include: [
       {
         model: Master,
-        as: 'master',
-        attributes: ['first_name', 'last_name', 'specialization']
+        as: 'master_provider',
+        attributes: ['first_name', 'last_name', 'specialization', 'rating']
       }
     ]
   });
@@ -255,8 +255,8 @@ const createCatalogService = async (serviceData) => {
     include: [
       {
         model: Master,
-        as: 'master',
-        attributes: ['first_name', 'last_name', 'specialization']
+        as: 'master_provider',
+        attributes: ['first_name', 'last_name', 'specialization', 'rating']
       }
     ]
   });
@@ -274,8 +274,8 @@ const updateCatalogService = async (id, updateData) => {
     include: [
       {
         model: Master,
-        as: 'master',
-        attributes: ['first_name', 'last_name', 'specialization']
+        as: 'master_provider',
+        attributes: ['first_name', 'last_name', 'specialization', 'rating']
       }
     ]
   });
@@ -311,8 +311,8 @@ const createMasterService = async (masterId, serviceData) => {
     include: [
       {
         model: Master,
-        as: 'master',
-        attributes: ['first_name', 'last_name', 'specialization']
+        as: 'master_provider',
+        attributes: ['first_name', 'last_name', 'specialization', 'rating']
       }
     ]
   });
@@ -369,8 +369,8 @@ const getMasterServices = async (masterId, { category = null, search = null, is_
     include: [
       {
         model: Master,
-        as: 'master',
-        attributes: ['first_name', 'last_name', 'specialization']
+        as: 'master_provider',
+        attributes: ['first_name', 'last_name', 'specialization', 'rating']
       }
     ],
     offset: parseInt(offset)
@@ -420,8 +420,8 @@ const getSalonServices = async (salonId, { category = null, search = null, is_ac
       },
       {
         model: Master,
-        as: 'master',
-        attributes: ['first_name', 'last_name', 'specialization']
+        as: 'master_provider',
+        attributes: ['first_name', 'last_name', 'specialization', 'rating']
       },
       {
         model: Salon,
@@ -457,8 +457,8 @@ const updateMasterService = async (masterId, serviceId, updateData) => {
     include: [
       {
         model: Master,
-        as: 'master',
-        attributes: ['first_name', 'last_name', 'specialization']
+        as: 'master_provider',
+        attributes: ['first_name', 'last_name', 'specialization', 'rating']
       }
     ]
   });
@@ -510,8 +510,8 @@ const updateSalonService = async (salonId, serviceId, updateData) => {
       },
       {
         model: Master,
-        as: 'master',
-        attributes: ['first_name', 'last_name', 'specialization']
+        as: 'master_provider',
+        attributes: ['first_name', 'last_name', 'specialization', 'rating']
       },
       {
         model: Salon,

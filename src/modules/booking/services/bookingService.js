@@ -186,7 +186,7 @@ const getBookingById = async (bookingId) => {
   const booking = await Booking.findByPk(bookingId, {
     include: [
       { model: MasterService, as: 'service' },
-      { model: Master, as: 'master' },
+      { model: Master, as: 'booking_master' },
       { model: Client, as: 'client' }
     ]
   });

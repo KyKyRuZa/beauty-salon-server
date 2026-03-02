@@ -198,9 +198,10 @@ const editProfile = async (userId, profileData) => {
 
 
     if (transformed.avatar) {
-
       const baseUrl = process.env.SERVER_URL || `http://localhost:${process.env.PORT || 5000}`;
-      transformed.image_url = `${baseUrl}/${transformed.avatar}`;
+      // Убираем ведущий слеш из avatar чтобы не было двойного слеша
+      const avatarPath = transformed.avatar.replace(/^\/+/, '');
+      transformed.image_url = `${baseUrl}/${avatarPath}`;
       delete transformed.avatar;
     }
 

@@ -181,7 +181,8 @@ const editProfile = async (req, res) => {
 
 
     if (req.file) {
-      profileData.avatar = req.file.path;
+      // Делаем путь относительным (убираем /app/ если есть)
+      profileData.avatar = req.file.path.replace('/app/', '');
     }
 
 
@@ -208,7 +209,8 @@ const editProfile = async (req, res) => {
     
 
     if (req.file) {
-      validatedProfileData.avatar = req.file.path;
+      // Делаем путь относительным (убираем /app/ если есть)
+      validatedProfileData.avatar = req.file.path.replace('/app/', '');
     }
 
     const updatedProfile = await userService.editProfile(userId, validatedProfileData);
