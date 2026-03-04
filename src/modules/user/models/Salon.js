@@ -112,4 +112,15 @@ const Salon = sequelize.define('Salon', {
   deletedAt: 'deleted_at'
 });
 
+// Ассоциации будут определены после импорта всех моделей
+Salon.associate = (models) => {
+  if (models.SalonLocation) {
+    Salon.hasOne(models.SalonLocation, {
+      foreignKey: 'salon_id',
+      as: 'location',
+      sourceKey: 'id'
+    });
+  }
+};
+
 module.exports = Salon;

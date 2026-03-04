@@ -5,7 +5,6 @@ const { authenticateToken } = require('../../../middleware/auth');
 const { validate } = require('../../../middleware/validation');
 const {
   serviceCategoryValidationSchema,
-  serviceSubcategoryValidationSchema,
   serviceTemplateValidationSchema,
   masterServiceValidationSchema,
   updateMasterServiceValidationSchema

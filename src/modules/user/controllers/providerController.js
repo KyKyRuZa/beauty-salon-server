@@ -55,6 +55,7 @@ const getSalonById = async (req, res) => {
 
   try {
     const { id } = req.params;
+    const SalonLocation = require('../models/SalonLocation');
 
     const salon = await Salon.findByPk(id, {
       attributes: ['id', 'user_id', 'name', 'description', 'address', 'inn', 'rating', 'image_url', 'created_at', 'updated_at']
@@ -68,11 +69,29 @@ const getSalonById = async (req, res) => {
       });
     }
 
+    // Получаем локацию салона с координатами
+    const location = await SalonLocation.findOne({
+      where: { salon_id: id }
+    });
+
+    const salonData = salon.toJSON();
+    
+    if (location) {
+      salonData.location = {
+        id: location.id,
+        city: location.city,
+        address: location.address,
+        coordinates: location.getCoordinates(),
+        working_hours: location.working_hours,
+        is_verified: location.is_verified
+      };
+    }
+
     logger.info('Данные салона успешно получены', { salonId: id, ip: req.ip });
 
     res.status(200).json({
       success: true,
-      data: salon
+      data: salonData
     });
   } catch (error) {
     logger.error('Ошибка получения данных салона', { error: error.message, salonId: req.params.id, ip: req.ip });

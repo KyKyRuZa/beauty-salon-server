@@ -5,7 +5,6 @@ const Master = require('../../user/models/Master');
 const Salon = require('../../user/models/Salon');
 const Client = require('../../user/models/Client');
 const ServiceCategory = require('../../catalog/models/ServiceCategory');
-const ServiceSubcategory = require('../../catalog/models/ServiceSubcategory');
 const MasterService = require('../../catalog/models/MasterService');
 const Booking = require('../../booking/models/Booking');
 
@@ -16,7 +15,6 @@ const getDashboardStats = async () => {
     totalMasters: await Master.count(),
     totalSalons: await Salon.count(),
     totalCategories: await ServiceCategory.count(),
-    totalSubcategories: await ServiceSubcategory.count(),
     totalServices: await MasterService.count(),
     totalBookings: await Booking.count(),
     todayBookings: await Booking.count({

@@ -3,7 +3,6 @@ const { QueryTypes } = require('sequelize');
 const { cache, KEYS, CACHE_TTL } = require('../../../utils/cacheService');
 
 const ServiceCategory = require('../models/ServiceCategory');
-const ServiceSubcategory = require('../models/ServiceSubcategory');
 const MasterService = require('../models/MasterService');
 const Master = require('../../user/models/Master');
 const Salon = require('../../user/models/Salon');

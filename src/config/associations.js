@@ -1,6 +1,6 @@
 
 const defineAssociations = (models) => {
-  const { User, Client, Master, Salon, ServiceCategory, ServiceSubcategory, MasterService, TimeSlot, Admin, Booking, MasterAvailability, Review, Favorite, MasterSkill, MasterPortfolio } = models;
+  const { User, Client, Master, Salon, ServiceCategory, MasterService, TimeSlot, Admin, Booking, MasterAvailability, Review, Favorite, MasterSkill, MasterPortfolio } = models;
 
 
   User.hasOne(Client, {

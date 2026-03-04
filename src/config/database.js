@@ -55,15 +55,18 @@ function importModels() {
 
 
   const ServiceCategory = require('../modules/catalog/models/ServiceCategory');
-  const ServiceSubcategory = require('../modules/catalog/models/ServiceSubcategory');
   const MasterService = require('../modules/catalog/models/MasterService');
   const TimeSlot = require('../modules/booking/models/TimeSlot');
 
 
   const Booking = require('../modules/booking/models/Booking');
   const MasterAvailability = require('../modules/booking/models/MasterAvailability');
+  const SalonLocation = require('../modules/user/models/SalonLocation');
 
-  return { User, Client, Master, Salon, Admin, ServiceCategory, ServiceSubcategory, MasterService, TimeSlot, Booking, MasterAvailability, Review, Favorite, MasterSkill, MasterPortfolio };
+  Salon.associate({ SalonLocation });
+  SalonLocation.associate({ Salon });
+
+  return { User, Client, Master, Salon, Admin, ServiceCategory, MasterService, TimeSlot, Booking, MasterAvailability, Review, Favorite, MasterSkill, MasterPortfolio, SalonLocation };
 }
 
 function defineAssociations(models) {
@@ -92,13 +95,13 @@ const connectDB = async () => {
     await models.Admin.sync();
 
     await models.ServiceCategory.sync();
-    await models.ServiceSubcategory.sync();
     await models.MasterService.sync();
 
+    // Сначала MasterAvailability, потом TimeSlot (т.к. TimeSlot ссылается на MasterAvailability)
+    await models.MasterAvailability.sync();
     await models.TimeSlot.sync();
 
     await models.Booking.sync();
-    await models.MasterAvailability.sync();
 
     await models.Review.sync();
 
@@ -106,6 +109,8 @@ const connectDB = async () => {
 
     await models.MasterSkill.sync();
     await models.MasterPortfolio.sync();
+
+    await models.SalonLocation.sync();
 
     dbLogger.info('База данных синхронизирована.');
   } catch (error) {

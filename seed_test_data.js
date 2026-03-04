@@ -169,7 +169,9 @@ async function seedTestData() {
         {
           name: 'Beauty Salon & Spa',
           description: 'Современный салон красоты с широким спектром услуг: парикмахерский зал, ногтевой сервис, косметология, СПА.',
-          address: 'г. Москва, ул. Тверская, д. 1',
+          address: 'г. Казань, ул. Баумана, д. 15',
+          city: 'Казань',
+          coordinates: { lat: 55.7887, lng: 49.1221 },
           inn: '1234567890',
           image_url: 'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=500',
           rating: 4.8
@@ -177,7 +179,9 @@ async function seedTestData() {
         {
           name: 'Style House',
           description: 'Элитный салон красоты с индивидуальным подходом к каждому клиенту. Премиум косметика и топ-мастера.',
-          address: 'г. Москва, ул. Арбат, д. 10',
+          address: 'г. Казань, ул. Пушкина, д. 10',
+          city: 'Казань',
+          coordinates: { lat: 55.7900, lng: 49.1300 },
           inn: '0987654321',
           image_url: 'https://images.unsplash.com/photo-1521590832169-d7fcbe215a3e?w=500',
           rating: 4.9
@@ -380,6 +384,32 @@ async function seedTestData() {
       const salon = await Salon.create(salonData);
       createdSalons.push(salon);
       console.log(`   ✓ ${salon.name}`);
+    }
+
+    console.log('\n📍 Создание локаций салонов...');
+    const SalonLocation = require('./src/modules/user/models/SalonLocation');
+    for (let i = 0; i < testData.salons.length; i++) {
+      const salon = createdSalons[i];
+      const salonConfig = testData.salons[i];
+      if (salonConfig.coordinates) {
+        const location = await SalonLocation.create({
+          salon_id: salon.id,
+          city: salonConfig.city,
+          address: salonConfig.address,
+          coordinates: salonConfig.coordinates,
+          working_hours: {
+            monday: { open: '09:00', close: '20:00', is_open: true },
+            tuesday: { open: '09:00', close: '20:00', is_open: true },
+            wednesday: { open: '09:00', close: '20:00', is_open: true },
+            thursday: { open: '09:00', close: '20:00', is_open: true },
+            friday: { open: '09:00', close: '20:00', is_open: true },
+            saturday: { open: '10:00', close: '18:00', is_open: true },
+            sunday: { open: '10:00', close: '18:00', is_open: false }
+          },
+          is_verified: true
+        });
+        console.log(`   ✓ Локация для ${salon.name} (${salonConfig.city})`);
+      }
     }
 
     

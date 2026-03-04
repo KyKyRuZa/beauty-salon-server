@@ -1,3 +1,17 @@
+CREATE EXTENSION IF NOT EXISTS postgis;
+
+-- pg_trgm - для нечеткого поиска
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+
+-- btree_gin - для GIN индексов
+CREATE EXTENSION IF NOT EXISTS btree_gin;
+
+-- pg_stat_statements - для мониторинга
+CREATE EXTENSION IF NOT EXISTS pg_stat_statements;
+
+-- pg_prewarm - для кэширования
+CREATE EXTENSION IF NOT EXISTS pg_prewarm;
+
 -- Создание схем для организации базы данных
 CREATE SCHEMA IF NOT EXISTS user_schema;
 CREATE SCHEMA IF NOT EXISTS catalog_schema;

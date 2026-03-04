@@ -1,6 +1,5 @@
 const catalogService = require('../services/catalogService');
 const ServiceCategory = require('../models/ServiceCategory');
-const ServiceSubcategory = require('../models/ServiceSubcategory');
 const MasterService = require('../models/MasterService');
 const { createLogger } = require('../../../utils/logger');
 
