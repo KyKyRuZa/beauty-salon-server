@@ -5,6 +5,9 @@ const MasterSkill = require('../models/MasterSkill');
 const MasterPortfolio = require('../models/MasterPortfolio');
 const { authenticateToken } = require('../../../middleware/auth');
 
+// Топ мастеров (публичный endpoint)
+router.get('/top', providerController.getTopMastersController);
+
 router.get('/master/:id', providerController.getMasterById);
 router.get('/salon/:id', providerController.getSalonById);
 

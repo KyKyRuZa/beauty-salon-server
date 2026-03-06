@@ -14,7 +14,6 @@ const getAvailableDates = async (masterId, serviceId = null, startDate = null, e
     is_available: true
   };
 
-  
   if (serviceId) {
     where[Op.or] = [
       { service_id: serviceId },
@@ -22,7 +21,6 @@ const getAvailableDates = async (masterId, serviceId = null, startDate = null, e
     ];
   }
 
-  
   if (startDate && endDate) {
     where.date = {
       [Op.gte]: startDate,
@@ -37,10 +35,10 @@ const getAvailableDates = async (masterId, serviceId = null, startDate = null, e
   const availability = await MasterAvailability.findAll({
     where,
     attributes: ['date', 'start_time', 'end_time', 'slot_duration', 'service_id'],
-    order: [['date', 'ASC']]
+    order: [['date', 'ASC']],
+    group: ['date']
   });
 
-  
   return availability.map(a => ({
     date: a.date,
     start_time: a.start_time,

@@ -5,7 +5,8 @@ require('dotenv').config();
 
 const logger = createLogger('modular-monolith-app');
 
-const { connectDB } = require('./config/database');
+const { connectDB, sequelize } = require('./config/database');
+const redis = require('./config/redis');
 
 const userAuthRoutes = require('./modules/user/routes/authRoutes');
 const serviceRoutes = require('./modules/user/routes/serviceRoutes');
@@ -64,10 +65,52 @@ app.use('/api/availability', availabilityRoutes);
 app.use('/api/catalog', catalogRoutes);
 app.use('/api/admin', adminRoutes);
 
+// ============================================================================
+// HEALTH CHECK ENDPOINT - Проверка состояния БД и Redis
+// ============================================================================
+app.get('/health', async (req, res) => {
+  const healthStatus = {
+    status: 'OK',
+    timestamp: new Date().toISOString(),
+    services: {
+      database: { status: 'unknown', message: '' },
+      redis: { status: 'unknown', message: '' }
+    }
+  };
 
-app.get('/health', (req, res) => {
-  logger.info('Вызван эндпоинт проверки работоспособности');
-  res.status(200).json({ status: 'OK', message: 'Сервер запущен' });
+  let overallStatus = 'healthy';
+
+  // Проверка PostgreSQL
+  try {
+    await sequelize.authenticate();
+    healthStatus.services.database.status = 'connected';
+    healthStatus.services.database.message = 'База данных доступна';
+  } catch (error) {
+    healthStatus.services.database.status = 'disconnected';
+    healthStatus.services.database.message = `Ошибка подключения: ${error.message}`;
+    overallStatus = 'unhealthy';
+  }
+
+  // Проверка Redis
+  try {
+    await redis.ping();
+    healthStatus.services.redis.status = 'connected';
+    healthStatus.services.redis.message = 'Redis доступен';
+  } catch (error) {
+    healthStatus.services.redis.status = 'disconnected';
+    healthStatus.services.redis.message = `Ошибка подключения: ${error.message}`;
+    overallStatus = 'unhealthy';
+  }
+
+  const httpStatus = overallStatus === 'healthy' ? 200 : 503;
+  healthStatus.status = overallStatus === 'healthy' ? 'OK' : 'DEGRADED';
+
+  logger.info(`Health check: ${overallStatus}`, {
+    database: healthStatus.services.database.status,
+    redis: healthStatus.services.redis.status
+  });
+
+  res.status(httpStatus).json(healthStatus);
 });
 
 app.use((err, req, res, next) => {

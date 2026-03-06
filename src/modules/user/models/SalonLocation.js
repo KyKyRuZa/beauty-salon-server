@@ -54,9 +54,15 @@ const SalonLocation = sequelize.define('SalonLocation', {
   },
   coordinates: {
     type: DataTypes.STRING,
-    allowNull: false,
+    allowNull: true, // Оставляем для обратной совместимости
     field: 'coordinates',
-    comment: 'Координаты (PostGIS GEOGRAPHY POINT). Формат: "SRID=4326;POINT(lng lat)"'
+    comment: 'Координаты в текстовом формате (устаревшее). Формат: "SRID=4326;POINT(lng lat)"'
+  },
+  coordinatesGeo: {
+    type: DataTypes.STRING(255), // Используем STRING т.к. Sequelize не поддерживает GEOGRAPHY напрямую
+    allowNull: false,
+    field: 'coordinates_geo',
+    comment: 'Гео-координаты PostGIS GEOGRAPHY(POINT, 4326) в формате WKT'
   },
   working_hours: {
     type: DataTypes.JSONB,
@@ -94,15 +100,24 @@ const SalonLocation = sequelize.define('SalonLocation', {
     {
       fields: ['is_verified'],
       name: 'salon_locations_is_verified_idx'
+    },
+    {
+      fields: [sequelize.col('coordinates_geo')],
+      name: 'salon_locations_coordinates_geo_idx',
+      using: 'GIST'
     }
   ],
   timestamps: false,
   hooks: {
     beforeValidate: (location) => {
       // Преобразование координат в формат PostGIS если переданы как объект
-      if (location.coordinates && typeof location.coordinates === 'object') {
-        const { lat, lng } = location.coordinates;
-        location.coordinates = `SRID=4326;POINT(${lng} ${lat})`;
+      if (location.coordinatesGeo && typeof location.coordinatesGeo === 'object') {
+        const { lat, lng } = location.coordinatesGeo;
+        location.coordinatesGeo = `SRID=4326;POINT(${lng} ${lat})`;
+      }
+      // Конвертация из старого формата coordinates в coordinatesGeo
+      if (location.coordinates && !location.coordinatesGeo && location.coordinates.startsWith('SRID=')) {
+        location.coordinatesGeo = location.coordinates;
       }
     }
   }
@@ -122,7 +137,10 @@ SalonLocation.associate = (models) => {
 // Методы экземпляра
 SalonLocation.prototype.getCoordinates = function() {
   // Парсинг координат из формата PostGIS "SRID=4326;POINT(lng lat)"
-  const match = this.coordinates.match(/POINT\(([^\s]+)\s+([^\)]+)\)/);
+  const coordString = this.coordinatesGeo || this.coordinates;
+  if (!coordString) return null;
+  
+  const match = coordString.match(/POINT\(([^\s]+)\s+([^\)]+)\)/);
   if (match) {
     return {
       lng: parseFloat(match[1]),
@@ -133,57 +151,39 @@ SalonLocation.prototype.getCoordinates = function() {
 };
 
 SalonLocation.prototype.setCoordinates = function(lat, lng) {
-  this.coordinates = `SRID=4326;POINT(${lng} ${lat})`;
+  this.coordinatesGeo = `SRID=4326;POINT(${lng} ${lat})`;
 };
 
 // Статические методы
 SalonLocation.findNearby = async function(lat, lng, radiusKm = 5, city = null) {
-  const radii = [5, 10, 20, 50];
   const radiusMeters = radiusKm * 1000;
-  
-  for (const radius of radii) {
-    const radiusM = radius * 1000;
-    const query = `
-      SELECT *, 
-             ST_Distance(
-               coordinates, 
-               ST_MakePoint(:lng, :lat)::geography
-             ) as distance_meters
-      FROM user_schema.salon_locations
-      WHERE ST_DWithin(coordinates, ST_MakePoint(:lng, :lat)::geography, :radius)
-        ${city ? 'AND city = :city' : ''}
-      ORDER BY distance_meters ASC
-      LIMIT 20
-    `;
-    
-    const results = await sequelize.query(query, {
-      model: this,
-      mapToModel: true,
-      replacements: {
-        lat,
-        lng,
-        radius: radiusM,
-        ...(city && { city })
-      }
-    });
-    
-    if (results.length > 0) {
-      return {
-        locations: results,
-        searchRadius: radius,
-        message: radius > 5 ? `Найдено в радиусе ${radius} км` : 'Ближайшие салоны'
-      };
+
+  const query = `
+    SELECT 
+      sl.*,
+      ST_Distance(sl.coordinates_geo, ST_MakePoint(:lng, :lat)::geography) as distance_meters
+    FROM user_schema.salon_locations sl
+    WHERE ST_DWithin(sl.coordinates_geo, ST_MakePoint(:lng, :lat)::geography, :radius)
+      ${city ? 'AND sl.city = :city' : ''}
+    ORDER BY distance_meters ASC
+    LIMIT 20
+  `;
+
+  const results = await sequelize.query(query, {
+    model: this,
+    mapToModel: true,
+    replacements: {
+      lat,
+      lng,
+      radius: radiusMeters,
+      ...(city && { city })
     }
-  }
-  
-  // Если ничего не найдено, вернуть все салоны города
-  const where = city ? { city } : {};
-  const locations = await this.findAll({ where });
-  
+  });
+
   return {
-    locations,
-    searchRadius: null,
-    message: 'Все салоны города'
+    locations: results,
+    searchRadius: radiusKm,
+    message: `Найдено салонов: ${results.length}`
   };
 };
 

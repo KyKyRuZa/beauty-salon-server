@@ -76,15 +76,16 @@ const getLocationBySalonId = async (salonId) => {
  */
 const getNearbySalons = async (lat, lng, city = null) => {
   const radii = [5, 10, 20, 50];
-  
+
   for (const radius of radii) {
     const radiusMeters = radius * 1000;
-    
+
     const query = `
-      SELECT 
+      SELECT
         sl.*,
+        ST_AsText(sl.coordinates_geo) as coordinates_wkt,
         ST_Distance(
-          sl.coordinates, 
+          sl.coordinates_geo,
           ST_MakePoint(:lng, :lat)::geography
         ) as distance_meters,
         s.id as salon_id,
@@ -95,12 +96,12 @@ const getNearbySalons = async (lat, lng, city = null) => {
         s.description as salon_description
       FROM user_schema.salon_locations sl
       JOIN user_schema.salons s ON sl.salon_id = s.id
-      WHERE ST_DWithin(sl.coordinates, ST_MakePoint(:lng, :lat)::geography, :radius)
+      WHERE ST_DWithin(sl.coordinates_geo, ST_MakePoint(:lng, :lat)::geography, :radius)
         ${city ? 'AND sl.city = :city' : ''}
       ORDER BY distance_meters ASC
       LIMIT 20
     `;
-    
+
     const results = await sequelize.query(query, {
       type: sequelize.QueryTypes.SELECT,
       replacements: {
@@ -110,7 +111,7 @@ const getNearbySalons = async (lat, lng, city = null) => {
         ...(city && { city })
       }
     });
-    
+
     if (results.length > 0) {
       return {
         salons: results.map(salon => ({
@@ -123,8 +124,8 @@ const getNearbySalons = async (lat, lng, city = null) => {
           description: salon.description,
           city: salon.city,
           coordinates: {
-            lat: parseFloat(salon.coordinates ? salon.coordinates.replace(/.*POINT\(([^)]+)\).*/, '$1').split(' ')[1] : 0),
-            lng: parseFloat(salon.coordinates ? salon.coordinates.replace(/.*POINT\(([^)]+)\).*/, '$1').split(' ')[0] : 0)
+            lat: parseFloat(salon.coordinates_wkt ? salon.coordinates_wkt.replace(/.*POINT\(([^)]+)\).*/, '$1').split(' ')[1] : 0),
+            lng: parseFloat(salon.coordinates_wkt ? salon.coordinates_wkt.replace(/.*POINT\(([^)]+)\).*/, '$1').split(' ')[0] : 0)
           },
           working_hours: salon.working_hours,
           is_verified: salon.is_verified,
@@ -132,13 +133,13 @@ const getNearbySalons = async (lat, lng, city = null) => {
           distance_km: (salon.distance_meters / 1000).toFixed(1)
         })),
         searchRadius: radius,
-        message: radius > 5 
-          ? `Найдено салонов: ${results.length} в радиусе ${radius} км` 
+        message: radius > 5
+          ? `Найдено салонов: ${results.length} в радиусе ${radius} км`
           : 'Ближайшие салоны'
       };
     }
   }
-  
+
   // Если ничего не найдено, вернуть все салоны города
   if (city) {
     const allSalons = await getLocationsByCity(city);
@@ -148,7 +149,7 @@ const getNearbySalons = async (lat, lng, city = null) => {
       message: `Все салоны города ${city}`
     };
   }
-  
+
   return {
     salons: [],
     searchRadius: null,
@@ -160,22 +161,30 @@ const getNearbySalons = async (lat, lng, city = null) => {
  * Создать локацию салона
  */
 const createLocation = async (data) => {
-  const { salon_id, city, address, coordinates, working_hours } = data;
-  
+  const { salon_id, city, address, coordinates, coordinatesGeo, working_hours } = data;
+
   // Проверка на существующую локацию
   const existing = await SalonLocation.findOne({ where: { salon_id } });
   if (existing) {
     throw new Error('Локация для этого салона уже существует');
   }
-  
+
+  // Подготовка координат для PostGIS
+  let coordinatesValue = coordinatesGeo || coordinates;
+  if (coordinatesValue && typeof coordinatesValue === 'object') {
+    const { lat, lng } = coordinatesValue;
+    coordinatesValue = `SRID=4326;POINT(${lng} ${lat})`;
+  }
+
   const location = await SalonLocation.create({
     salon_id,
     city,
     address,
-    coordinates,
+    coordinatesGeo: coordinatesValue,
+    coordinates: coordinatesValue, // Для обратной совместимости
     working_hours: working_hours || SalonLocation.options.defaultScope?.working_hours?.defaultValue
   });
-  
+
   return getLocationBySalonId(salon_id);
 };
 
@@ -184,25 +193,30 @@ const createLocation = async (data) => {
  */
 const updateLocation = async (salonId, data) => {
   const location = await SalonLocation.findOne({ where: { salon_id: salonId } });
-  
+
   if (!location) {
     throw new Error('Локация не найдена');
   }
-  
+
   if (data.city) location.city = data.city;
   if (data.address) location.address = data.address;
-  if (data.coordinates) {
-    if (typeof data.coordinates === 'object') {
-      location.setCoordinates(data.coordinates.lat, data.coordinates.lng);
+  
+  // Обновление координат
+  if (data.coordinatesGeo || data.coordinates) {
+    const coords = data.coordinatesGeo || data.coordinates;
+    if (typeof coords === 'object') {
+      location.setCoordinates(coords.lat, coords.lng);
     } else {
-      location.coordinates = data.coordinates;
+      location.coordinatesGeo = coords;
+      location.coordinates = coords; // Для обратной совместимости
     }
   }
+  
   if (data.working_hours) location.working_hours = data.working_hours;
   if (data.is_verified !== undefined) location.is_verified = data.is_verified;
-  
+
   await location.save();
-  
+
   return getLocationBySalonId(salonId);
 };
 

@@ -13,7 +13,8 @@ const CACHE_TTL = {
   CATEGORIES: 600,         // 10 минут
   MASTERS: 300,            // 5 минут
   MASTER_SERVICES: 300,    // 5 минут
-  SEARCH: 180              // 3 минуты
+  SEARCH: 180,             // 3 минуты
+  TOP_MASTERS: 2700        // 45 минут
 };
 
 /**
@@ -25,13 +26,13 @@ const get = async (key) => {
   try {
     const value = await redis.get(key);
     if (value) {
-      logger.debug(`Cache HIT: ${key}`);
+      logger.debug(`Кэш найден: ${key}`);
       return JSON.parse(value);
     }
-    logger.debug(`Cache MISS: ${key}`);
+    logger.debug(`Кэш не найден: ${key}`);
     return null;
   } catch (error) {
-    logger.error(`Cache get error: ${error.message}`);
+    logger.error(`Ошибка получения из кэша: ${error.message}`);
     return null;
   }
 };
@@ -46,10 +47,10 @@ const get = async (key) => {
 const set = async (key, value, ttl = CACHE_TTL.SERVICES) => {
   try {
     await redis.setex(key, ttl, JSON.stringify(value));
-    logger.debug(`Cache SET: ${key} (TTL: ${ttl}s)`);
+    logger.debug(`Кэш установлен: ${key} (TTL: ${ttl}s)`);
     return true;
   } catch (error) {
-    logger.error(`Cache set error: ${error.message}`);
+    logger.error(`Ошибка установки в кэш: ${error.message}`);
     return false;
   }
 };
@@ -62,10 +63,10 @@ const set = async (key, value, ttl = CACHE_TTL.SERVICES) => {
 const del = async (key) => {
   try {
     await redis.del(key);
-    logger.debug(`Cache DEL: ${key}`);
+    logger.debug(`Кэш удалён: ${key}`);
     return true;
   } catch (error) {
-    logger.error(`Cache del error: ${error.message}`);
+    logger.error(`Ошибка удаления из кэша: ${error.message}`);
     return false;
   }
 };
@@ -80,11 +81,11 @@ const clearByPattern = async (pattern) => {
     const keys = await redis.keys(pattern);
     if (keys.length > 0) {
       await redis.del(...keys);
-      logger.debug(`Cache CLEAR: ${keys.length} keys by pattern ${pattern}`);
+      logger.debug(`Кэш очищен: ${keys.length} ключей по паттерну ${pattern}`);
     }
     return true;
   } catch (error) {
-    logger.error(`Cache clear error: ${error.message}`);
+    logger.error(`Ошибка очистки кэша: ${error.message}`);
     return false;
   }
 };
@@ -99,7 +100,7 @@ const exists = async (key) => {
     const result = await redis.exists(key);
     return result === 1;
   } catch (error) {
-    logger.error(`Cache exists error: ${error.message}`);
+    logger.error(`Ошибка проверки существования ключа: ${error.message}`);
     return false;
   }
 };
@@ -113,14 +114,14 @@ const getStats = async () => {
     const info = await redis.info('stats');
     const memory = await redis.info('memory');
     const keyspace = await redis.info('keyspace');
-    
+
     return {
       info,
       memory,
       keyspace
     };
   } catch (error) {
-    logger.error(`Cache stats error: ${error.message}`);
+    logger.error(`Ошибка получения статистики кэша: ${error.message}`);
     return null;
   }
 };
@@ -131,22 +132,23 @@ const getStats = async () => {
 const KEYS = {
   // Сессии
   SESSION: (userId) => `session:${userId}`,
-  
+
   // Каталог
   CATEGORIES: 'catalog:categories',
   CATEGORY_BY_ID: (id) => `catalog:category:${id}`,
-  
+
   // Услуги
   SERVICES: 'catalog:services',
   SERVICE_BY_ID: (id) => `catalog:service:${id}`,
   SERVICES_BY_CATEGORY: (categoryId) => `catalog:services:category:${categoryId}`,
-  
+
   // Мастера
   MASTERS: 'masters:list',
   MASTER_BY_ID: (id) => `master:${id}`,
   MASTER_SERVICES: (masterId) => `master:${masterId}:services`,
   MASTER_SCHEDULE: (masterId, date) => `master:${masterId}:schedule:${date}`,
-  
+  TOP_MASTERS: (limit, minRating) => `top_masters:${limit}:${minRating}`,
+
   // Поиск
   SEARCH_CATEGORIES: (query) => `search:categories:${query}`,
   SEARCH_SERVICES: (query) => `search:services:${query}`,

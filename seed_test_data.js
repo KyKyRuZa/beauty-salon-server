@@ -5,11 +5,15 @@ const Master = require('./src/modules/user/models/Master');
 const Salon = require('./src/modules/user/models/Salon');
 const Admin = require('./src/modules/admin/models/Admin');
 const ServiceCategory = require('./src/modules/catalog/models/ServiceCategory');
-const ServiceSubcategory = require('./src/modules/catalog/models/ServiceSubcategory');
 const MasterService = require('./src/modules/catalog/models/MasterService');
 const MasterSkill = require('./src/modules/user/models/MasterSkill');
 const MasterPortfolio = require('./src/modules/user/models/MasterPortfolio');
+const MasterAvailability = require('./src/modules/booking/models/MasterAvailability');
+const TimeSlot = require('./src/modules/booking/models/TimeSlot');
+const Booking = require('./src/modules/booking/models/Booking');
+const SalonLocation = require('./src/modules/user/models/SalonLocation');
 const bcrypt = require('bcrypt');
+const { Op } = require('sequelize');
 
 async function seedTestData() {
   try {
@@ -18,10 +22,12 @@ async function seedTestData() {
 
     
     console.log('🗑️  Очистка базы данных...');
+    await Booking.destroy({ where: {}, truncate: true, cascade: true, force: true });
+    await TimeSlot.destroy({ where: {}, truncate: true, cascade: true, force: true });
+    await MasterAvailability.destroy({ where: {}, truncate: true, cascade: true, force: true });
     await MasterPortfolio.destroy({ where: {}, truncate: true, cascade: true, force: true });
     await MasterSkill.destroy({ where: {}, truncate: true, cascade: true, force: true });
     await MasterService.destroy({ where: {}, truncate: true, cascade: true, force: true });
-    await ServiceSubcategory.destroy({ where: {}, truncate: true, cascade: true, force: true });
     await ServiceCategory.destroy({ where: {}, truncate: true, cascade: true, force: true });
     await Admin.destroy({ where: {}, truncate: true, cascade: true, force: true });
     await Client.destroy({ where: {}, truncate: true, cascade: true, force: true });
@@ -370,9 +376,11 @@ async function seedTestData() {
 
     
     console.log('\n👤 Создание клиентов...');
+    const createdClients = [];
     for (let i = 0; i < testData.clients.length; i++) {
       const clientData = { ...testData.clients[i], user_id: createdUsers[1 + i].id };
       const client = await Client.create(clientData);
+      createdClients.push(client);
       console.log(`   ✓ ${client.first_name} ${client.last_name}`);
     }
 
@@ -501,6 +509,262 @@ async function seedTestData() {
     const portfolioCount = await MasterPortfolio.count();
     console.log(`   ✓ Создано работ в портфолио: ${portfolioCount}`);
 
+
+    // ========================================================================
+    // 📅 ГЕНЕРАЦИЯ РАСПИСАНИЯ (MASTER AVAILABILITY)
+    // ========================================================================
+    console.log('\n📅 Создание расписания мастеров (на 5 дней вперёд)...');
+    
+    // Динамические даты: начиная с завтрашнего дня + 4 дня (всего 5 дней)
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() + 1); // Завтрашний день
+    const endDate = new Date(startDate);
+    endDate.setDate(endDate.getDate() + 4); // +4 дня = всего 5 дней
+    
+    const dates = [];
+    for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+      dates.push(d.toISOString().split('T')[0]);
+    }
+    
+    console.log(`   Даты расписания: ${dates.join(', ')}`);
+    
+    // Получаем услуги каждого мастера для привязки расписания
+    const masterServicesMap = {};
+    for (const master of createdMasters) {
+      const services = await MasterService.findAll({ where: { master_id: master.id } });
+      masterServicesMap[master.id] = services;
+    }
+    
+    // Расписание для каждого мастера (разные рабочие часы)
+    // Теперь с привязкой к ПЕРВОЙ услуге мастера (чтобы не было дублей)
+    const masterSchedules = [
+      {
+        masterIndex: 0, // Екатерина (парикмахер)
+        schedules: dates.flatMap(date => [
+          { date, start: '09:00', end: '13:00', slotDuration: 60 },
+          { date, start: '14:00', end: '18:00', slotDuration: 60 }
+        ])
+      },
+      {
+        masterIndex: 1, // Ольга (маникюр)
+        schedules: dates.map(date => ({
+          date, start: '10:00', end: '20:00', slotDuration: 90
+        }))
+      },
+      {
+        masterIndex: 2, // Дмитрий (барбер)
+        schedules: dates.flatMap(date => [
+          { date, start: '09:00', end: '12:00', slotDuration: 60 },
+          { date, start: '13:00', end: '17:00', slotDuration: 60 }
+        ])
+      }
+    ];
+    
+    let availabilityCount = 0;
+    for (const { masterIndex, schedules } of masterSchedules) {
+      const master = createdMasters[masterIndex];
+      const masterServices = masterServicesMap[master.id];
+      // Привязываем расписание к ПЕРВОЙ услуге мастера
+      const serviceId = masterServices.length > 0 ? masterServices[0].id : null;
+      
+      for (const schedule of schedules) {
+        await MasterAvailability.create({
+          master_id: master.id,
+          service_id: serviceId,  // ✅ Привязываем к услуге
+          date: schedule.date,
+          start_time: schedule.start,
+          end_time: schedule.end,
+          slot_duration: schedule.slotDuration,
+          is_available: true
+        });
+        availabilityCount++;
+      }
+      console.log(`   ✓ ${master.first_name} ${master.last_name}: ${schedules.length} записей`);
+    }
+    console.log(`   ✓ Всего записей расписания: ${availabilityCount}`);
+
+
+    // ========================================================================
+    // ⏰ ГЕНЕРАЦИЯ ВРЕМЕННЫХ СЛОТОВ (TIME SLOT)
+    // ========================================================================
+    console.log('\n⏰ Генерация временных слотов...');
+    
+    const availabilities = await MasterAvailability.findAll({
+      where: { is_available: true }
+    });
+    
+    let slotCount = 0;
+    for (const availability of availabilities) {
+      const { master_id, service_id, date, start_time, end_time, slot_duration, id: master_availability_id } = availability;
+      
+      // Парсим время
+      const [startHour, startMin] = start_time.split(':').map(Number);
+      const [endHour, endMin] = end_time.split(':').map(Number);
+      
+      const dayStart = new Date(`${date}T${start_time}`);
+      const dayEnd = new Date(`${date}T${end_time}`);
+      
+      // Генерируем слоты
+      let currentTime = new Date(dayStart);
+      while (currentTime < dayEnd) {
+        const slotEnd = new Date(currentTime.getTime() + slot_duration * 60000);
+        if (slotEnd <= dayEnd) {
+          await TimeSlot.create({
+            master_id,
+            service_id,  // ✅ Привязываем слот к услуге
+            master_availability_id,
+            start_time: currentTime.toISOString(),
+            end_time: slotEnd.toISOString(),
+            status: 'free',
+            source: 'auto'
+          });
+          slotCount++;
+        }
+        currentTime = slotEnd;
+      }
+    }
+    console.log(`   ✓ Сгенерировано слотов: ${slotCount}`);
+
+
+    // ========================================================================
+    // 📝 СОЗДАНИЕ ТЕСТОВЫХ БРОНИРОВАНИЙ (BOOKING)
+    // ========================================================================
+    console.log('\n📝 Создание тестовых бронирований...');
+    
+    // Получаем услуги мастеров
+    const allServices = await MasterService.findAll({
+      where: { master_id: createdMasters.map(m => m.id) }
+    });
+    
+    // Функция проверки на пересечение
+    const hasOverlap = async (masterId, startTime, endTime) => {
+      const overlapping = await Booking.findOne({
+        where: {
+          master_id: masterId,
+          status: { [Op.in]: ['confirmed', 'completed'] },
+          [Op.or]: [
+            {
+              start_time: { [Op.lt]: endTime },
+              end_time: { [Op.gt]: startTime }
+            }
+          ]
+        }
+      });
+      return !!overlapping;
+    };
+    
+    // Тестовые бронирования (2-3 на клиента, разные статусы)
+    const testBookings = [
+      // Иван (client 1)
+      {
+        clientIndex: 0,
+        masterIndex: 0, // Екатерина
+        date: '2026-03-06',
+        time: '10:00',
+        duration: 60,
+        status: 'confirmed',
+        comment: 'Стрижка женская'
+      },
+      {
+        clientIndex: 0,
+        masterIndex: 1, // Ольга
+        date: '2026-03-07',
+        time: '14:00',
+        duration: 90,
+        status: 'completed',
+        comment: 'Маникюр с покрытием'
+      },
+      // Мария (client 2)
+      {
+        clientIndex: 1,
+        masterIndex: 2, // Дмитрий
+        date: '2026-03-06',
+        time: '11:00',
+        duration: 60,
+        status: 'confirmed',
+        comment: 'Мужская стрижка'
+      },
+      {
+        clientIndex: 1,
+        masterIndex: 0, // Екатерина
+        date: '2026-03-08',
+        time: '15:00',
+        duration: 60,
+        status: 'cancelled',
+        comment: 'Отменённая запись'
+      },
+      // Анна (client 3)
+      {
+        clientIndex: 2,
+        masterIndex: 1, // Ольга
+        date: '2026-03-10',
+        time: '10:00',
+        duration: 90,
+        status: 'confirmed',
+        comment: 'Педикюр полный'
+      }
+    ];
+    
+    let bookingCount = 0;
+    for (const bookingData of testBookings) {
+      const client = createdClients[bookingData.clientIndex];
+      const master = createdMasters[bookingData.masterIndex];
+      
+      const startTime = new Date(`${bookingData.date}T${bookingData.time}`);
+      const endTime = new Date(startTime.getTime() + bookingData.duration * 60000);
+      
+      // Проверка на пересечение
+      const overlap = await hasOverlap(master.id, startTime, endTime);
+      if (overlap) {
+        console.log(`   ⚠️ Пропущено: ${client.first_name} к ${master.first_name} (${bookingData.date} ${bookingData.time}) - пересечение`);
+        continue;
+      }
+      
+      // Находим подходящую услугу
+      const service = allServices.find(s => 
+        s.master_id === master.id && 
+        Math.abs(s.price - (bookingData.duration === 90 ? 2000 : 2500)) < 1000
+      ) || allServices.find(s => s.master_id === master.id);
+      
+      // Находим подходящий слот
+      const slot = await TimeSlot.findOne({
+        where: {
+          master_id: master.id,
+          start_time: { [Op.lte]: startTime },
+          end_time: { [Op.gte]: endTime },
+          status: 'free'
+        }
+      });
+      
+      const booking = await Booking.create({
+        client_id: client.id,
+        master_id: master.id,
+        master_service_id: service?.id || null,
+        time_slot_id: slot?.id || null,
+        start_time: startTime,
+        end_time: endTime,
+        status: bookingData.status,
+        comment: bookingData.comment,
+        price: service?.price || 2000
+      });
+      
+      // Обновляем статус слота
+      if (slot && bookingData.status === 'confirmed') {
+        await slot.update({ status: 'booked' });
+      }
+      
+      console.log(`   ✓ ${client.first_name} → ${master.first_name}: ${bookingData.date} ${bookingData.time} (${bookingData.status})`);
+      bookingCount++;
+    }
+    console.log(`   ✓ Всего бронирований: ${bookingCount}`);
+
+
+    // ========================================================================
+    // ФИНАЛЬНАЯ СТАТИСТИКА
+    // ========================================================================
+    const masterAvailabilityCount = await MasterAvailability.count();
+    const timeSlotCount = await TimeSlot.count();
+    const bookingCountTotal = await Booking.count();
     
     console.log('\n' + '='.repeat(60));
     console.log('✅ ТЕСТОВЫЕ ДАННЫЕ УСПЕШНО СОЗДАНЫ!');
@@ -509,21 +773,21 @@ async function seedTestData() {
     console.log('\n🔐 АДМИНИСТРАТОР:');
     console.log('   Email: admin@beauty-vite.ru');
     console.log('   Пароль: AdminPass123!');
-    
+
     console.log('\n👤 КЛИЕНТЫ:');
     console.log('   ivan.petrov@example.com / ClientPass123!');
     console.log('   maria.sidorova@example.com / ClientPass456!');
     console.log('   anna.kuznetsova@example.com / ClientPass789!');
-    
+
     console.log('\n💇‍♀️ МАСТЕРА:');
     console.log('   ekaterina.volkova@example.com / MasterPass123! (Парикмахер)');
     console.log('   olga.novikova@example.com / MasterPass456! (Маникюр)');
     console.log('   dmitry.sokolov@example.com / MasterPass789! (Барбер)');
-    
+
     console.log('\n🏢 САЛОНЫ:');
     console.log('   beauty.salon@example.com / SalonPass123!');
     console.log('   style.house@example.com / SalonPass456!');
-    
+
     console.log('\n📊 СТАТИСТИКА:');
     console.log(`   Пользователей: ${createdUsers.length}`);
     console.log(`   Клиентов: ${testData.clients.length}`);
@@ -533,6 +797,9 @@ async function seedTestData() {
     console.log(`   Услуг мастеров: ${testData.masterServices.length}`);
     console.log(`   Навыков: ${masterSkillCount}`);
     console.log(`   Работ в портфолио: ${portfolioCount}`);
+    console.log(`   Записей расписания: ${masterAvailabilityCount}`);
+    console.log(`   Временных слотов: ${timeSlotCount}`);
+    console.log(`   Бронирований: ${bookingCountTotal} (${bookingCount} тестовых)`);
     console.log('\n' + '='.repeat(60));
 
   } catch (error) {

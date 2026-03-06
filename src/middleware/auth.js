@@ -11,10 +11,10 @@ const authenticateToken = async (req, res, next) => {
   const token = authHeader && authHeader.split(' ')[1];
 
   if (!token) {
-    logger.warn('Требуется токен доступа', { url: req.url, method: req.method, ip: req.ip });
+    logger.warn('Требуется авторизация', { url: req.url, method: req.method, ip: req.ip });
     return res.status(401).json({
       success: false,
-      message: 'Требуется токен доступа'
+      message: 'Необходимо авторизоваться для выполнения этого действия'
     });
   }
 
@@ -54,7 +54,7 @@ const authenticateToken = async (req, res, next) => {
         });
         return res.status(403).json({
           success: false,
-          message: 'Неверный или просроченный токен'
+          message: 'Сессия истекла. Пожалуйста, войдите в систему повторно'
         });
       }
 
@@ -82,10 +82,10 @@ const requireAdminRole = (req, res, next) => {
   const token = authHeader && authHeader.split(' ')[1];
 
   if (!token) {
-    logger.warn('Требуется токен доступа для доступа к админ-панели', { url: req.url, method: req.method, ip: req.ip });
+    logger.warn('Требуется авторизация для доступа к админ-панели', { url: req.url, method: req.method, ip: req.ip });
     return res.status(401).json({
       success: false,
-      message: 'Требуется токен доступа'
+      message: 'Необходимо авторизоваться для выполнения этого действия'
     });
   }
 
@@ -99,7 +99,7 @@ const requireAdminRole = (req, res, next) => {
       });
       return res.status(403).json({
         success: false,
-        message: 'Неверный или просроченный токен'
+        message: 'Сессия истекла. Пожалуйста, войдите в систему повторно'
       });
     }
 
