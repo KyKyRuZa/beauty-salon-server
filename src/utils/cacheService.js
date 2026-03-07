@@ -135,12 +135,13 @@ const KEYS = {
 
   // Каталог
   CATEGORIES: 'catalog:categories',
+  CATEGORIES_LIST: (params) => `catalog:categories:list:${JSON.stringify(params)}`,
   CATEGORY_BY_ID: (id) => `catalog:category:${id}`,
 
   // Услуги
   SERVICES: 'catalog:services',
   SERVICE_BY_ID: (id) => `catalog:service:${id}`,
-  SERVICES_BY_CATEGORY: (categoryId) => `catalog:services:category:${categoryId}`,
+  SERVICES_BY_CATEGORY: (categoryId, params) => `catalog:services:category:${categoryId}:${JSON.stringify(params)}`,
 
   // Мастера
   MASTERS: 'masters:list',

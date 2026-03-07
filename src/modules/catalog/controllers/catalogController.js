@@ -2,6 +2,7 @@ const catalogService = require('../services/catalogService');
 const ServiceCategory = require('../models/ServiceCategory');
 const MasterService = require('../models/MasterService');
 const { createLogger } = require('../../../utils/logger');
+const cacheService = require('../../../utils/cacheService');
 
 
 const logger = createLogger('catalog-controller');
@@ -12,16 +13,40 @@ const getAllCatalogCategories = async (req, res) => {
 
   try {
     const { category, search, sortBy = 'name', order = 'ASC', limit, offset = 0 } = req.query;
-    
-    const result = await catalogService.getAllCatalogCategories({ 
-      category, 
-      search, 
-      sortBy, 
-      order, 
-      limit, 
-      offset 
+
+    // Формируем ключ кэша на основе параметров запроса
+    const cacheKey = cacheService.KEYS.CATEGORIES_LIST({ category, search, sortBy, order, limit, offset });
+
+    // Пробуем получить из кэша
+    let result = await cacheService.cache.get(cacheKey);
+
+    if (result) {
+      logger.debug('Кэш хит: категории каталога', { cacheKey, ip: req.ip });
+      return res.status(200).json({
+        success: true,
+        data: result.rows,
+        pagination: {
+          total: result.count,
+          limit: limit ? parseInt(limit) : null,
+          offset: parseInt(offset),
+          pages: limit ? Math.ceil(result.count / limit) : 1
+        }
+      });
+    }
+
+    result = await catalogService.getAllCatalogCategories({
+      category,
+      search,
+      sortBy,
+      order,
+      limit,
+      offset
     });
-    
+
+    // Сохраняем в кэш на 5 минут
+    await cacheService.cache.set(cacheKey, result, cacheService.CACHE_TTL.CATEGORIES);
+    logger.debug('Кэш установлен: категории каталога', { cacheKey, ip: req.ip });
+
     logger.info('Категории услуг из каталога успешно получены', { count: result.rows.length, total: result.count, ip: req.ip });
 
     res.status(200).json({
@@ -49,7 +74,20 @@ const getCatalogCategoryById = async (req, res) => {
 
   try {
     const { id } = req.params;
-    const category = await catalogService.getCatalogCategoryById(id);
+
+    // Пробуем получить из кэша
+    const cacheKey = cacheService.KEYS.CATEGORY_BY_ID(id);
+    let category = await cacheService.cache.get(cacheKey);
+
+    if (category) {
+      logger.debug('Кэш хит: категория по ID', { cacheKey, ip: req.ip });
+      return res.status(200).json({
+        success: true,
+        data: category
+      });
+    }
+
+    category = await catalogService.getCatalogCategoryById(id);
 
     if (!category) {
       logger.warn('Категория услуги из каталога не найдена', { categoryId: id, ip: req.ip });
@@ -58,6 +96,10 @@ const getCatalogCategoryById = async (req, res) => {
         message: 'Категория услуги не найдена'
       });
     }
+
+    // Сохраняем в кэш на 10 минут
+    await cacheService.cache.set(cacheKey, category, cacheService.CACHE_TTL.CATEGORIES);
+    logger.debug('Кэш установлен: категория по ID', { cacheKey, ip: req.ip });
 
     logger.info('Категория услуги из каталога успешно получена', { categoryId: id, ip: req.ip });
 
@@ -122,6 +164,10 @@ const createCatalogCategory = async (req, res) => {
 
     const category = await catalogService.createCatalogCategory(categoryData);
 
+    // Инвалидация кэша категорий
+    await cacheService.cache.clearByPattern('catalog:categories:*');
+    await cacheService.cache.del(cacheService.KEYS.CATEGORIES);
+
     logger.info('Категория услуги в каталоге успешно создана', { categoryId: category.id, ip: req.ip });
 
     res.status(201).json({
@@ -164,6 +210,11 @@ const updateCatalogCategory = async (req, res) => {
       });
     }
 
+    // Инвалидация кэша категорий
+    await cacheService.cache.del(cacheService.KEYS.CATEGORY_BY_ID(id));
+    await cacheService.cache.clearByPattern('catalog:categories:*');
+    await cacheService.cache.del(cacheService.KEYS.CATEGORIES);
+
     logger.info('Категория услуги в каталоге успешно обновлена', { categoryId: id, ip: req.ip });
 
     res.status(200).json({
@@ -196,6 +247,11 @@ const deleteCatalogCategory = async (req, res) => {
       });
     }
 
+    // Инвалидация кэша категорий
+    await cacheService.cache.del(cacheService.KEYS.CATEGORY_BY_ID(id));
+    await cacheService.cache.clearByPattern('catalog:categories:*');
+    await cacheService.cache.del(cacheService.KEYS.CATEGORIES);
+
     logger.info('Категория услуги в каталоге успешно удалена', { categoryId: id, ip: req.ip });
 
     res.status(200).json({
@@ -219,12 +275,30 @@ const getServicesByCategory = async (req, res) => {
     const { categoryId } = req.params;
     const { masterId, salonId, isActive = true, limit = 20 } = req.query;
 
-    const services = await catalogService.getServiceVariationsByCategory(categoryId, {
+    // Формируем ключ кэша
+    const cacheKey = cacheService.KEYS.SERVICES_BY_CATEGORY(categoryId, { masterId, salonId, isActive, limit });
+
+    // Пробуем получить из кэша
+    let services = await cacheService.cache.get(cacheKey);
+
+    if (services) {
+      logger.debug('Кэш хит: услуги по категории', { cacheKey, ip: req.ip });
+      return res.status(200).json({
+        success: true,
+        data: services
+      });
+    }
+
+    services = await catalogService.getServiceVariationsByCategory(categoryId, {
       masterId: masterId ? parseInt(masterId) : null,
       salonId: salonId ? parseInt(salonId) : null,
       is_active: isActive === 'false' ? false : true,
       limit
     });
+
+    // Сохраняем в кэш на 5 минут
+    await cacheService.cache.set(cacheKey, services, cacheService.CACHE_TTL.SERVICES);
+    logger.debug('Кэш установлен: услуги по категории', { cacheKey, ip: req.ip });
 
     logger.info('Услуги по категории каталога успешно получены', { count: services.length, categoryId, ip: req.ip });
 

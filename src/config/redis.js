@@ -15,7 +15,10 @@ const redisConfig = {
   lazyConnect: true,
   maxRetriesPerRequest: 3,
   connectTimeout: 10000,
-  commandTimeout: 5000
+  commandTimeout: 5000,
+  // Оптимизация для сессий
+  keepAlive: 300000, // 5 минут keep-alive
+  family: 4 // IPv4 для стабильности
 };
 
 const redis = new Redis(redisConfig);
@@ -36,6 +39,13 @@ redis.on('reconnecting', (delay) => {
   logger.info(`Redis reconnecting in ${delay}ms`);
 });
 
+// Логирование состояния подключения при старте
+logger.info('📡 Redis конфигурация:', {
+  host: redisConfig.host,
+  port: redisConfig.port,
+  db: redisConfig.db,
+  lazyConnect: redisConfig.lazyConnect
+});
 
 redis.connect().catch((err) => {
   logger.error('Failed to connect to Redis:', err.message);
