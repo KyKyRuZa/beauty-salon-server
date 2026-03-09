@@ -1,17 +1,17 @@
-const { sequelize } = require('./src/config/database');
-const User = require('./src/modules/user/models/User');
-const Client = require('./src/modules/user/models/Client');
-const Master = require('./src/modules/user/models/Master');
-const Salon = require('./src/modules/user/models/Salon');
-const Admin = require('./src/modules/admin/models/Admin');
-const ServiceCategory = require('./src/modules/catalog/models/ServiceCategory');
-const MasterService = require('./src/modules/catalog/models/MasterService');
-const MasterSkill = require('./src/modules/user/models/MasterSkill');
-const MasterPortfolio = require('./src/modules/user/models/MasterPortfolio');
-const MasterAvailability = require('./src/modules/booking/models/MasterAvailability');
-const TimeSlot = require('./src/modules/booking/models/TimeSlot');
-const Booking = require('./src/modules/booking/models/Booking');
-const SalonLocation = require('./src/modules/user/models/SalonLocation');
+const { sequelize } = require('../src/config/database');
+const User = require('../src/modules/user/models/User');
+const Client = require('../src/modules/user/models/Client');
+const Master = require('../src/modules/user/models/Master');
+const Salon = require('../src/modules/user/models/Salon');
+const Admin = require('../src/modules/admin/models/Admin');
+const ServiceCategory = require('../src/modules/catalog/models/ServiceCategory');
+const MasterService = require('../src/modules/catalog/models/MasterService');
+const MasterSkill = require('../src/modules/user/models/MasterSkill');
+const MasterPortfolio = require('../src/modules/user/models/MasterPortfolio');
+const MasterAvailability = require('../src/modules/booking/models/MasterAvailability');
+const TimeSlot = require('../src/modules/booking/models/TimeSlot');
+const Booking = require('../src/modules/booking/models/Booking');
+const SalonLocation = require('../src/modules/user/models/SalonLocation');
 const bcrypt = require('bcrypt');
 const { Op } = require('sequelize');
 
@@ -38,7 +38,6 @@ async function seedTestData() {
 
     const testData = {
       users: [
-        
         {
           phone: '+7 (495) 000-00-01',
           email: 'admin@beauty-vite.ru',
@@ -90,6 +89,27 @@ async function seedTestData() {
           role: 'master',
           isActive: true
         },
+        {
+          phone: '+7 (8553) 11-22-33',
+          email: 'natalia.ivanova@example.com',
+          password: 'MasterPass123!',
+          role: 'master',
+          isActive: true
+        },
+        {
+          phone: '+7 (347) 22-33-44',
+          email: 'maria.kuznetsova@example.com',
+          password: 'MasterPass456!',
+          role: 'master',
+          isActive: true
+        },
+        {
+          phone: '+7 (3412) 33-44-55',
+          email: 'elena.popova@example.com',
+          password: 'MasterPass789!',
+          role: 'master',
+          isActive: true
+        },
         
         {
           phone: '+7 (495) 789-01-23',
@@ -102,6 +122,97 @@ async function seedTestData() {
           phone: '+7 (495) 890-12-34',
           email: 'style.house@example.com',
           password: 'SalonPass456!',
+          role: 'salon',
+          isActive: true
+        },
+        {
+          phone: '+7 (843) 100-00-03',
+          email: 'lazurit@example.com',
+          password: 'SalonPass789!',
+          role: 'salon',
+          isActive: true
+        },
+        {
+          phone: '+7 (843) 100-00-04',
+          email: 'myata@example.com',
+          password: 'SalonPass012!',
+          role: 'salon',
+          isActive: true
+        },
+        {
+          phone: '+7 (8553) 10-00-01',
+          email: 'sharm@example.com',
+          password: 'SalonPass123!',
+          role: 'salon',
+          isActive: true
+        },
+        {
+          phone: '+7 (8553) 10-00-02',
+          email: 'estetika@example.com',
+          password: 'SalonPass456!',
+          role: 'salon',
+          isActive: true
+        },
+        {
+          phone: '+7 (8552) 20-00-01',
+          email: 'oazis@example.com',
+          password: 'SalonPass789!',
+          role: 'salon',
+          isActive: true
+        },
+        {
+          phone: '+7 (8552) 20-00-02',
+          email: 'vuala@example.com',
+          password: 'SalonPass012!',
+          role: 'salon',
+          isActive: true
+        },
+        {
+          phone: '+7 (8552) 20-00-03',
+          email: 'beauty.bar@example.com',
+          password: 'SalonPass345!',
+          role: 'salon',
+          isActive: true
+        },
+        {
+          phone: '+7 (347) 30-00-01',
+          email: 'freziya@example.com',
+          password: 'SalonPass123!',
+          role: 'salon',
+          isActive: true
+        },
+        {
+          phone: '+7 (347) 30-00-02',
+          email: 'persona@example.com',
+          password: 'SalonPass456!',
+          role: 'salon',
+          isActive: true
+        },
+        {
+          phone: '+7 (347) 30-00-03',
+          email: 'apriori@example.com',
+          password: 'SalonPass789!',
+          role: 'salon',
+          isActive: true
+        },
+        {
+          phone: '+7 (3412) 40-00-01',
+          email: 'territoria@example.com',
+          password: 'SalonPass123!',
+          role: 'salon',
+          isActive: true
+        },
+        {
+          phone: '+7 (3412) 40-00-02',
+          email: 'melissa@example.com',
+          password: 'SalonPass456!',
+          role: 'salon',
+          isActive: true
+        },
+        {
+          phone: '+7 (3412) 40-00-03',
+          email: 'studio13@example.com',
+          password: 'SalonPass789!',
           role: 'salon',
           isActive: true
         }
@@ -120,17 +231,17 @@ async function seedTestData() {
         {
           first_name: 'Иван',
           last_name: 'Петров',
-          image_url: 'https://i.pravatar.cc/300?img=11'
+          image_url: 'https://cdn.pixabay.com/photo/2016/11/22/19/08/man-1850034_960_720.jpg'
         },
         {
           first_name: 'Мария',
           last_name: 'Сидорова',
-          image_url: 'https://i.pravatar.cc/300?img=5'
+          image_url: 'https://cdn.pixabay.com/photo/2016/11/23/06/57/asian-1853604_960_720.jpg'
         },
         {
           first_name: 'Анна',
           last_name: 'Кузнецова',
-          image_url: 'https://i.pravatar.cc/300?img=9'
+          image_url: 'https://cdn.pixabay.com/photo/2017/02/13/14/56/people-2063347_960_720.jpg'
         }
       ],
       masters: [
@@ -140,9 +251,9 @@ async function seedTestData() {
           specialization: 'Парикмахер-стилист, колорист',
           experience: 7,
           bio: 'Топ-стилист с опытом работы более 7 лет. Специализируюсь на сложных окрашиваниях и стрижках.',
-          image_url: 'https://i.pravatar.cc/300?img=5',
+          image_url: 'https://cdn.pixabay.com/photo/2016/11/21/16/04/woman-1846649_960_720.jpg',
           is_available: true,
-          address: 'г. Москва, ул. Тверская, д. 15',
+          address: 'г. Казань, ул. Баумана, д. 15',
           has_training: true,
           rating: 4.9
         },
@@ -152,9 +263,9 @@ async function seedTestData() {
           specialization: 'Мастер маникюра и педикюра',
           experience: 5,
           bio: 'Сертифицированный мастер ногтевого сервиса. Работаю на материалах премиум-класса.',
-          image_url: 'https://i.pravatar.cc/300?img=9',
+          image_url: 'https://cdn.pixabay.com/photo/2017/02/16/18/24/woman-2072127_960_720.jpg',
           is_available: true,
-          address: 'г. Москва, ул. Арбат, д. 25',
+          address: 'г. Казань, ул. Пушкина, д. 10',
           has_training: false,
           rating: 4.8
         },
@@ -164,14 +275,51 @@ async function seedTestData() {
           specialization: 'Барбер, мужской мастер',
           experience: 4,
           bio: 'Профессиональный барбер. Создаю стильные мужские стрижки и бороды.',
-          image_url: 'https://i.pravatar.cc/300?img=13',
+          image_url: 'https://cdn.pixabay.com/photo/2018/01/15/20/40/man-3085862_960_720.jpg',
           is_available: true,
-          address: 'г. Москва, ул. Лесная, д. 5',
+          address: 'г. Казань, ул. Петербургская, д. 30',
           has_training: false,
           rating: 4.7
+        },
+        {
+          first_name: 'Наталья',
+          last_name: 'Иванова',
+          specialization: 'Визажист, бровист',
+          experience: 6,
+          bio: 'Сертифицированный визажист. Создаю образы для свадеб и фотосессий.',
+          image_url: 'https://cdn.pixabay.com/photo/2019/10/22/15/12/woman-4567234_960_720.jpg',
+          is_available: true,
+          address: 'г. Альметьевск, ул. Ленина, д. 52',
+          has_training: true,
+          rating: 4.8
+        },
+        {
+          first_name: 'Мария',
+          last_name: 'Кузнецова',
+          specialization: 'Косметолог, массажист',
+          experience: 8,
+          bio: 'Врач-косметолог с медицинским образованием. Аппаратная и инъекционная косметология.',
+          image_url: 'https://cdn.pixabay.com/photo/2017/08/30/01/05/milf-2695672_960_720.jpg',
+          is_available: true,
+          address: 'г. Уфа, ул. Ленина, д. 14',
+          has_training: true,
+          rating: 4.9
+        },
+        {
+          first_name: 'Елена',
+          last_name: 'Попова',
+          specialization: 'Парикмахер-универсал',
+          experience: 3,
+          bio: 'Молодой талантливый мастер. Стрижки, укладки, окрашивания.',
+          image_url: 'https://cdn.pixabay.com/photo/2020/01/26/08/47/portrait-4795243_960_720.jpg',
+          is_available: true,
+          address: 'г. Ижевск, ул. Пушкинская, д. 268',
+          has_training: false,
+          rating: 4.6
         }
       ],
       salons: [
+        // ========== КАЗАНЬ ==========
         {
           name: 'Beauty Salon & Spa',
           description: 'Современный салон красоты с широким спектром услуг: парикмахерский зал, ногтевой сервис, косметология, СПА.',
@@ -179,7 +327,7 @@ async function seedTestData() {
           city: 'Казань',
           coordinates: { lat: 55.7887, lng: 49.1221 },
           inn: '1234567890',
-          image_url: 'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=500',
+          image_url: 'https://cdn.pixabay.com/photo/2016/09/06/14/30/beauty-1649072_960_720.jpg',
           rating: 4.8
         },
         {
@@ -189,8 +337,146 @@ async function seedTestData() {
           city: 'Казань',
           coordinates: { lat: 55.7900, lng: 49.1300 },
           inn: '0987654321',
-          image_url: 'https://images.unsplash.com/photo-1521590832169-d7fcbe215a3e?w=500',
+          image_url: 'https://cdn.pixabay.com/photo/2017/01/26/09/59/interior-2012101_960_720.jpg',
           rating: 4.9
+        },
+        {
+          name: 'Лазурит',
+          description: 'Салон красоты с акцентом на ногтевой сервис и косметологию.',
+          address: 'г. Казань, пр. Победы, д. 141',
+          city: 'Казань',
+          coordinates: { lat: 55.7650, lng: 49.0850 },
+          inn: '1623456789',
+          image_url: 'https://cdn.pixabay.com/photo/2018/03/13/13/26/nail-studio-3223616_960_720.jpg',
+          rating: 4.7
+        },
+        {
+          name: 'Мята',
+          description: 'Уютный салон красоты в центре города. Стрижки, маникюр, косметология.',
+          address: 'г. Казань, ул. Петербургская, д. 46',
+          city: 'Казань',
+          coordinates: { lat: 55.7950, lng: 49.1100 },
+          inn: '1634567890',
+          image_url: 'https://cdn.pixabay.com/photo/2019/08/07/08/06/hairdresser-4391663_960_720.jpg',
+          rating: 4.6
+        },
+        
+        // ========== АЛЬМЕТЬЕВСК ==========
+        {
+          name: 'Шарм',
+          description: 'Салон красоты полного цикла. Парикмахерские услуги, маникюр, педикюр.',
+          address: 'г. Альметьевск, ул. Ленина, д. 52',
+          city: 'Альметьевск',
+          coordinates: { lat: 55.0167, lng: 52.3200 },
+          inn: '1644567890',
+          image_url: 'https://cdn.pixabay.com/photo/2016/11/29/03/11/beauty-1865257_960_720.jpg',
+          rating: 4.5
+        },
+        {
+          name: 'Эстетика',
+          description: 'Студия красоты с акцентом на косметологию и массаж.',
+          address: 'г. Альметьевск, пр. Строителей, д. 13',
+          city: 'Альметьевск',
+          coordinates: { lat: 55.0230, lng: 52.3100 },
+          inn: '1655678901',
+          image_url: 'https://cdn.pixabay.com/photo/2017/08/02/15/00/beauty-salon-2572466_960_720.jpg',
+          rating: 4.7
+        },
+        
+        // ========== НАБЕРЕЖНЫЕ ЧЕЛНЫ ==========
+        {
+          name: 'Оазис',
+          description: 'Современный салон красоты в центре города.',
+          address: 'г. Набережные Челны, пр. Мира, д. 17',
+          city: 'Набережные Челны',
+          coordinates: { lat: 55.7256, lng: 52.4069 },
+          inn: '1666789012',
+          image_url: 'https://cdn.pixabay.com/photo/2016/11/22/19/14/building-1850133_960_720.jpg',
+          rating: 4.6
+        },
+        {
+          name: 'Вуаля',
+          description: 'Студия стиля и красоты. Парикмахерские услуги, визаж, маникюр.',
+          address: 'г. Набережные Челны, ул. Гагарина, д. 9',
+          city: 'Набережные Челны',
+          coordinates: { lat: 55.7300, lng: 52.3900 },
+          inn: '1677890123',
+          image_url: 'https://cdn.pixabay.com/photo/2017/06/17/02/04/beauty-2410428_960_720.jpg',
+          rating: 4.8
+        },
+        {
+          name: 'Бьюти Бар',
+          description: 'Экспресс-салон красоты. Быстро, качественно, доступно.',
+          address: 'г. Набережные Челны, пр. Чулман, д. 95',
+          city: 'Набережные Челны',
+          coordinates: { lat: 55.7100, lng: 52.4200 },
+          inn: '1688901234',
+          image_url: 'https://cdn.pixabay.com/photo/2018/01/17/05/53/woman-3087133_960_720.jpg',
+          rating: 4.4
+        },
+        
+        // ========== УФА ==========
+        {
+          name: 'Фрезия',
+          description: 'Салон красоты премиум класса. Топ-мастера и косметика люкс.',
+          address: 'г. Уфа, ул. Ленина, д. 14',
+          city: 'Уфа',
+          coordinates: { lat: 54.7388, lng: 55.9721 },
+          inn: '0201234567',
+          image_url: 'https://cdn.pixabay.com/photo/2016/09/22/09/22/interior-1687072_960_720.jpg',
+          rating: 4.9
+        },
+        {
+          name: 'Персона',
+          description: 'Студия красоты с широким спектром услуг.',
+          address: 'г. Уфа, ул. Менделеева, д. 137',
+          city: 'Уфа',
+          coordinates: { lat: 54.7350, lng: 55.9600 },
+          inn: '0212345678',
+          image_url: 'https://cdn.pixabay.com/photo/2017/01/14/12/34/studio-1979283_960_720.jpg',
+          rating: 4.7
+        },
+        {
+          name: 'Априори',
+          description: 'Салон красоты с акцентом на парикмахерские услуги.',
+          address: 'г. Уфа, пр. Октября, д. 82',
+          city: 'Уфа',
+          coordinates: { lat: 54.7280, lng: 55.9500 },
+          inn: '0223456789',
+          image_url: 'https://cdn.pixabay.com/photo/2019/08/07/08/06/hairdresser-4391663_960_720.jpg',
+          rating: 4.6
+        },
+        
+        // ========== ИЖЕВСК ==========
+        {
+          name: 'Территория',
+          description: 'Современный салон красоты. Все виды бьюти-услуг.',
+          address: 'г. Ижевск, ул. Пушкинская, д. 268',
+          city: 'Ижевск',
+          coordinates: { lat: 56.8527, lng: 53.2115 },
+          inn: '1801234567',
+          image_url: 'https://cdn.pixabay.com/photo/2017/08/02/15/00/beauty-salon-2572466_960_720.jpg',
+          rating: 4.8
+        },
+        {
+          name: 'Мелисса',
+          description: 'Уютный салон красоты с домашней атмосферой.',
+          address: 'г. Ижевск, ул. Карла Маркса, д. 166',
+          city: 'Ижевск',
+          coordinates: { lat: 56.8450, lng: 53.2000 },
+          inn: '1812345678',
+          image_url: 'https://cdn.pixabay.com/photo/2016/11/29/03/11/beauty-1865257_960_720.jpg',
+          rating: 4.5
+        },
+        {
+          name: 'Студия 13',
+          description: 'Творческая студия красоты. Нестандартные решения.',
+          address: 'г. Ижевск, ул. Советская, д. 13',
+          city: 'Ижевск',
+          coordinates: { lat: 56.8600, lng: 53.2200 },
+          inn: '1823456789',
+          image_url: 'https://cdn.pixabay.com/photo/2017/01/26/09/59/interior-2012101_960_720.jpg',
+          rating: 4.7
         }
       ],
       categories: [
@@ -304,11 +590,11 @@ async function seedTestData() {
         { name: 'Детская стрижка', sort_order: 4 }
       ],
       masterPortfolio: [
-        
+        // Парикмахерские работы
         {
           title: 'Сложное окрашивание Airtouch',
           description: 'Многоступенчатое окрашивание с растяжкой цвета',
-          image_url: 'https://images.unsplash.com/photo-1562322140-8baeececf3df?w=500',
+          image_url: 'https://cdn.pixabay.com/photo/2017/04/11/08/23/woman-2219957_960_720.jpg',
           category: 'Окрашивание',
           service_type: 'Airtouch',
           is_featured: true,
@@ -317,26 +603,26 @@ async function seedTestData() {
         {
           title: 'Вечерняя прическа',
           description: 'Локоны с объемом у корней',
-          image_url: 'https://images.unsplash.com/photo-1595476108010-b4d1f102b1b5?w=500',
+          image_url: 'https://cdn.pixabay.com/photo/2018/04/13/07/49/hairstyle-3317605_960_720.jpg',
           category: 'Прически',
           service_type: 'Укладка',
           is_featured: true,
           is_visible: true
         },
-        
+        // Маникюр работы
         {
           title: 'Французский маникюр',
           description: 'Классический френч с нюдовой подложкой',
-          image_url: 'https://images.unsplash.com/photo-1604654894610-df63bc536371?w=500',
+          image_url: 'https://cdn.pixabay.com/photo/2017/01/29/13/29/fingernails-2018906_960_720.jpg',
           category: 'Маникюр',
           service_type: 'Френч',
           is_featured: true,
           is_visible: true
         },
         {
-          title: 'Яркий дизайн с геометрий',
+          title: 'Яркий дизайн с геометрией',
           description: 'Маникюр с геометрическим дизайном',
-          image_url: 'https://images.unsplash.com/photo-1519014816548-bf5fe059e98b?w=500',
+          image_url: 'https://cdn.pixabay.com/photo/2018/03/13/13/26/nail-studio-3223616_960_720.jpg',
           category: 'Дизайн',
           service_type: 'Гель-лак',
           is_featured: false,
@@ -345,7 +631,7 @@ async function seedTestData() {
         {
           title: 'Педикюр с покрытием',
           description: 'Полный педикюр с покрытием гель-лак',
-          image_url: 'https://images.unsplash.com/photo-1516975080664-ed2fc6a32937?w=500',
+          image_url: 'https://cdn.pixabay.com/photo/2017/01/29/13/30/fingernails-2018910_960_720.jpg',
           category: 'Педикюр',
           service_type: 'Педикюр',
           is_featured: false,
@@ -387,15 +673,15 @@ async function seedTestData() {
     
     console.log('\n🏢 Создание салонов...');
     const createdSalons = [];
+    // Начинаем с 9-го пользователя (индекс 8) - это салоны
     for (let i = 0; i < testData.salons.length; i++) {
-      const salonData = { ...testData.salons[i], user_id: createdUsers[5 + i].id };
+      const salonData = { ...testData.salons[i], user_id: createdUsers[8 + i].id };
       const salon = await Salon.create(salonData);
       createdSalons.push(salon);
       console.log(`   ✓ ${salon.name}`);
     }
 
     console.log('\n📍 Создание локаций салонов...');
-    const SalonLocation = require('./src/modules/user/models/SalonLocation');
     for (let i = 0; i < testData.salons.length; i++) {
       const salon = createdSalons[i];
       const salonConfig = testData.salons[i];
@@ -404,7 +690,7 @@ async function seedTestData() {
           salon_id: salon.id,
           city: salonConfig.city,
           address: salonConfig.address,
-          coordinates: salonConfig.coordinates,
+          coordinates: `SRID=4326;POINT(${salonConfig.coordinates.lng} ${salonConfig.coordinates.lat})`,
           working_hours: {
             monday: { open: '09:00', close: '20:00', is_open: true },
             tuesday: { open: '09:00', close: '20:00', is_open: true },
@@ -424,8 +710,8 @@ async function seedTestData() {
     console.log('\n💇‍♀️ Создание мастеров...');
     const createdMasters = [];
     for (let i = 0; i < testData.masters.length; i++) {
-      const masterData = { ...testData.masters[i], user_id: createdUsers[2 + i].id };
-      
+      const masterData = { ...testData.masters[i], user_id: createdUsers[4 + i].id };
+
       if (createdSalons[i % createdSalons.length]) {
         masterData.salon_id = createdSalons[i % createdSalons.length].id;
       }

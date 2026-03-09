@@ -39,14 +39,29 @@ const getLocationsByCity = async (city) => {
     include: [{
       model: Salon,
       as: 'salon',
-      attributes: ['id', 'name', 'rating', 'image_url', 'address']
+      attributes: ['id', 'name', 'rating', 'image_url', 'address', 'description']
     }]
   });
-  
-  return locations.map(loc => ({
-    ...loc.toJSON(),
-    coordinates: loc.getCoordinates()
-  }));
+
+  return locations.map(loc => {
+    const data = loc.toJSON();
+    const salon = data.salon || {};
+    
+    // Возвращаем плоскую структуру как в getNearbySalons
+    return {
+      id: salon.id,
+      salon_location_id: data.id,
+      name: salon.name,
+      rating: salon.rating,
+      image_url: salon.image_url,
+      address: salon.address,
+      description: salon.description,
+      city: data.city,
+      coordinates: loc.getCoordinates(),
+      working_hours: data.working_hours,
+      is_verified: data.is_verified
+    };
+  });
 };
 
 /**

@@ -1,6 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const providerController = require('../controllers/providerController');
+const { createLogger } = require('../../../utils/logger');
+
+const logger = createLogger('provider-routes');
 const MasterSkill = require('../models/MasterSkill');
 const MasterPortfolio = require('../models/MasterPortfolio');
 const { authenticateToken } = require('../../../middleware/auth');
@@ -25,7 +28,7 @@ router.get('/master/:masterId/skills', async (req, res) => {
     });
     res.json({ success: true, data: skills });
   } catch (error) {
-    console.error('Ошибка получения навыков:', error);
+    logger.error('Ошибка получения навыков:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 });
@@ -50,7 +53,7 @@ router.get('/master/:masterId/portfolio', async (req, res) => {
     });
     res.json({ success: true, data: portfolio });
   } catch (error) {
-    console.error('Ошибка получения портфолио:', error);
+    logger.error('Ошибка получения портфолио:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 });

@@ -4,11 +4,14 @@ const authController = require('../controllers/authController');
 const { authenticateToken } = require('../../../middleware/auth');
 const { validate } = require('../../../middleware/validation');
 const upload = require('../../../middleware/upload');
+const { createLogger } = require('../../../utils/logger');
 const {
   registerValidationSchema,
   loginValidationSchema,
   updateProfileValidationSchema
 } = require('../../../validation');
+
+const logger = createLogger('auth-routes');
 
 
 router.post('/register', validate(registerValidationSchema, 'body'), authController.register);
@@ -21,9 +24,11 @@ router.use(authenticateToken);
 router.get('/profile', authController.getProfile);
 
 router.put('/edit-profile', upload.single('avatar'), (req, res, next) => {
-  console.log('Request body:', req.body);
-  console.log('Request file:', req.file);
-  console.log('Request headers:', req.headers['content-type']);
+  logger.debug('Edit profile request', {
+    body: req.body,
+    file: req.file,
+    contentType: req.headers['content-type']
+  });
 
 
   if (req.file) {

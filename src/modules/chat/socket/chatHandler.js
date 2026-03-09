@@ -1,10 +1,13 @@
 const Message = require('../models/Message');
+const { createLogger } = require('../../../utils/logger');
+
+const logger = createLogger('chat-socket');
 
 let connectedUsers = {};
 
 const handleConnection = (socket) => {
-  console.log('User connected:', socket.id);
-  
+  logger.debug('User connected:', socket.id);
+
 
   socket.on('authenticate', (token) => {
 
@@ -12,13 +15,13 @@ const handleConnection = (socket) => {
     socket.userId = token.userId;
     connectedUsers[socket.userId] = socket.id;
   });
-  
+
 
   socket.on('sendMessage', async (data) => {
     try {
       const { receiverId, content, messageType = 'text' } = data;
       const senderId = socket.userId;
-      
+
 
       const message = await Message.create({
         senderId,
@@ -26,7 +29,7 @@ const handleConnection = (socket) => {
         content,
         messageType
       });
-      
+
 
       const recipientSocketId = connectedUsers[receiverId];
       if (recipientSocketId) {
@@ -38,7 +41,7 @@ const handleConnection = (socket) => {
           sentAt: message.sentAt
         });
       }
-      
+
 
       socket.emit('messageSent', {
         id: message.id,
@@ -51,10 +54,10 @@ const handleConnection = (socket) => {
       socket.emit('errorMessage', { error: error.message });
     }
   });
-  
+
 
   socket.on('disconnect', () => {
-    console.log('User disconnected:', socket.id);
+    logger.debug('User disconnected:', socket.id);
 
     for (const userId in connectedUsers) {
       if (connectedUsers[userId] === socket.id) {

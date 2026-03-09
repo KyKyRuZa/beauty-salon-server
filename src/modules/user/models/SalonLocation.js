@@ -137,9 +137,25 @@ SalonLocation.associate = (models) => {
 // Методы экземпляра
 SalonLocation.prototype.getCoordinates = function() {
   // Парсинг координат из формата PostGIS "SRID=4326;POINT(lng lat)"
-  const coordString = this.coordinatesGeo || this.coordinates;
-  if (!coordString) return null;
+  let coordString = this.coordinatesGeo || this.coordinates;
   
+  // Если координаты уже в формате объекта (из JSON ответа)
+  if (coordString && typeof coordString === 'object') {
+    if (coordString.lat !== undefined && coordString.lng !== undefined) {
+      return { lat: coordString.lat, lng: coordString.lng };
+    }
+    // Если это GeoJSON объект
+    if (coordString.type === 'Point' && Array.isArray(coordString.coordinates)) {
+      return {
+        lat: coordString.coordinates[1],
+        lng: coordString.coordinates[0]
+      };
+    }
+    return null;
+  }
+  
+  if (!coordString || typeof coordString !== 'string') return null;
+
   const match = coordString.match(/POINT\(([^\s]+)\s+([^\)]+)\)/);
   if (match) {
     return {
@@ -148,6 +164,22 @@ SalonLocation.prototype.getCoordinates = function() {
     };
   }
   return null;
+};
+
+// Метод для правильной сериализации в JSON
+SalonLocation.prototype.toJSON = function() {
+  const data = { ...this.get() };
+  
+  // Добавляем координаты в удобном формате
+  const coords = this.getCoordinates();
+  if (coords) {
+    data.coordinates = coords;
+  }
+  
+  // Удаляем сырые GeoJSON данные если есть
+  delete data.coordinatesGeo;
+  
+  return data;
 };
 
 SalonLocation.prototype.setCoordinates = function(lat, lng) {

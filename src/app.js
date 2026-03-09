@@ -1,4 +1,5 @@
 const express = require('express');
+const compression = require('compression');
 const { createLogger } = require('./utils/logger');
 const { applySecurityMiddleware } = require('./middleware/security');
 require('dotenv').config();
@@ -23,6 +24,19 @@ const adminAuthRoutes = require('./modules/admin/routes/adminAuthRoutes');
 
 const app = express();
 
+// Gzip сжатие для всех ответов (включая dev)
+app.use(compression({
+  level: 6, // Уровень сжатия (1-9, по умолчанию 6)
+  threshold: 1024, // Сжимать только ответы > 1KB
+  filter: (req, res) => {
+    // Не сжимать SSE (Server-Sent Events)
+    if (req.headers['accept']?.includes('text/event-stream')) {
+      return false;
+    }
+    return compression.filter(req, res);
+  }
+}));
+
 connectDB()
   .then(() => {
     logger.info('База данных успешно инициализирована');
@@ -43,11 +57,16 @@ app.use('/uploads', express.static('uploads'));
 
 
 app.use((req, res, next) => {
-  logger.info(`${req.method} ${req.path}`, {
-    ip: req.ip,
-    userAgent: req.get('User-Agent'),
-    timestamp: new Date().toISOString()
-  });
+  if (
+    !req.path.startsWith('/health') && 
+    !req.path.match(/\.(js|css|png|jpg|jpeg|svg|webp|gif|ico|woff2?|ttf|eot)$/)
+  ) {
+    logger.info(`${req.method} ${req.path}`, {
+      ip: req.ip,
+      userAgent: req.get('User-Agent'),
+      timestamp: new Date().toISOString()
+    });
+  }
   next();
 });
 
@@ -65,9 +84,6 @@ app.use('/api/availability', availabilityRoutes);
 app.use('/api/catalog', catalogRoutes);
 app.use('/api/admin', adminRoutes);
 
-// ============================================================================
-// HEALTH CHECK ENDPOINT - Проверка состояния БД и Redis
-// ============================================================================
 app.get('/health', async (req, res) => {
   const healthStatus = {
     status: 'OK',
