@@ -35,7 +35,7 @@ const BaseValidationSchema = {
   date: z.string().datetime().optional(),
 
 
-  number: z.number().int().positive().optional(),
+  number: z.coerce.number().int().positive().optional(),
 };
 
 module.exports = { BaseValidationSchema };

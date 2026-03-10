@@ -39,7 +39,7 @@ const reviewValidationSchema = z.object({
   master_id: BaseValidationSchema.number.optional(),
   salon_id: BaseValidationSchema.number.optional(),
   booking_id: BaseValidationSchema.number.optional(),
-  rating: z.number().min(1).max(5, 'Рейтинг должен быть от 1 до 5'),
+  rating: z.coerce.number().min(1).max(5, 'Рейтинг должен быть от 1 до 5'),
   comment: z.string().max(1000, 'Комментарий не должен превышать 1000 символов').optional(),
 }).refine(data => data.master_id || data.salon_id, {
   message: 'Отзыв должен быть оставлен мастеру или салону',

@@ -18,19 +18,21 @@ const createReview = async (req, res) => {
       });
     }
 
-
     const validationResult = reviewValidationSchema.safeParse(req.body);
     if (!validationResult.success) {
-      logger.warn('Ошибка валидации отзыва', { errors: validationResult.error.errors });
+      const errors = validationResult.error?.issues?.map(e => ({
+        field: e.path.join('.'),
+        message: e.message
+      })) || [];
+      logger.warn('Ошибка валидации отзыва', { errors });
       return res.status(400).json({
         success: false,
         message: 'Ошибка валидации',
-        errors: validationResult.error.errors.map(e => ({
-          field: e.path.join('.'),
-          message: e.message
-        }))
+        errors
       });
     }
+
+    logger.debug('Валидация успешна', { data: validationResult.data });
 
     const { master_id, salon_id, booking_id, rating, comment } = validationResult.data;
 
@@ -270,6 +272,34 @@ const getReviewStats = async (req, res) => {
   }
 };
 
+const getMyReviews = async (req, res) => {
+  try {
+    const user_id = req.user?.id;
+
+    if (!user_id) {
+      return res.status(401).json({
+        success: false,
+        message: 'Требуется аутентификация'
+      });
+    }
+
+    logger.info('Запрос моих отзывов', { userId: user_id });
+
+    const result = await reviewService.getUserReviews(user_id);
+
+    res.json({
+      success: true,
+      data: result
+    });
+  } catch (error) {
+    logger.error('Ошибка получения моих отзывов', { error: error.message });
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
 module.exports = {
   createReview,
   getMasterReviews,
@@ -277,5 +307,6 @@ module.exports = {
   getReviewById,
   updateReview,
   deleteReview,
-  getReviewStats
+  getReviewStats,
+  getMyReviews
 };

@@ -80,7 +80,7 @@ const updateMasterRating = async (masterId, transaction = null) => {
       where: { master_id: masterId, is_visible: true },
       attributes: ['rating'],
       ...options
-    });
+    }) || [];
 
 
     let newRating = 0;
@@ -112,7 +112,7 @@ const updateSalonRating = async (salonId, transaction = null) => {
       where: { salon_id: salonId, is_visible: true },
       attributes: ['rating'],
       ...options
-    });
+    }) || [];
 
 
     let newRating = 0;
@@ -145,7 +145,15 @@ const getMasterReviews = async (masterId, options = {}) => {
         {
           model: require('../../user/models/User'),
           as: 'user',
-          attributes: ['id', 'email', 'phone']
+          attributes: ['id', 'email', 'phone'],
+          include: [
+            {
+              model: require('../../user/models/Client'),
+              as: 'client_profile',
+              attributes: ['first_name', 'last_name'],
+              required: false
+            }
+          ]
         }
       ],
       order: [['created_at', 'DESC']],
@@ -171,7 +179,15 @@ const getSalonReviews = async (salonId, options = {}) => {
         {
           model: require('../../user/models/User'),
           as: 'user',
-          attributes: ['id', 'email', 'phone']
+          attributes: ['id', 'email', 'phone'],
+          include: [
+            {
+              model: require('../../user/models/Client'),
+              as: 'client_profile',
+              attributes: ['first_name', 'last_name'],
+              required: false
+            }
+          ]
         }
       ],
       order: [['created_at', 'DESC']],
@@ -287,7 +303,7 @@ const getReviewStats = async (masterId, salonId) => {
     const reviews = await Review.findAll({
       where,
       attributes: ['rating']
-    });
+    }) || [];
 
     const total = reviews.length;
     if (total === 0) {
@@ -313,6 +329,35 @@ const getReviewStats = async (masterId, salonId) => {
   }
 };
 
+const getUserReviews = async (userId) => {
+  try {
+    const reviews = await Review.findAll({
+      where: { user_id: userId },
+      include: [
+        {
+          model: require('../../user/models/Master'),
+          as: 'master',
+          attributes: ['id', 'first_name', 'last_name', 'image_url'],
+          required: false
+        },
+        {
+          model: require('../../user/models/Salon'),
+          as: 'salon',
+          attributes: ['id', 'name', 'image_url'],
+          required: false
+        }
+      ],
+      order: [['created_at', 'DESC']]
+    });
+
+    logger.info('Отзывы пользователя получены', { userId, count: reviews.length });
+    return reviews;
+  } catch (error) {
+    logger.error('Ошибка получения отзывов пользователя', { userId, error: error.message });
+    throw error;
+  }
+};
+
 module.exports = {
   createReview,
   updateMasterRating,
@@ -322,5 +367,6 @@ module.exports = {
   getReviewById,
   updateReview,
   deleteReview,
-  getReviewStats
+  getReviewStats,
+  getUserReviews
 };

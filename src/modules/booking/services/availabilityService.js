@@ -35,8 +35,8 @@ const getAvailableDates = async (masterId, serviceId = null, startDate = null, e
   const availability = await MasterAvailability.findAll({
     where,
     attributes: ['date', 'start_time', 'end_time', 'slot_duration', 'service_id'],
-    order: [['date', 'ASC']],
-    group: ['date']
+    order: [['date', 'ASC']]
+    // group убран - не нужен без агрегатных функций
   });
 
   return availability.map(a => ({
