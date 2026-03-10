@@ -3,9 +3,6 @@ const { createLogger } = require('./logger');
 
 const logger = createLogger('cache-service');
 
-/**
- * Время жизни кэша (TTL) в секундах
- */
 const CACHE_TTL = {
   SESSION: 3600,           // 1 час
   CATALOG: 300,            // 5 минут
@@ -17,11 +14,6 @@ const CACHE_TTL = {
   TOP_MASTERS: 2700        // 45 минут
 };
 
-/**
- * Получить значение из кэша
- * @param {string} key - Ключ
- * @returns {Promise<any>} - Значение или null
- */
 const get = async (key) => {
   try {
     const value = await redis.get(key);

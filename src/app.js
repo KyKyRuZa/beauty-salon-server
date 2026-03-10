@@ -20,6 +20,7 @@ const timeslotRoutes = require('./modules/booking/routes/timeslotRoutes');
 const availabilityRoutes = require('./modules/booking/routes/availabilityRoutes');
 const catalogRoutes = require('./modules/catalog/routes/catalogRoutes');
 const adminRoutes = require('./modules/admin/routes/adminRoutes');
+const geoRoutes = require('./modules/geo/routes/geoRoutes');
 const adminAuthRoutes = require('./modules/admin/routes/adminAuthRoutes');
 
 const app = express();
@@ -76,6 +77,7 @@ app.use('/api/auth', userAuthRoutes);
 app.use('/api/services', serviceRoutes);
 app.use('/api/providers', providerRoutes);
 app.use('/api/salon-locations', salonLocationRoutes);
+app.use('/api/geo', geoRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/favorites', favoriteRoutes);
 app.use('/api/booking', bookingRoutes);
