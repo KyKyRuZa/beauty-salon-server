@@ -5,9 +5,7 @@ const { Op } = require('sequelize');
 const { sequelize } = require('../../../config/database');
 const { createLogger } = require('../../../utils/logger');
 
-
 const logger = createLogger('admin-auth-service');
-
 
 const registerAdmin = async (adminData) => {
   logger.info('Регистрация нового администратора', { email: adminData.email });
@@ -19,14 +17,10 @@ const registerAdmin = async (adminData) => {
   const transaction = await sequelize.transaction();
 
   try {
-
     const existingUser = await User.findOne({
       where: {
-        [Op.or]: [
-          { phone },
-          { email }
-        ]
-      }
+        [Op.or]: [{ phone }, { email }],
+      },
     });
 
     if (existingUser) {
@@ -38,46 +32,62 @@ const registerAdmin = async (adminData) => {
 
     logger.info('Создание пользователя с паролем', { userId: 'new_user', email });
 
+    const user = await User.create(
+      {
+        phone,
+        email,
+        password,
+        role: 'admin',
+      },
+      { transaction }
+    );
 
+    logger.info('Пользователь создан с хешированным паролем', {
+      userId: user.id,
+      email: user.email,
+    });
 
-    const user = await User.create({
-      phone,
-      email,
-      password,
-      role: 'admin'
-    }, { transaction });
+    logger.info('Пользователь с ролью администратора создан', {
+      userId: user.id,
+      email: user.email,
+      role: user.role,
+    });
 
-    logger.info('Пользователь создан с хешированным паролем', { userId: user.id, email: user.email });
+    const admin = await Admin.create(
+      {
+        user_id: user.id,
+        role: 'admin',
+        first_name: adminData.firstName || null,
+        last_name: adminData.lastName || null,
+        is_active: true,
+      },
+      { transaction }
+    );
 
-    logger.info('Пользователь с ролью администратора создан', { userId: user.id, email: user.email, role: user.role });
-
-
-    const admin = await Admin.create({
-      user_id: user.id,
-      role: 'admin',
-      first_name: adminData.firstName || null,
-      last_name: adminData.lastName || null,
-      is_active: true
-    }, { transaction });
-
-    logger.info('Запись администратора создана', { adminId: admin.id, userId: user.id, role: admin.role });
+    logger.info('Запись администратора создана', {
+      adminId: admin.id,
+      userId: user.id,
+      role: admin.role,
+    });
 
     await transaction.commit();
-    logger.info('Регистрация администратора успешно завершена', { userId: user.id, adminId: admin.id });
-
+    logger.info('Регистрация администратора успешно завершена', {
+      userId: user.id,
+      adminId: admin.id,
+    });
 
     const adminDataResponse = {
       user: {
         id: user.id,
         email: user.email,
         role: user.role,
-        profileCompleted: user.profileCompleted
+        profileCompleted: user.profileCompleted,
       },
       admin: {
         id: admin.id,
         role: admin.role,
-        is_active: admin.is_active
-      }
+        is_active: admin.is_active,
+      },
     };
 
     return adminDataResponse;
@@ -88,10 +98,8 @@ const registerAdmin = async (adminData) => {
   }
 };
 
-
 const loginAdmin = async (email, password) => {
   logger.info('Попытка входа администратора', { email });
-
 
   const user = await User.findOne({ where: { email } });
   if (!user) {
@@ -99,22 +107,33 @@ const loginAdmin = async (email, password) => {
     throw new Error('Пользователь не найден');
   }
 
-  logger.info('Найден пользователь', { userId: user.id, email: user.email, role: user.role, isActive: user.isActive });
+  logger.info('Найден пользователь', {
+    userId: user.id,
+    email: user.email,
+    role: user.role,
+    isActive: user.isActive,
+  });
 
   if (!user.isActive) {
     logger.warn('Аккаунт администратора деактивирован', { userId: user.id, email });
     throw new Error('Аккаунт деактивирован');
   }
 
-
   const admin = await Admin.findOne({ where: { user_id: user.id, is_active: true } });
   if (!admin) {
-    logger.warn('Пользователь не является администратором', { userId: user.id, email, role: user.role });
+    logger.warn('Пользователь не является администратором', {
+      userId: user.id,
+      email,
+      role: user.role,
+    });
     throw new Error('Пользователь не является администратором');
   }
 
-  logger.info('Найдена запись администратора', { adminId: admin.id, userId: user.id, adminRole: admin.role });
-
+  logger.info('Найдена запись администратора', {
+    adminId: admin.id,
+    userId: user.id,
+    adminRole: admin.role,
+  });
 
   logger.info('Проверка пароля', { userId: user.id });
   const isValidPassword = await bcrypt.compare(password, user.password);
@@ -127,19 +146,18 @@ const loginAdmin = async (email, password) => {
 
   logger.info('Вход администратора успешен', { userId: user.id, email });
 
-
   const adminDataResponse = {
     user: {
       id: user.id,
       email: user.email,
       role: user.role,
-      profileCompleted: user.profileCompleted
+      profileCompleted: user.profileCompleted,
     },
     admin: {
       id: admin.id,
       role: admin.role,
-      is_active: admin.is_active
-    }
+      is_active: admin.is_active,
+    },
   };
 
   return adminDataResponse;
@@ -147,5 +165,5 @@ const loginAdmin = async (email, password) => {
 
 module.exports = {
   registerAdmin,
-  loginAdmin
+  loginAdmin,
 };

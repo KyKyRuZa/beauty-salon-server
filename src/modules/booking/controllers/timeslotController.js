@@ -1,6 +1,6 @@
 const TimeSlot = require('../models/TimeSlot');
 const Booking = require('../models/Booking');
-const Master = require('../../user/models/Master'); 
+const Master = require('../../user/models/Master');
 const availabilityService = require('../services/availabilityService');
 const { sequelize } = require('../../../config/database');
 const { Op } = require('sequelize');
@@ -11,9 +11,9 @@ const logger = createLogger('timeslot-controller');
 const getMasterId = async (userId) => {
   logger.info('getMasterId вызов', { userId });
   try {
-    const master = await Master.findOne({ 
+    const master = await Master.findOne({
       where: { user_id: userId },
-      paranoid: false
+      paranoid: false,
     });
     logger.info('getMasterId результат', { userId, masterFound: !!master, masterId: master?.id });
     return master ? master.id : null;
@@ -31,9 +31,8 @@ const getMasterSlots = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Необходимо указать дату' });
     }
 
-    
     let effectiveMasterId = master_id ? parseInt(master_id) : null;
-    
+
     if (!effectiveMasterId) {
       const userId = req.user?.userId || req.user?.id;
       if (userId) {
@@ -55,23 +54,27 @@ const getMasterSlots = async (req, res) => {
         master_id: effectiveMasterId,
         start_time: {
           [Op.gte]: startOfDay,
-          [Op.lte]: endOfDay
-        }
+          [Op.lte]: endOfDay,
+        },
       },
-      order: [['start_time', 'ASC']]
+      order: [['start_time', 'ASC']],
     });
 
-    logger.info('Получены слоты мастера', { masterId: effectiveMasterId, date, count: slots.length });
+    logger.info('Получены слоты мастера', {
+      masterId: effectiveMasterId,
+      date,
+      count: slots.length,
+    });
 
     res.json({
       success: true,
-      data: slots
+      data: slots,
     });
   } catch (error) {
     logger.error('Ошибка получения слотов мастера', { error: error.message });
     res.status(500).json({
       success: false,
-      message: error.message
+      message: error.message,
     });
   }
 };
@@ -93,16 +96,19 @@ const createTimeSlot = async (req, res) => {
     }
 
     if (!start_time || !end_time) {
-      return res.status(400).json({ success: false, message: 'Необходимо указать start_time и end_time' });
+      return res
+        .status(400)
+        .json({ success: false, message: 'Необходимо указать start_time и end_time' });
     }
 
     const start = new Date(start_time);
     const end = new Date(end_time);
 
     if (start >= end) {
-      return res.status(400).json({ success: false, message: 'Время окончания должно быть позже времени начала' });
+      return res
+        .status(400)
+        .json({ success: false, message: 'Время окончания должно быть позже времени начала' });
     }
-
 
     const overlappingSlot = await TimeSlot.findOne({
       where: {
@@ -110,19 +116,18 @@ const createTimeSlot = async (req, res) => {
         [Op.or]: [
           {
             start_time: { [Op.lt]: end },
-            end_time: { [Op.gt]: start }
-          }
-        ]
-      }
+            end_time: { [Op.gt]: start },
+          },
+        ],
+      },
     });
 
     if (overlappingSlot) {
       return res.status(400).json({
         success: false,
-        message: 'Это время уже занято другим слотом'
+        message: 'Это время уже занято другим слотом',
       });
     }
-
 
     const overlappingBooking = await Booking.findOne({
       where: {
@@ -131,25 +136,28 @@ const createTimeSlot = async (req, res) => {
         [Op.or]: [
           {
             start_time: { [Op.lt]: end },
-            end_time: { [Op.gt]: start }
-          }
-        ]
-      }
+            end_time: { [Op.gt]: start },
+          },
+        ],
+      },
     });
 
     if (overlappingBooking) {
       return res.status(400).json({
         success: false,
-        message: 'Это время уже забронировано'
+        message: 'Это время уже забронировано',
       });
     }
 
-    const slot = await TimeSlot.create({
-      master_id: masterId,
-      start_time,
-      end_time,
-      status: 'free'
-    }, { transaction });
+    const slot = await TimeSlot.create(
+      {
+        master_id: masterId,
+        start_time,
+        end_time,
+        status: 'free',
+      },
+      { transaction }
+    );
 
     await transaction.commit();
 
@@ -158,14 +166,14 @@ const createTimeSlot = async (req, res) => {
     res.status(201).json({
       success: true,
       message: 'Слот успешно создан',
-      data: slot
+      data: slot,
     });
   } catch (error) {
     await transaction.rollback();
     logger.error('Ошибка создания слота', { error: error.message });
     res.status(400).json({
       success: false,
-      message: error.message
+      message: error.message,
     });
   }
 };
@@ -188,21 +196,20 @@ const updateTimeSlot = async (req, res) => {
     }
 
     const slot = await TimeSlot.findOne({
-      where: { id, master_id: masterId }
+      where: { id, master_id: masterId },
     });
 
     if (!slot) {
       return res.status(404).json({
         success: false,
-        message: 'Слот не найден'
+        message: 'Слот не найден',
       });
     }
-
 
     if (slot.status === 'booked') {
       return res.status(400).json({
         success: false,
-        message: 'Нельзя изменить забронированный слот'
+        message: 'Нельзя изменить забронированный слот',
       });
     }
 
@@ -214,10 +221,9 @@ const updateTimeSlot = async (req, res) => {
       if (start >= end) {
         return res.status(400).json({
           success: false,
-          message: 'Время окончания должно быть позже времени начала'
+          message: 'Время окончания должно быть позже времени начала',
         });
       }
-
 
       const overlappingSlot = await TimeSlot.findOne({
         where: {
@@ -226,19 +232,18 @@ const updateTimeSlot = async (req, res) => {
           [Op.or]: [
             {
               start_time: { [Op.lt]: end },
-              end_time: { [Op.gt]: start }
-            }
-          ]
-        }
+              end_time: { [Op.gt]: start },
+            },
+          ],
+        },
       });
 
       if (overlappingSlot) {
         return res.status(400).json({
           success: false,
-          message: 'Это время уже занято другим слотом'
+          message: 'Это время уже занято другим слотом',
         });
       }
-
 
       const overlappingBooking = await Booking.findOne({
         where: {
@@ -247,16 +252,16 @@ const updateTimeSlot = async (req, res) => {
           [Op.or]: [
             {
               start_time: { [Op.lt]: end },
-              end_time: { [Op.gt]: start }
-            }
-          ]
-        }
+              end_time: { [Op.gt]: start },
+            },
+          ],
+        },
       });
 
       if (overlappingBooking) {
         return res.status(400).json({
           success: false,
-          message: 'Это время уже забронировано'
+          message: 'Это время уже забронировано',
         });
       }
 
@@ -277,14 +282,14 @@ const updateTimeSlot = async (req, res) => {
     res.json({
       success: true,
       message: 'Слот успешно обновлен',
-      data: slot
+      data: slot,
     });
   } catch (error) {
     await transaction.rollback();
     logger.error('Ошибка обновления слота', { error: error.message });
     res.status(400).json({
       success: false,
-      message: error.message
+      message: error.message,
     });
   }
 };
@@ -306,16 +311,17 @@ const deleteTimeSlot = async (req, res) => {
     }
 
     const slot = await TimeSlot.findOne({
-      where: { id, master_id: masterId }
+      where: { id, master_id: masterId },
     });
 
     if (!slot) {
       return res.status(404).json({ success: false, message: 'Слот не найден' });
     }
 
-
     if (slot.status === 'booked') {
-      return res.status(400).json({ success: false, message: 'Нельзя удалить забронированный слот' });
+      return res
+        .status(400)
+        .json({ success: false, message: 'Нельзя удалить забронированный слот' });
     }
 
     await slot.destroy({ transaction });
@@ -326,14 +332,14 @@ const deleteTimeSlot = async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Слот успешно удален'
+      message: 'Слот успешно удален',
     });
   } catch (error) {
     await transaction.rollback();
     logger.error('Ошибка удаления слота', { error: error.message });
     res.status(400).json({
       success: false,
-      message: error.message
+      message: error.message,
     });
   }
 };
@@ -353,9 +359,10 @@ const createSchedule = async (req, res) => {
     }
 
     if (!date || !start_time || !end_time) {
-      return res.status(400).json({ success: false, message: 'Необходимо указать date, start_time и end_time' });
+      return res
+        .status(400)
+        .json({ success: false, message: 'Необходимо указать date, start_time и end_time' });
     }
-
 
     await availabilityService.setAvailability(
       masterId,
@@ -365,7 +372,6 @@ const createSchedule = async (req, res) => {
       parseInt(slot_duration)
     );
 
-
     const result = await availabilityService.getAvailabilityWithSlots(masterId, date);
 
     logger.info('Расписание создано', { masterId, date, slotsCount: result.slots.length });
@@ -373,13 +379,13 @@ const createSchedule = async (req, res) => {
     res.status(201).json({
       success: true,
       message: `Создано ${result.slots.length} слотов`,
-      data: result.slots
+      data: result.slots,
     });
   } catch (error) {
     logger.error('Ошибка создания расписания', { error: error.message });
     res.status(400).json({
       success: false,
-      message: error.message
+      message: error.message,
     });
   }
 };
@@ -389,5 +395,5 @@ module.exports = {
   createTimeSlot,
   updateTimeSlot,
   deleteTimeSlot,
-  createSchedule
+  createSchedule,
 };

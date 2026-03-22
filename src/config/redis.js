@@ -18,7 +18,7 @@ const redisConfig = {
   commandTimeout: 5000,
   // Оптимизация для сессий
   keepAlive: 300000, // 5 минут keep-alive
-  family: 4 // IPv4 для стабильности
+  family: 4, // IPv4 для стабильности
 };
 
 const redis = new Redis(redisConfig);
@@ -44,7 +44,7 @@ logger.info('📡 Redis конфигурация:', {
   host: redisConfig.host,
   port: redisConfig.port,
   db: redisConfig.db,
-  lazyConnect: redisConfig.lazyConnect
+  lazyConnect: redisConfig.lazyConnect,
 });
 
 redis.connect().catch((err) => {

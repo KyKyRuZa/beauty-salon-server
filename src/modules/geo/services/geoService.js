@@ -18,18 +18,18 @@ try {
 
 // Координаты центров городов
 const CITY_COORDINATES = {
-  'Казань': { lat: 55.7887, lng: 49.1221 },
-  'Альметьевск': { lat: 55.0167, lng: 52.3200 },
-  'Уфа': { lat: 54.7388, lng: 55.9721 },
-  'Ижевск': { lat: 56.8527, lng: 53.2115 },
-  'Набережные Челны': { lat: 55.7256, lng: 52.4069 }
+  Казань: { lat: 55.7887, lng: 49.1221 },
+  Альметьевск: { lat: 55.0167, lng: 52.32 },
+  Уфа: { lat: 54.7388, lng: 55.9721 },
+  Ижевск: { lat: 56.8527, lng: 53.2115 },
+  'Набережные Челны': { lat: 55.7256, lng: 52.4069 },
 };
 
 // Кэш статистика
 let cacheStats = {
   hits: 0,
   misses: 0,
-  errors: 0
+  errors: 0,
 };
 
 /**
@@ -41,8 +41,7 @@ const calculateDistance = (lat1, lng1, lat2, lng2) => {
   const dLng = toRad(lng2 - lng1);
   const a =
     Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
-    Math.sin(dLng / 2) * Math.sin(dLng / 2);
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;
 };
@@ -59,19 +58,16 @@ const toRad = (deg) => deg * (Math.PI / 180);
 const isPointInPolygon = (lat, lng, polygon) => {
   let inside = false;
   const len = polygon.length;
-  
+
   for (let i = 0, j = len - 1; i < len; j = i++) {
     const [lng1, lat1] = polygon[i];
     const [lng2, lat2] = polygon[j];
-    
-    if (
-      ((lat1 > lat) !== (lat2 > lat)) &&
-      (lng < ((lng2 - lng1) * (lat - lat1)) / (lat2 - lat1) + lng1)
-    ) {
+
+    if (lat1 > lat !== lat2 > lat && lng < ((lng2 - lng1) * (lat - lat1)) / (lat2 - lat1) + lng1) {
       inside = !inside;
     }
   }
-  
+
   return inside;
 };
 
@@ -85,17 +81,17 @@ const findCityByPolygon = (lat, lng) => {
   if (!cityBoundaries || cityBoundaries.length === 0) {
     return null;
   }
-  
+
   for (const feature of cityBoundaries) {
     const city = feature.properties.name;
     const coordinates = feature.geometry.coordinates[0];
-    
+
     if (isPointInPolygon(lat, lng, coordinates)) {
       logger.debug(`Точка [${lat}, ${lng}] внутри границ города ${city}`);
       return city;
     }
   }
-  
+
   logger.debug(`Точка [${lat}, ${lng}] не попала ни в один полигон`);
   return null;
 };
@@ -111,7 +107,7 @@ const findNearestCity = async (lat, lng) => {
   const latRounded = Math.round(lat * 10000) / 10000;
   const lngRounded = Math.round(lng * 10000) / 10000;
   const cacheKey = `geo:${latRounded}:${lngRounded}`;
-  
+
   try {
     // 1. Проверяем кэш
     const cached = await redis.get(cacheKey);
@@ -120,9 +116,9 @@ const findNearestCity = async (lat, lng) => {
       logger.debug(`Кэш hit: ${cacheKey}`);
       return JSON.parse(cached);
     }
-    
+
     cacheStats.misses++;
-    
+
     // 2. Проверяем попадание в полигон
     const cityByPolygon = findCityByPolygon(lat, lng);
     if (cityByPolygon) {
@@ -131,7 +127,7 @@ const findNearestCity = async (lat, lng) => {
       logger.info(`Город определён по границам: ${cityByPolygon}`);
       return result;
     }
-    
+
     // 3. Fallback: ищем по расстоянию до центра
     let nearestCity = null;
     let minDistance = Infinity;
@@ -154,24 +150,24 @@ const findNearestCity = async (lat, lng) => {
 
     const result = {
       city: nearestCity,
-      distance: Math.round(minDistance * 10) / 10
+      distance: Math.round(minDistance * 10) / 10,
     };
-    
+
     // Сохраняем в кэш
     await redis.setex(cacheKey, 86400, JSON.stringify(result));
     logger.info(`Определён город: ${nearestCity} (${minDistance.toFixed(1)} км от пользователя)`);
-    
+
     return result;
   } catch (error) {
     cacheStats.errors++;
     logger.error('Ошибка кэширования:', error.message);
-    
+
     // Fallback без кэша
     const cityByPolygon = findCityByPolygon(lat, lng);
     if (cityByPolygon) {
       return { city: cityByPolygon, distance: 0 };
     }
-    
+
     // ... упрощённая логика для fallback
     let nearestCity = null;
     let minDistance = Infinity;
@@ -182,12 +178,12 @@ const findNearestCity = async (lat, lng) => {
         nearestCity = city;
       }
     }
-    
+
     if (minDistance > 100) return null;
-    
+
     return {
       city: nearestCity,
-      distance: Math.round(minDistance * 10) / 10
+      distance: Math.round(minDistance * 10) / 10,
     };
   }
 };
@@ -200,7 +196,7 @@ const getCacheStats = () => {
   return {
     ...cacheStats,
     total,
-    hitRate: total > 0 ? ((cacheStats.hits / total) * 100).toFixed(2) + '%' : '0%'
+    hitRate: total > 0 ? ((cacheStats.hits / total) * 100).toFixed(2) + '%' : '0%',
   };
 };
 
@@ -210,5 +206,5 @@ module.exports = {
   findCityByPolygon,
   isPointInPolygon,
   getCacheStats,
-  CITY_COORDINATES
+  CITY_COORDINATES,
 };

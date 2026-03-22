@@ -7,24 +7,20 @@ const { createLogger } = require('../../../utils/logger');
 
 const logger = createLogger('availability-service');
 
-
 const getAvailableDates = async (masterId, serviceId = null, startDate = null, endDate = null) => {
   const where = {
     master_id: masterId,
-    is_available: true
+    is_available: true,
   };
 
   if (serviceId) {
-    where[Op.or] = [
-      { service_id: serviceId },
-      { service_id: null }
-    ];
+    where[Op.or] = [{ service_id: serviceId }, { service_id: null }];
   }
 
   if (startDate && endDate) {
     where.date = {
       [Op.gte]: startDate,
-      [Op.lte]: endDate
+      [Op.lte]: endDate,
     };
   } else if (startDate) {
     where.date = { [Op.gte]: startDate };
@@ -35,65 +31,78 @@ const getAvailableDates = async (masterId, serviceId = null, startDate = null, e
   const availability = await MasterAvailability.findAll({
     where,
     attributes: ['date', 'start_time', 'end_time', 'slot_duration', 'service_id'],
-    order: [['date', 'ASC']]
+    order: [['date', 'ASC']],
     // group убран - не нужен без агрегатных функций
   });
 
-  return availability.map(a => ({
+  return availability.map((a) => ({
     date: a.date,
     start_time: a.start_time,
     end_time: a.end_time,
     slot_duration: a.slot_duration,
-    service_id: a.service_id
+    service_id: a.service_id,
   }));
 };
 
-const setAvailability = async (masterId, date, startTime, endTime, slotDuration = 60, serviceId = null) => {
-  logger.info('setAvailability вызов', { masterId, date, startTime, endTime, slotDuration, serviceId });
+const setAvailability = async (
+  masterId,
+  date,
+  startTime,
+  endTime,
+  slotDuration = 60,
+  serviceId = null
+) => {
+  logger.info('setAvailability вызов', {
+    masterId,
+    date,
+    startTime,
+    endTime,
+    slotDuration,
+    serviceId,
+  });
 
   const transaction = await sequelize.transaction();
 
   try {
-
     const existing = await MasterAvailability.findOne({
       where: {
         master_id: masterId,
         date,
-        service_id: serviceId
-      }
+        service_id: serviceId,
+      },
     });
 
     logger.info('setAvailability поиск существующего расписания', {
       masterId,
       date,
       serviceId,
-      found: !!existing
+      found: !!existing,
     });
 
     let availabilityId;
 
     if (existing) {
-      await existing.update({
-        start_time: startTime,
-        end_time: endTime,
-        slot_duration: slotDuration,
-        is_available: true
-      }, { transaction });
+      await existing.update(
+        {
+          start_time: startTime,
+          end_time: endTime,
+          slot_duration: slotDuration,
+          is_available: true,
+        },
+        { transaction }
+      );
 
       await TimeSlot.destroy({
         where: {
           master_id: masterId,
           start_time: {
             [Op.gte]: new Date(date + 'T00:00:00'),
-            [Op.lt]: new Date(date + 'T23:59:59')
+            [Op.lt]: new Date(date + 'T23:59:59'),
           },
 
-          [Op.or]: [
-            { service_id: serviceId },
-            { service_id: null }
-          ]
+          [Op.or]: [{ service_id: serviceId }, { service_id: null }],
         },
-        transaction
+        transaction,
       });
 
       availabilityId = existing.id;
@@ -102,18 +111,21 @@ const setAvailability = async (masterId, date, startTime, endTime, slotDuration 
         masterId,
         date,
         availabilityId,
-        serviceId
+        serviceId,
       });
     } else {
-      const newAvailability = await MasterAvailability.create({
-        master_id: masterId,
-        date,
-        start_time: startTime,
-        end_time: endTime,
-        slot_duration: slotDuration,
-        service_id: serviceId,
-        is_available: true
-      }, { transaction });
+      const newAvailability = await MasterAvailability.create(
+        {
+          master_id: masterId,
+          date,
+          start_time: startTime,
+          end_time: endTime,
+          slot_duration: slotDuration,
+          service_id: serviceId,
+          is_available: true,
+        },
+        { transaction }
+      );
 
       availabilityId = newAvailability.id;
 
@@ -121,11 +133,20 @@ const setAvailability = async (masterId, date, startTime, endTime, slotDuration 
         masterId,
         date,
         availabilityId,
-        serviceId
+        serviceId,
       });
     }
 
-    await generateTimeSlots(masterId, date, startTime, endTime, slotDuration, transaction, serviceId, availabilityId);
+    await generateTimeSlots(
+      masterId,
+      date,
+      startTime,
+      endTime,
+      slotDuration,
+      transaction,
+      serviceId,
+      availabilityId
+    );
 
     await transaction.commit();
 
@@ -145,7 +166,7 @@ const getAvailability = async (masterId, startDate, endDate) => {
   if (startDate && endDate) {
     where.date = {
       [Op.gte]: startDate,
-      [Op.lte]: endDate
+      [Op.lte]: endDate,
     };
   } else if (startDate) {
     where.date = { [Op.gte]: startDate };
@@ -153,7 +174,7 @@ const getAvailability = async (masterId, startDate, endDate) => {
 
   const availability = await MasterAvailability.findAll({
     where,
-    order: [['date', 'ASC']]
+    order: [['date', 'ASC']],
   });
 
   return availability;
@@ -164,7 +185,7 @@ const updateAvailability = async (availabilityId, masterId, updateData) => {
 
   try {
     const availability = await MasterAvailability.findOne({
-      where: { id: availabilityId, master_id: masterId }
+      where: { id: availabilityId, master_id: masterId },
     });
 
     if (!availability) {
@@ -173,20 +194,22 @@ const updateAvailability = async (availabilityId, masterId, updateData) => {
 
     await availability.update(updateData, { transaction });
 
-
-    if (updateData.start_time || updateData.end_time || updateData.slot_duration || updateData.service_id) {
-
+    if (
+      updateData.start_time ||
+      updateData.end_time ||
+      updateData.slot_duration ||
+      updateData.service_id
+    ) {
       await TimeSlot.destroy({
         where: {
           master_id: masterId,
           start_time: {
             [Op.gte]: new Date(availability.date + 'T00:00:00'),
-            [Op.lt]: new Date(availability.date + 'T23:59:59')
-          }
+            [Op.lt]: new Date(availability.date + 'T23:59:59'),
+          },
         },
-        transaction
+        transaction,
       });
-
 
       await generateTimeSlots(
         masterId,
@@ -196,10 +219,9 @@ const updateAvailability = async (availabilityId, masterId, updateData) => {
         updateData.slot_duration || availability.slot_duration,
         transaction,
         updateData.service_id !== undefined ? updateData.service_id : availability.service_id,
-        availability.id  // ✅ Передаём existing availabilityId
+        availability.id // ✅ Передаём existing availabilityId
       );
     }
-
 
     if (updateData.is_available === false) {
       await TimeSlot.update(
@@ -209,10 +231,10 @@ const updateAvailability = async (availabilityId, masterId, updateData) => {
             master_id: masterId,
             start_time: {
               [Op.gte]: new Date(availability.date + 'T00:00:00'),
-              [Op.lt]: new Date(availability.date + 'T23:59:59')
-            }
+              [Op.lt]: new Date(availability.date + 'T23:59:59'),
+            },
           },
-          transaction
+          transaction,
         }
       );
     }
@@ -234,26 +256,24 @@ const deleteAvailability = async (availabilityId, masterId) => {
 
   try {
     const availability = await MasterAvailability.findOne({
-      where: { id: availabilityId, master_id: masterId }
+      where: { id: availabilityId, master_id: masterId },
     });
 
     if (!availability) {
       throw new Error('Расписание не найдено');
     }
 
-
     await TimeSlot.destroy({
       where: {
         master_id: masterId,
         start_time: {
           [Op.gte]: new Date(availability.date + 'T00:00:00'),
-          [Op.lt]: new Date(availability.date + 'T23:59:59')
+          [Op.lt]: new Date(availability.date + 'T23:59:59'),
         },
-        status: { [Op.ne]: 'booked' }
+        status: { [Op.ne]: 'booked' },
       },
-      transaction
+      transaction,
     });
-
 
     await availability.destroy({ transaction });
 
@@ -269,7 +289,16 @@ const deleteAvailability = async (availabilityId, masterId) => {
   }
 };
 
-const generateTimeSlots = async (masterId, date, startTime, endTime, slotDuration, transaction, serviceId = null, availabilityId = null) => {
+const generateTimeSlots = async (
+  masterId,
+  date,
+  startTime,
+  endTime,
+  slotDuration,
+  transaction,
+  serviceId = null,
+  availabilityId = null
+) => {
   try {
     const baseDate = new Date(date + 'T00:00:00');
     const [startHour, startMin, startSec] = startTime.split(':').map(Number);
@@ -295,8 +324,6 @@ const generateTimeSlots = async (masterId, date, startTime, endTime, slotDuratio
 
       if (slotEnd > dayEnd) break;
 
-
-
       const formatLocalTime = (date) => {
         const year = date.getFullYear();
         const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -310,12 +337,12 @@ const generateTimeSlots = async (masterId, date, startTime, endTime, slotDuratio
       slots.push({
         master_id: masterId,
         service_id: serviceId,
-        master_availability_id: availabilityId,  // ✅ Добавляем связь с расписанием
+        master_availability_id: availabilityId, // ✅ Добавляем связь с расписанием
         start_time: formatLocalTime(currentTime),
         end_time: formatLocalTime(slotEnd),
         status: 'free',
         source: 'auto',
-        created_at: new Date()
+        created_at: new Date(),
       });
 
       currentTime = slotEnd;
@@ -336,23 +363,18 @@ const generateTimeSlots = async (masterId, date, startTime, endTime, slotDuratio
 const getAvailabilityWithSlots = async (masterId, date, serviceId = null) => {
   logger.info('getAvailabilityWithSlots вызов', { masterId, date, serviceId });
 
-  
   const whereCondition = {
     master_id: masterId,
-    date
+    date,
   };
-  
+
   if (serviceId !== null && serviceId !== undefined) {
-    
-    whereCondition[Op.or] = [
-      { service_id: serviceId },
-      { service_id: null }
-    ];
+    whereCondition[Op.or] = [{ service_id: serviceId }, { service_id: null }];
   }
 
   const availability = await MasterAvailability.findOne({
     where: whereCondition,
-    order: [['service_id', 'DESC']] 
+    order: [['service_id', 'DESC']],
   });
 
   logger.info('getAvailabilityWithSlots результат поиска расписания', {
@@ -360,48 +382,43 @@ const getAvailabilityWithSlots = async (masterId, date, serviceId = null) => {
     date,
     serviceId,
     found: !!availability,
-    availabilityData: availability ? availability.toJSON() : null
+    availabilityData: availability ? availability.toJSON() : null,
   });
 
   const startOfDay = new Date(date + 'T00:00:00');
   const endOfDay = new Date(date + 'T23:59:59');
 
-  
   const slotsWhere = {
     master_id: masterId,
     start_time: {
       [Op.gte]: startOfDay,
-      [Op.lte]: endOfDay
-    }
+      [Op.lte]: endOfDay,
+    },
   };
-  
+
   if (serviceId !== null && serviceId !== undefined) {
-    slotsWhere[Op.or] = [
-      { service_id: serviceId },
-      { service_id: null }
-    ];
+    slotsWhere[Op.or] = [{ service_id: serviceId }, { service_id: null }];
   }
 
   const slots = await TimeSlot.findAll({
     where: slotsWhere,
-    order: [['start_time', 'ASC']]
+    order: [['start_time', 'ASC']],
   });
 
   logger.info('getAvailabilityWithSlots результат поиска слотов', {
     masterId,
     date,
     serviceId,
-    slotsCount: slots.length
+    slotsCount: slots.length,
   });
 
-  
   if (!availability && slots.length === 0) {
     return null;
   }
 
   return {
     ...(availability ? availability.toJSON() : { master_id: masterId, date }),
-    slots
+    slots,
   };
 };
 
@@ -410,39 +427,36 @@ const regenerateSlotsForDate = async (masterId, date) => {
 
   try {
     const availability = await MasterAvailability.findOne({
-      where: { master_id: masterId, date }
+      where: { master_id: masterId, date },
     });
 
     if (!availability) {
       throw new Error('Расписание не найдено');
     }
 
-
     const bookedSlots = await TimeSlot.findAll({
       where: {
         master_id: masterId,
         start_time: {
           [Op.gte]: new Date(date + 'T00:00:00'),
-          [Op.lt]: new Date(date + 'T23:59:59')
+          [Op.lt]: new Date(date + 'T23:59:59'),
         },
-        status: 'booked'
+        status: 'booked',
       },
-      transaction
+      transaction,
     });
-
 
     await TimeSlot.destroy({
       where: {
         master_id: masterId,
         start_time: {
           [Op.gte]: new Date(date + 'T00:00:00'),
-          [Op.lt]: new Date(date + 'T23:59:59')
+          [Op.lt]: new Date(date + 'T23:59:59'),
         },
-        status: { [Op.ne]: 'booked' }
+        status: { [Op.ne]: 'booked' },
       },
-      transaction
+      transaction,
     });
-
 
     await generateTimeSlots(
       masterId,
@@ -452,7 +466,7 @@ const regenerateSlotsForDate = async (masterId, date) => {
       availability.slot_duration,
       transaction,
       availability.service_id,
-      availability.id  // ✅ Передаём availabilityId
+      availability.id // ✅ Передаём availabilityId
     );
 
     await transaction.commit();
@@ -475,5 +489,5 @@ module.exports = {
   generateTimeSlots,
   getAvailabilityWithSlots,
   regenerateSlotsForDate,
-  getAvailableDates
+  getAvailableDates,
 };

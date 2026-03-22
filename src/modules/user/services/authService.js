@@ -8,31 +8,24 @@ const { Op } = require('sequelize');
 const { sequelize } = require('../../../config/database');
 const { createLogger } = require('../../../utils/logger');
 
-
 const logger = createLogger('auth-service');
-
 
 const register = async (userData) => {
   logger.info('Регистрация нового пользователя', { email: userData.email, role: userData.role });
 
   const { phone, email, password, role } = userData;
-  
-  // НЕ хешируем пароль здесь - это сделает модель User в beforeCreate hook
 
+  // НЕ хешируем пароль здесь - это сделает модель User в beforeCreate hook
 
   const { profileData, first_name, last_name, ...userDataWithoutProfile } = userData;
 
   const transaction = await sequelize.transaction();
 
   try {
-
     const existingUser = await User.findOne({
       where: {
-        [Op.or]: [
-          { phone },
-          { email }
-        ]
-      }
+        [Op.or]: [{ phone }, { email }],
+      },
     });
 
     if (existingUser) {
@@ -40,43 +33,53 @@ const register = async (userData) => {
       throw new Error('Номер телефона или email уже существуют');
     }
 
-
-    const user = await User.create({
-      phone,
-      email,
-      password, // Передаём пароль как есть - модель захеширует его в beforeCreate
-      role
-    }, { transaction });
+    const user = await User.create(
+      {
+        phone,
+        email,
+        password, // Передаём пароль как есть - модель захеширует его в beforeCreate
+        role,
+      },
+      { transaction }
+    );
 
     logger.info('Пользователь создан', { userId: user.id, role });
 
-
     switch (role) {
       case 'client':
-        await Client.create({
-          user_id: user.id,
-          ...(profileData || {}),
-          ...(first_name && { first_name }),
-          ...(last_name && { last_name })
-        }, { transaction });
+        await Client.create(
+          {
+            user_id: user.id,
+            ...(profileData || {}),
+            ...(first_name && { first_name }),
+            ...(last_name && { last_name }),
+          },
+          { transaction }
+        );
         logger.info('Профиль клиента создан', { userId: user.id });
         break;
       case 'master':
-        await Master.create({
-          user_id: user.id,
-          ...(profileData || {}),
-          ...(first_name && { first_name }),
-          ...(last_name && { last_name })
-        }, { transaction });
+        await Master.create(
+          {
+            user_id: user.id,
+            ...(profileData || {}),
+            ...(first_name && { first_name }),
+            ...(last_name && { last_name }),
+          },
+          { transaction }
+        );
         logger.info('Профиль мастера создан', { userId: user.id });
         break;
       case 'salon':
-        await Salon.create({
-          user_id: user.id,
-          ...(profileData || {}),
-          ...(first_name && { first_name }),
-          ...(last_name && { last_name })
-        }, { transaction });
+        await Salon.create(
+          {
+            user_id: user.id,
+            ...(profileData || {}),
+            ...(first_name && { first_name }),
+            ...(last_name && { last_name }),
+          },
+          { transaction }
+        );
         logger.info('Профиль салона создан', { userId: user.id });
         break;
       default:
@@ -87,11 +90,10 @@ const register = async (userData) => {
     await transaction.commit();
     logger.info('Регистрация пользователя успешно завершена', { userId: user.id });
 
-
     const userWithoutPassword = {
       id: user.id,
       email: user.email,
-      role: user.role
+      role: user.role,
     };
 
     return userWithoutPassword;
@@ -102,10 +104,8 @@ const register = async (userData) => {
   }
 };
 
-
 const login = async (email, password) => {
   logger.info('Попытка входа пользователя', { email });
-
 
   const user = await User.findOne({ where: { email } });
   if (!user) {
@@ -126,36 +126,36 @@ const login = async (email, password) => {
 
   logger.info('Вход пользователя успешен', { userId: user.id, email });
 
-
   const userWithoutPassword = {
     id: user.id,
     email: user.email,
-    role: user.role
+    role: user.role,
   };
 
   return userWithoutPassword;
 };
 
-
 const loginWithSession = async (email, password) => {
   logger.info('Попытка входа с созданием сессии', { email });
 
-  
   const user = await login(email, password);
 
-  
   const session = await sessionService.createSession(user);
 
-  logger.info('Сессия создана', { userId: user.id, email, sessionId: session.token.substring(0, 8) + '...' });
+  logger.info('Сессия создана', {
+    userId: user.id,
+    email,
+    sessionId: session.token.substring(0, 8) + '...',
+  });
 
   return {
     user,
-    session
+    session,
   };
 };
 
 module.exports = {
   register,
   login,
-  loginWithSession
+  loginWithSession,
 };

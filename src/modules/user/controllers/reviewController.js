@@ -14,21 +14,22 @@ const createReview = async (req, res) => {
       logger.warn('Попытка создать отзыв без аутентификации');
       return res.status(401).json({
         success: false,
-        message: 'Требуется аутентификация'
+        message: 'Требуется аутентификация',
       });
     }
 
     const validationResult = reviewValidationSchema.safeParse(req.body);
     if (!validationResult.success) {
-      const errors = validationResult.error?.issues?.map(e => ({
-        field: e.path.join('.'),
-        message: e.message
-      })) || [];
+      const errors =
+        validationResult.error?.issues?.map((e) => ({
+          field: e.path.join('.'),
+          message: e.message,
+        })) || [];
       logger.warn('Ошибка валидации отзыва', { errors });
       return res.status(400).json({
         success: false,
         message: 'Ошибка валидации',
-        errors
+        errors,
       });
     }
 
@@ -42,7 +43,7 @@ const createReview = async (req, res) => {
       salon_id,
       booking_id,
       rating: parseInt(rating),
-      comment
+      comment,
     });
 
     logger.info('Отзыв успешно создан', { reviewId: review.id, userId: user_id });
@@ -50,7 +51,7 @@ const createReview = async (req, res) => {
     res.status(201).json({
       success: true,
       message: 'Отзыв успешно создан',
-      data: review
+      data: review,
     });
   } catch (error) {
     logger.error('Ошибка создания отзыва', { error: error.message });
@@ -58,13 +59,13 @@ const createReview = async (req, res) => {
     if (error.message.includes('уже оставили отзыв')) {
       return res.status(409).json({
         success: false,
-        message: error.message
+        message: error.message,
       });
     }
 
     res.status(400).json({
       success: false,
-      message: error.message
+      message: error.message,
     });
   }
 };
@@ -78,7 +79,7 @@ const getMasterReviews = async (req, res) => {
 
     const result = await reviewService.getMasterReviews(masterId, {
       limit: parseInt(limit),
-      offset: parseInt(offset)
+      offset: parseInt(offset),
     });
 
     res.json({
@@ -86,13 +87,13 @@ const getMasterReviews = async (req, res) => {
       data: result.rows,
       total: result.count,
       limit: parseInt(limit),
-      offset: parseInt(offset)
+      offset: parseInt(offset),
     });
   } catch (error) {
     logger.error('Ошибка получения отзывов мастера', { error: error.message });
     res.status(500).json({
       success: false,
-      message: error.message
+      message: error.message,
     });
   }
 };
@@ -106,7 +107,7 @@ const getSalonReviews = async (req, res) => {
 
     const result = await reviewService.getSalonReviews(salonId, {
       limit: parseInt(limit),
-      offset: parseInt(offset)
+      offset: parseInt(offset),
     });
 
     res.json({
@@ -114,13 +115,13 @@ const getSalonReviews = async (req, res) => {
       data: result.rows,
       total: result.count,
       limit: parseInt(limit),
-      offset: parseInt(offset)
+      offset: parseInt(offset),
     });
   } catch (error) {
     logger.error('Ошибка получения отзывов салона', { error: error.message });
     res.status(500).json({
       success: false,
-      message: error.message
+      message: error.message,
     });
   }
 };
@@ -136,19 +137,19 @@ const getReviewById = async (req, res) => {
     if (!review) {
       return res.status(404).json({
         success: false,
-        message: 'Отзыв не найден'
+        message: 'Отзыв не найден',
       });
     }
 
     res.json({
       success: true,
-      data: review
+      data: review,
     });
   } catch (error) {
     logger.error('Ошибка получения отзыва', { error: error.message });
     res.status(500).json({
       success: false,
-      message: error.message
+      message: error.message,
     });
   }
 };
@@ -160,21 +161,19 @@ const updateReview = async (req, res) => {
 
     logger.info('Попытка обновления отзыва', { id, userId: req.user?.id });
 
-
     const existingReview = await reviewService.getReviewById(id);
     if (!existingReview) {
       return res.status(404).json({
         success: false,
-        message: 'Отзыв не найден'
+        message: 'Отзыв не найден',
       });
     }
-
 
     if (existingReview.user_id !== req.user?.id && req.user?.role !== 'admin') {
       logger.warn('Попытка редактирования чужого отзыва', { id, userId: req.user?.id });
       return res.status(403).json({
         success: false,
-        message: 'Доступ запрещен'
+        message: 'Доступ запрещен',
       });
     }
 
@@ -183,7 +182,7 @@ const updateReview = async (req, res) => {
       if (rating < 1 || rating > 5) {
         return res.status(400).json({
           success: false,
-          message: 'Рейтинг должен быть от 1 до 5'
+          message: 'Рейтинг должен быть от 1 до 5',
         });
       }
       updateData.rating = parseInt(rating);
@@ -200,13 +199,13 @@ const updateReview = async (req, res) => {
     res.json({
       success: true,
       message: 'Отзыв обновлен',
-      data: review
+      data: review,
     });
   } catch (error) {
     logger.error('Ошибка обновления отзыва', { error: error.message });
     res.status(400).json({
       success: false,
-      message: error.message
+      message: error.message,
     });
   }
 };
@@ -217,12 +216,11 @@ const deleteReview = async (req, res) => {
 
     logger.info('Попытка удаления отзыва', { id, userId: req.user?.id });
 
-
     const existingReview = await reviewService.getReviewById(id);
     if (!existingReview) {
       return res.status(404).json({
         success: false,
-        message: 'Отзыв не найден'
+        message: 'Отзыв не найден',
       });
     }
 
@@ -230,7 +228,7 @@ const deleteReview = async (req, res) => {
       logger.warn('Попытка удаления чужого отзыва', { id, userId: req.user?.id });
       return res.status(403).json({
         success: false,
-        message: 'Доступ запрещен'
+        message: 'Доступ запрещен',
       });
     }
 
@@ -240,13 +238,13 @@ const deleteReview = async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Отзыв удален'
+      message: 'Отзыв удален',
     });
   } catch (error) {
     logger.error('Ошибка удаления отзыва', { error: error.message });
     res.status(400).json({
       success: false,
-      message: error.message
+      message: error.message,
     });
   }
 };
@@ -261,13 +259,13 @@ const getReviewStats = async (req, res) => {
 
     res.json({
       success: true,
-      data: stats
+      data: stats,
     });
   } catch (error) {
     logger.error('Ошибка получения статистики отзывов', { error: error.message });
     res.status(500).json({
       success: false,
-      message: error.message
+      message: error.message,
     });
   }
 };
@@ -279,7 +277,7 @@ const getMyReviews = async (req, res) => {
     if (!user_id) {
       return res.status(401).json({
         success: false,
-        message: 'Требуется аутентификация'
+        message: 'Требуется аутентификация',
       });
     }
 
@@ -289,13 +287,13 @@ const getMyReviews = async (req, res) => {
 
     res.json({
       success: true,
-      data: result
+      data: result,
     });
   } catch (error) {
     logger.error('Ошибка получения моих отзывов', { error: error.message });
     res.status(500).json({
       success: false,
-      message: error.message
+      message: error.message,
     });
   }
 };
@@ -308,5 +306,5 @@ module.exports = {
   updateReview,
   deleteReview,
   getReviewStats,
-  getMyReviews
+  getMyReviews,
 };

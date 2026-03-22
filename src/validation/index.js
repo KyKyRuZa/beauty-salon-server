@@ -4,15 +4,8 @@ const {
   loginValidationSchema,
   updateProfileValidationSchema,
 } = require('./auth');
-const {
-  adminRegisterValidationSchema,
-  adminLoginValidationSchema,
-} = require('./adminAuth');
-const {
-  clientValidationSchema,
-  masterValidationSchema,
-  salonValidationSchema,
-} = require('./user');
+const { adminRegisterValidationSchema, adminLoginValidationSchema } = require('./adminAuth');
+const { clientValidationSchema, masterValidationSchema, salonValidationSchema } = require('./user');
 const {
   serviceCategoryValidationSchema,
   serviceSubcategoryValidationSchema,
@@ -26,28 +19,21 @@ const {
   orderValidationSchema,
   masterAvailabilityValidationSchema,
 } = require('./booking');
-const {
-  adminValidationSchema,
-} = require('./admin');
+const { adminValidationSchema } = require('./admin');
 
 module.exports = {
-
   BaseValidationSchema,
-
 
   registerValidationSchema,
   loginValidationSchema,
   updateProfileValidationSchema,
 
-
   adminRegisterValidationSchema,
   adminLoginValidationSchema,
-
 
   clientValidationSchema,
   masterValidationSchema,
   salonValidationSchema,
-
 
   serviceCategoryValidationSchema,
   serviceSubcategoryValidationSchema,
@@ -55,12 +41,10 @@ module.exports = {
   masterServiceValidationSchema,
   updateMasterServiceValidationSchema,
 
-
   timeSlotValidationSchema,
   bookingValidationSchema,
   orderValidationSchema,
   masterAvailabilityValidationSchema,
-
 
   adminValidationSchema,
 };

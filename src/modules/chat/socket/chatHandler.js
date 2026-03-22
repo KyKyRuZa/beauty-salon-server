@@ -8,28 +8,22 @@ let connectedUsers = {};
 const handleConnection = (socket) => {
   logger.debug('User connected:', socket.id);
 
-
   socket.on('authenticate', (token) => {
-
-
     socket.userId = token.userId;
     connectedUsers[socket.userId] = socket.id;
   });
-
 
   socket.on('sendMessage', async (data) => {
     try {
       const { receiverId, content, messageType = 'text' } = data;
       const senderId = socket.userId;
 
-
       const message = await Message.create({
         senderId,
         receiverId,
         content,
-        messageType
+        messageType,
       });
-
 
       const recipientSocketId = connectedUsers[receiverId];
       if (recipientSocketId) {
@@ -38,23 +32,21 @@ const handleConnection = (socket) => {
           senderId,
           content,
           messageType,
-          sentAt: message.sentAt
+          sentAt: message.sentAt,
         });
       }
-
 
       socket.emit('messageSent', {
         id: message.id,
         receiverId,
         content,
         messageType,
-        sentAt: message.sentAt
+        sentAt: message.sentAt,
       });
     } catch (error) {
       socket.emit('errorMessage', { error: error.message });
     }
   });
-
 
   socket.on('disconnect', () => {
     logger.debug('User disconnected:', socket.id);
@@ -69,5 +61,5 @@ const handleConnection = (socket) => {
 };
 
 module.exports = {
-  handleConnection
+  handleConnection,
 };

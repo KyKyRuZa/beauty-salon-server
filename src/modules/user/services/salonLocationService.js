@@ -7,25 +7,30 @@ const Salon = require('../models/Salon');
  */
 const getAllLocations = async ({ city = null, is_verified = null, limit = 100, offset = 0 }) => {
   const where = {};
-  
+
   if (city) where.city = city;
   if (is_verified !== null) where.is_verified = is_verified;
-  
+
   const locations = await SalonLocation.findAll({
     where,
     limit: parseInt(limit),
     offset: parseInt(offset),
-    order: [['is_verified', 'DESC'], ['city', 'ASC']],
-    include: [{
-      model: Salon,
-      as: 'salon',
-      attributes: ['id', 'name', 'rating', 'image_url']
-    }]
+    order: [
+      ['is_verified', 'DESC'],
+      ['city', 'ASC'],
+    ],
+    include: [
+      {
+        model: Salon,
+        as: 'salon',
+        attributes: ['id', 'name', 'rating', 'image_url'],
+      },
+    ],
   });
-  
-  return locations.map(loc => ({
+
+  return locations.map((loc) => ({
     ...loc.toJSON(),
-    coordinates: loc.getCoordinates()
+    coordinates: loc.getCoordinates(),
   }));
 };
 
@@ -36,17 +41,19 @@ const getLocationsByCity = async (city) => {
   const locations = await SalonLocation.findAll({
     where: { city },
     order: [['is_verified', 'DESC']],
-    include: [{
-      model: Salon,
-      as: 'salon',
-      attributes: ['id', 'name', 'rating', 'image_url', 'address', 'description']
-    }]
+    include: [
+      {
+        model: Salon,
+        as: 'salon',
+        attributes: ['id', 'name', 'rating', 'image_url', 'address', 'description'],
+      },
+    ],
   });
 
-  return locations.map(loc => {
+  return locations.map((loc) => {
     const data = loc.toJSON();
     const salon = data.salon || {};
-    
+
     // Возвращаем плоскую структуру как в getNearbySalons
     return {
       id: salon.id,
@@ -59,7 +66,7 @@ const getLocationsByCity = async (city) => {
       city: data.city,
       coordinates: loc.getCoordinates(),
       working_hours: data.working_hours,
-      is_verified: data.is_verified
+      is_verified: data.is_verified,
     };
   });
 };
@@ -70,18 +77,20 @@ const getLocationsByCity = async (city) => {
 const getLocationBySalonId = async (salonId) => {
   const location = await SalonLocation.findOne({
     where: { salon_id: salonId },
-    include: [{
-      model: Salon,
-      as: 'salon',
-      attributes: ['id', 'name', 'rating', 'image_url', 'address', 'description']
-    }]
+    include: [
+      {
+        model: Salon,
+        as: 'salon',
+        attributes: ['id', 'name', 'rating', 'image_url', 'address', 'description'],
+      },
+    ],
   });
-  
+
   if (!location) return null;
-  
+
   const data = location.toJSON();
   data.coordinates = location.getCoordinates();
-  
+
   return data;
 };
 
@@ -123,13 +132,13 @@ const getNearbySalons = async (lat, lng, city = null) => {
         lat: parseFloat(lat),
         lng: parseFloat(lng),
         radius: radiusMeters,
-        ...(city && { city })
-      }
+        ...(city && { city }),
+      },
     });
 
     if (results.length > 0) {
       return {
-        salons: results.map(salon => ({
+        salons: results.map((salon) => ({
           id: salon.salon_id,
           salon_location_id: salon.id,
           name: salon.salon_name,
@@ -139,18 +148,27 @@ const getNearbySalons = async (lat, lng, city = null) => {
           description: salon.description,
           city: salon.city,
           coordinates: {
-            lat: parseFloat(salon.coordinates_wkt ? salon.coordinates_wkt.replace(/.*POINT\(([^)]+)\).*/, '$1').split(' ')[1] : 0),
-            lng: parseFloat(salon.coordinates_wkt ? salon.coordinates_wkt.replace(/.*POINT\(([^)]+)\).*/, '$1').split(' ')[0] : 0)
+            lat: parseFloat(
+              salon.coordinates_wkt
+                ? salon.coordinates_wkt.replace(/.*POINT\(([^)]+)\).*/, '$1').split(' ')[1]
+                : 0
+            ),
+            lng: parseFloat(
+              salon.coordinates_wkt
+                ? salon.coordinates_wkt.replace(/.*POINT\(([^)]+)\).*/, '$1').split(' ')[0]
+                : 0
+            ),
           },
           working_hours: salon.working_hours,
           is_verified: salon.is_verified,
           distance_meters: Math.round(salon.distance_meters),
-          distance_km: (salon.distance_meters / 1000).toFixed(1)
+          distance_km: (salon.distance_meters / 1000).toFixed(1),
         })),
         searchRadius: radius,
-        message: radius > 5
-          ? `Найдено салонов: ${results.length} в радиусе ${radius} км`
-          : 'Ближайшие салоны'
+        message:
+          radius > 5
+            ? `Найдено салонов: ${results.length} в радиусе ${radius} км`
+            : 'Ближайшие салоны',
       };
     }
   }
@@ -161,14 +179,14 @@ const getNearbySalons = async (lat, lng, city = null) => {
     return {
       salons: allSalons,
       searchRadius: null,
-      message: `Все салоны города ${city}`
+      message: `Все салоны города ${city}`,
     };
   }
 
   return {
     salons: [],
     searchRadius: null,
-    message: 'Салоны не найдены'
+    message: 'Салоны не найдены',
   };
 };
 
@@ -197,7 +215,7 @@ const createLocation = async (data) => {
     address,
     coordinatesGeo: coordinatesValue,
     coordinates: coordinatesValue, // Для обратной совместимости
-    working_hours: working_hours || SalonLocation.options.defaultScope?.working_hours?.defaultValue
+    working_hours: working_hours || SalonLocation.options.defaultScope?.working_hours?.defaultValue,
   });
 
   return getLocationBySalonId(salon_id);
@@ -215,7 +233,7 @@ const updateLocation = async (salonId, data) => {
 
   if (data.city) location.city = data.city;
   if (data.address) location.address = data.address;
-  
+
   // Обновление координат
   if (data.coordinatesGeo || data.coordinates) {
     const coords = data.coordinatesGeo || data.coordinates;
@@ -226,7 +244,7 @@ const updateLocation = async (salonId, data) => {
       location.coordinates = coords; // Для обратной совместимости
     }
   }
-  
+
   if (data.working_hours) location.working_hours = data.working_hours;
   if (data.is_verified !== undefined) location.is_verified = data.is_verified;
 
@@ -240,13 +258,13 @@ const updateLocation = async (salonId, data) => {
  */
 const deleteLocation = async (salonId) => {
   const location = await SalonLocation.findOne({ where: { salon_id: salonId } });
-  
+
   if (!location) {
     throw new Error('Локация не найдена');
   }
-  
+
   await location.destroy();
-  
+
   return { success: true, message: 'Локация удалена' };
 };
 
@@ -255,23 +273,23 @@ const deleteLocation = async (salonId) => {
  */
 const isSalonOpenNow = (workingHours) => {
   if (!workingHours) return false;
-  
+
   const now = new Date();
   const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
   const currentDay = days[now.getDay()];
   const currentHours = now.getHours();
   const currentMinutes = now.getMinutes();
   const currentTime = currentHours * 60 + currentMinutes;
-  
+
   const daySchedule = workingHours[currentDay];
   if (!daySchedule || !daySchedule.is_open) return false;
-  
+
   const [openHours, openMinutes] = daySchedule.open.split(':').map(Number);
   const [closeHours, closeMinutes] = daySchedule.close.split(':').map(Number);
-  
+
   const openTime = openHours * 60 + openMinutes;
   const closeTime = closeHours * 60 + closeMinutes;
-  
+
   return currentTime >= openTime && currentTime <= closeTime;
 };
 
@@ -283,5 +301,5 @@ module.exports = {
   createLocation,
   updateLocation,
   deleteLocation,
-  isSalonOpenNow
+  isSalonOpenNow,
 };

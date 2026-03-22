@@ -3,19 +3,17 @@ const Master = require('../models/Master');
 const Salon = require('../models/Salon');
 const { Op } = require('sequelize');
 
-
 const getAllActiveServices = async () => {
   return await MasterService.findAll({
     include: [
       {
         model: Master,
         as: 'master_provider',
-        attributes: ['first_name', 'last_name', 'specialization']
-      }
-    ]
+        attributes: ['first_name', 'last_name', 'specialization'],
+      },
+    ],
   });
 };
-
 
 const getServiceById = async (id) => {
   return await MasterService.findByPk(id, {
@@ -23,15 +21,13 @@ const getServiceById = async (id) => {
       {
         model: Master,
         as: 'master_provider',
-        attributes: ['first_name', 'last_name', 'specialization']
-      }
-    ]
+        attributes: ['first_name', 'last_name', 'specialization'],
+      },
+    ],
   });
 };
 
-
 const createService = async (serviceData) => {
-
   if (serviceData.master_id) {
     const master = await Master.findByPk(serviceData.master_id);
     if (!master) {
@@ -45,12 +41,11 @@ const createService = async (serviceData) => {
       {
         model: Master,
         as: 'master_provider',
-        attributes: ['first_name', 'last_name', 'specialization']
-      }
-    ]
+        attributes: ['first_name', 'last_name', 'specialization'],
+      },
+    ],
   });
 };
-
 
 const updateService = async (id, updateData) => {
   const service = await MasterService.findByPk(id);
@@ -64,12 +59,11 @@ const updateService = async (id, updateData) => {
       {
         model: Master,
         as: 'master_provider',
-        attributes: ['first_name', 'last_name', 'specialization']
-      }
-    ]
+        attributes: ['first_name', 'last_name', 'specialization'],
+      },
+    ],
   });
 };
-
 
 const deleteService = async (id) => {
   const service = await MasterService.findByPk(id);
@@ -86,5 +80,5 @@ module.exports = {
   getServiceById,
   createService,
   updateService,
-  deleteService
+  deleteService,
 };

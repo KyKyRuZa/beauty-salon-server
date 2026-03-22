@@ -3,112 +3,116 @@ const { sequelize } = require('../../../config/database');
 const MasterService = require('../../catalog/models/MasterService');
 const MasterAvailability = require('./MasterAvailability');
 
-const TimeSlot = sequelize.define('TimeSlot', {
-  id: {
-    type: DataTypes.INTEGER,
-    primaryKey: true,
-    autoIncrement: true,
-    field: 'id'
-  },
-  master_id: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-    field: 'master_id',
-    comment: 'ID мастера'
-  },
-  service_id: {
-    type: DataTypes.INTEGER,
-    allowNull: true,
-    field: 'service_id',
-    comment: 'ID услуги',
-    references: {
-      model: {
-        schema: 'catalog_schema',
-        tableName: 'master_services'
+const TimeSlot = sequelize.define(
+  'TimeSlot',
+  {
+    id: {
+      type: DataTypes.INTEGER,
+      primaryKey: true,
+      autoIncrement: true,
+      field: 'id',
+    },
+    master_id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      field: 'master_id',
+      comment: 'ID мастера',
+    },
+    service_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      field: 'service_id',
+      comment: 'ID услуги',
+      references: {
+        model: {
+          schema: 'catalog_schema',
+          tableName: 'master_services',
+        },
+        key: 'id',
       },
-      key: 'id'
+      onDelete: 'SET NULL',
     },
-    onDelete: 'SET NULL'
-  },
-  master_availability_id: {
-    type: DataTypes.INTEGER,
-    allowNull: true,
-    field: 'master_availability_id',
-    comment: 'ID записи расписания мастера, из которого создан слот',
-    references: {
-      model: {
-        schema: 'booking_schema',
-        tableName: 'master_availability'
+    master_availability_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      field: 'master_availability_id',
+      comment: 'ID записи расписания мастера, из которого создан слот',
+      references: {
+        model: {
+          schema: 'booking_schema',
+          tableName: 'master_availability',
+        },
+        key: 'id',
       },
-      key: 'id'
+      onDelete: 'SET NULL',
     },
-    onDelete: 'SET NULL'
+    start_time: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      field: 'start_time',
+      comment: 'Время начала слота',
+    },
+    end_time: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      field: 'end_time',
+      comment: 'Время окончания слота',
+    },
+    status: {
+      type: DataTypes.ENUM('free', 'booked', 'blocked'),
+      defaultValue: 'free',
+      field: 'status',
+      comment: 'Статус слота: free-свободен, booked-забронирован, blocked-заблокирован',
+    },
+    source: {
+      type: DataTypes.ENUM('auto', 'manual'),
+      defaultValue: 'auto',
+      field: 'source',
+      comment: 'Источник создания: auto-из расписания, manual-вручную',
+    },
   },
-  start_time: {
-    type: DataTypes.DATE,
-    allowNull: false,
-    field: 'start_time',
-    comment: 'Время начала слота'
-  },
-  end_time: {
-    type: DataTypes.DATE,
-    allowNull: false,
-    field: 'end_time',
-    comment: 'Время окончания слота'
-  },
-  status: {
-    type: DataTypes.ENUM('free', 'booked', 'blocked'),
-    defaultValue: 'free',
-    field: 'status',
-    comment: 'Статус слота: free-свободен, booked-забронирован, blocked-заблокирован'
-  },
-  source: {
-    type: DataTypes.ENUM('auto', 'manual'),
-    defaultValue: 'auto',
-    field: 'source',
-    comment: 'Источник создания: auto-из расписания, manual-вручную'
-  }
-}, {
-  tableName: 'slots',
-  schema: 'booking_schema',
-  indexes: [
-    {
-      fields: ['master_id', 'start_time'],
-      name: 'idx_slots_master_datetime'
-    },
-    {
-      fields: ['master_id', 'service_id', 'start_time'],
-      name: 'idx_slots_master_service_datetime'
-    },
-    {
-      fields: ['status'],
-      name: 'idx_slots_status'
-    },
-    {
-      fields: ['master_id', 'status'],
-      name: 'idx_slots_master_status'
-    },
-    {
-      fields: ['master_availability_id'],
-      name: 'idx_slots_master_availability_id'
-    }
-  ],
-  paranoid: false,
-  timestamps: true,
-  createdAt: 'created_at',
-  updatedAt: false,
-  hooks: {
-    beforeValidate: (timeSlot) => {
-      if (timeSlot.start_time && timeSlot.end_time) {
-        const start = new Date(timeSlot.start_time);
-        const end = new Date(timeSlot.end_time);
+  {
+    tableName: 'slots',
+    schema: 'booking_schema',
+    indexes: [
+      {
+        fields: ['master_id', 'start_time'],
+        name: 'idx_slots_master_datetime',
+      },
+      {
+        fields: ['master_id', 'service_id', 'start_time'],
+        name: 'idx_slots_master_service_datetime',
+      },
+      {
+        fields: ['status'],
+        name: 'idx_slots_status',
+      },
+      {
+        fields: ['master_id', 'status'],
+        name: 'idx_slots_master_status',
+      },
+      {
+        fields: ['master_availability_id'],
+        name: 'idx_slots_master_availability_id',
+      },
+    ],
+    paranoid: false,
+    timestamps: true,
+    createdAt: 'created_at',
+    updatedAt: false,
+    hooks: {
+      beforeValidate: (timeSlot) => {
+        if (timeSlot.start_time && timeSlot.end_time) {
+          const start = new Date(timeSlot.start_time);
+          const end = new Date(timeSlot.end_time);
 
-        if (start >= end) {
-          throw new Error('Время окончания должно быть позже времени начала');
+          if (start >= end) {
+            throw new Error('Время окончания должно быть позже времени начала');
+          }
         }
-      }
-    }
+      },
+    },
   }
-});
+);
 
 module.exports = TimeSlot;

@@ -4,14 +4,10 @@ const crypto = require('crypto');
 
 const logger = createLogger('session-service');
 
-
-
-
 const createSession = async (user) => {
   try {
-    
     const token = crypto.randomBytes(32).toString('hex');
-    const expiresAt = Date.now() + (CACHE_TTL.SESSION * 1000);
+    const expiresAt = Date.now() + CACHE_TTL.SESSION * 1000;
 
     const sessionData = {
       userId: user.id || user.userId,
@@ -19,25 +15,25 @@ const createSession = async (user) => {
       role: user.role,
       createdAt: Date.now(),
       expiresAt,
-      lastActivity: Date.now()
+      lastActivity: Date.now(),
     };
 
-    
     await cache.set(KEYS.SESSION(token), sessionData, CACHE_TTL.SESSION);
 
-    logger.info(`Сессия создана для пользователя ${sessionData.email} (токен: ${token.substring(0, 8)}...)`);
+    logger.info(
+      `Сессия создана для пользователя ${sessionData.email} (токен: ${token.substring(0, 8)}...)`
+    );
 
     return {
       token,
       expiresAt,
-      expiresIn: CACHE_TTL.SESSION
+      expiresIn: CACHE_TTL.SESSION,
     };
   } catch (error) {
     logger.error(`Ошибка создания сессии: ${error.message}`);
     throw error;
   }
 };
-
 
 const getSession = async (token) => {
   try {
@@ -52,14 +48,12 @@ const getSession = async (token) => {
       return null;
     }
 
-    
     if (Date.now() > session.expiresAt) {
       logger.info(`Сессия истекла для пользователя ${session.email}`);
       await destroySession(token);
       return null;
     }
 
-    
     session.lastActivity = Date.now();
     await cache.set(KEYS.SESSION(token), session, CACHE_TTL.SESSION);
 
@@ -70,7 +64,6 @@ const getSession = async (token) => {
   }
 };
 
-
 const renewSession = async (token) => {
   try {
     const session = await getSession(token);
@@ -79,8 +72,7 @@ const renewSession = async (token) => {
       return false;
     }
 
-    
-    session.expiresAt = Date.now() + (CACHE_TTL.SESSION * 1000);
+    session.expiresAt = Date.now() + CACHE_TTL.SESSION * 1000;
     session.lastActivity = Date.now();
 
     await cache.set(KEYS.SESSION(token), session, CACHE_TTL.SESSION);
@@ -93,7 +85,6 @@ const renewSession = async (token) => {
     return false;
   }
 };
-
 
 const destroySession = async (token) => {
   try {
@@ -116,11 +107,8 @@ const destroySession = async (token) => {
   }
 };
 
-
 const destroyAllUserSessions = async (userId) => {
   try {
-    
-    
     const pattern = `session:*`;
     const keys = await redis.keys(pattern);
 
@@ -141,7 +129,6 @@ const destroyAllUserSessions = async (userId) => {
     return 0;
   }
 };
-
 
 const getSessionStats = async () => {
   try {
@@ -168,14 +155,13 @@ const getSessionStats = async () => {
       activeSessions,
       expiredSessions,
       sessionsByRole,
-      totalKeys: keys.length
+      totalKeys: keys.length,
     };
   } catch (error) {
     logger.error(`Ошибка получения статистики сессий: ${error.message}`);
     return null;
   }
 };
-
 
 const { redis } = require('./cacheService');
 
@@ -186,5 +172,5 @@ module.exports = {
   destroySession,
   destroyAllUserSessions,
   getSessionStats,
-  SESSION_TTL: CACHE_TTL.SESSION
+  SESSION_TTL: CACHE_TTL.SESSION,
 };

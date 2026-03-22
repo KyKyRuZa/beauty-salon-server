@@ -26,51 +26,48 @@ const adminAuthRoutes = require('./modules/admin/routes/adminAuthRoutes');
 const app = express();
 
 // Gzip сжатие для всех ответов (включая dev)
-app.use(compression({
-  level: 6, // Уровень сжатия (1-9, по умолчанию 6)
-  threshold: 1024, // Сжимать только ответы > 1KB
-  filter: (req, res) => {
-    // Не сжимать SSE (Server-Sent Events)
-    if (req.headers['accept']?.includes('text/event-stream')) {
-      return false;
-    }
-    return compression.filter(req, res);
-  }
-}));
+app.use(
+  compression({
+    level: 6, // Уровень сжатия (1-9, по умолчанию 6)
+    threshold: 1024, // Сжимать только ответы > 1KB
+    filter: (req, res) => {
+      // Не сжимать SSE (Server-Sent Events)
+      if (req.headers['accept']?.includes('text/event-stream')) {
+        return false;
+      }
+      return compression.filter(req, res);
+    },
+  })
+);
 
 connectDB()
   .then(() => {
     logger.info('База данных успешно инициализирована');
   })
-  .catch(error => {
+  .catch((error) => {
     logger.error('Ошибка инициализации базы данных:', error);
   });
 
-
 applySecurityMiddleware(app);
-
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-
 app.use('/uploads', express.static('uploads'));
-
 
 app.use((req, res, next) => {
   if (
-    !req.path.startsWith('/health') && 
+    !req.path.startsWith('/health') &&
     !req.path.match(/\.(js|css|png|jpg|jpeg|svg|webp|gif|ico|woff2?|ttf|eot)$/)
   ) {
     logger.info(`${req.method} ${req.path}`, {
       ip: req.ip,
       userAgent: req.get('User-Agent'),
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   }
   next();
 });
-
 
 app.use('/api/auth/admin', adminAuthRoutes);
 app.use('/api/auth', userAuthRoutes);
@@ -92,8 +89,8 @@ app.get('/health', async (req, res) => {
     timestamp: new Date().toISOString(),
     services: {
       database: { status: 'unknown', message: '' },
-      redis: { status: 'unknown', message: '' }
-    }
+      redis: { status: 'unknown', message: '' },
+    },
   };
 
   let overallStatus = 'healthy';
@@ -125,18 +122,23 @@ app.get('/health', async (req, res) => {
 
   logger.info(`Health check: ${overallStatus}`, {
     database: healthStatus.services.database.status,
-    redis: healthStatus.services.redis.status
+    redis: healthStatus.services.redis.status,
   });
 
   res.status(httpStatus).json(healthStatus);
 });
 
 app.use((err, req, res, next) => {
-  logger.error('Произошла ошибка:', { error: err.message, stack: err.stack, url: req.url, method: req.method });
+  logger.error('Произошла ошибка:', {
+    error: err.message,
+    stack: err.stack,
+    url: req.url,
+    method: req.method,
+  });
   res.status(500).json({
     success: false,
     message: 'Что-то пошло не так!',
-    error: process.env.NODE_ENV === 'development' ? err.message : {}
+    error: process.env.NODE_ENV === 'development' ? err.message : {},
   });
 });
 
@@ -144,7 +146,7 @@ app.use((req, res) => {
   logger.warn('Маршрут не найден', { url: req.url, method: req.method });
   res.status(404).json({
     success: false,
-    message: 'Маршрут не найден'
+    message: 'Маршрут не найден',
   });
 });
 

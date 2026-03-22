@@ -7,5 +7,5 @@ module.exports = {
   catalogController,
   catalogService,
   ServiceCategory,
-  MasterService
+  MasterService,
 };

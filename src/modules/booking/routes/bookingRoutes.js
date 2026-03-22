@@ -7,7 +7,6 @@ router.get('/available-slots', bookingController.getAvailableSlots);
 
 router.get('/free-windows', bookingController.getFreeWindows);
 
-
 router.use(authenticateToken);
 
 router.post('/', bookingController.createBooking);

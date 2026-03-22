@@ -10,7 +10,7 @@ const getFavorites = async (req, res) => {
     if (!userId) {
       return res.status(401).json({
         success: false,
-        message: 'Требуется аутентификация'
+        message: 'Требуется аутентификация',
       });
     }
 
@@ -20,13 +20,13 @@ const getFavorites = async (req, res) => {
 
     res.json({
       success: true,
-      data: favorites
+      data: favorites,
     });
   } catch (error) {
     logger.error('Ошибка получения избранных мастеров', { error: error.message });
     res.status(500).json({
       success: false,
-      message: error.message
+      message: error.message,
     });
   }
 };
@@ -39,7 +39,7 @@ const addFavorite = async (req, res) => {
     if (!userId) {
       return res.status(401).json({
         success: false,
-        message: 'Требуется аутентификация'
+        message: 'Требуется аутентификация',
       });
     }
 
@@ -50,7 +50,7 @@ const addFavorite = async (req, res) => {
     res.status(201).json({
       success: true,
       message: 'Мастер добавлен в избранное',
-      data: favorite
+      data: favorite,
     });
   } catch (error) {
     logger.error('Ошибка добавления в избранное', { error: error.message });
@@ -58,13 +58,13 @@ const addFavorite = async (req, res) => {
     if (error.message.includes('уже в избранном')) {
       return res.status(409).json({
         success: false,
-        message: error.message
+        message: error.message,
       });
     }
 
     res.status(400).json({
       success: false,
-      message: error.message
+      message: error.message,
     });
   }
 };
@@ -77,7 +77,7 @@ const removeFavorite = async (req, res) => {
     if (!userId) {
       return res.status(401).json({
         success: false,
-        message: 'Требуется аутентификация'
+        message: 'Требуется аутентификация',
       });
     }
 
@@ -87,7 +87,7 @@ const removeFavorite = async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Мастер удалён из избранного'
+      message: 'Мастер удалён из избранного',
     });
   } catch (error) {
     logger.error('Ошибка удаления из избранного', { error: error.message });
@@ -95,13 +95,13 @@ const removeFavorite = async (req, res) => {
     if (error.message.includes('не в избранном')) {
       return res.status(404).json({
         success: false,
-        message: error.message
+        message: error.message,
       });
     }
 
     res.status(400).json({
       success: false,
-      message: error.message
+      message: error.message,
     });
   }
 };
@@ -114,7 +114,7 @@ const toggleFavorite = async (req, res) => {
     if (!userId) {
       return res.status(401).json({
         success: false,
-        message: 'Требуется аутентификация'
+        message: 'Требуется аутентификация',
       });
     }
 
@@ -125,13 +125,13 @@ const toggleFavorite = async (req, res) => {
     res.json({
       success: true,
       message: result.added ? 'Мастер добавлен в избранное' : 'Мастер удалён из избранного',
-      data: result
+      data: result,
     });
   } catch (error) {
     logger.error('Ошибка переключения статуса избранного', { error: error.message });
     res.status(400).json({
       success: false,
-      message: error.message
+      message: error.message,
     });
   }
 };
@@ -144,7 +144,7 @@ const checkFavorite = async (req, res) => {
     if (!userId) {
       return res.status(401).json({
         success: false,
-        message: 'Требуется аутентификация'
+        message: 'Требуется аутентификация',
       });
     }
 
@@ -152,13 +152,13 @@ const checkFavorite = async (req, res) => {
 
     res.json({
       success: true,
-      data: { isFavorite: isFav }
+      data: { isFavorite: isFav },
     });
   } catch (error) {
     logger.error('Ошибка проверки избранного', { error: error.message });
     res.status(500).json({
       success: false,
-      message: error.message
+      message: error.message,
     });
   }
 };
@@ -168,5 +168,5 @@ module.exports = {
   addFavorite,
   removeFavorite,
   toggleFavorite,
-  checkFavorite
+  checkFavorite,
 };

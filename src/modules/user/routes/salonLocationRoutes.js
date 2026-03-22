@@ -39,20 +39,17 @@ router.get('/nearby', salonLocationController.getNearbySalons);
  * @desc    Создать локацию салона
  * @access  Private (salon, admin)
  */
-router.post('/', 
-  authenticateToken, 
-  requireAdminRole, 
-  salonLocationController.createLocation
-);
+router.post('/', authenticateToken, requireAdminRole, salonLocationController.createLocation);
 
 /**
  * @route   PUT /api/salon-locations/:salonId
  * @desc    Обновить локацию салона
  * @access  Private (salon, admin)
  */
-router.put('/:salonId', 
-  authenticateToken, 
-  requireAdminRole, 
+router.put(
+  '/:salonId',
+  authenticateToken,
+  requireAdminRole,
   salonLocationController.updateLocation
 );
 
@@ -61,9 +58,10 @@ router.put('/:salonId',
  * @desc    Удалить локацию салона
  * @access  Private (admin only)
  */
-router.delete('/:salonId', 
-  authenticateToken, 
-  requireAdminRole, 
+router.delete(
+  '/:salonId',
+  authenticateToken,
+  requireAdminRole,
   salonLocationController.deleteLocation
 );
 

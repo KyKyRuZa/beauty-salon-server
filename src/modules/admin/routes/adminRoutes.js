@@ -10,30 +10,22 @@ const {
   createAdmin,
   getAllAdmins,
   getCurrentAdmin,
-  updateCurrentAdmin
+  updateCurrentAdmin,
 } = require('../controllers/adminController');
 const { requireAdminRole } = require('../../../middleware/auth');
 const { validate } = require('../../../middleware/validation');
-const { 
-  serviceCategoryValidationSchema,
-  adminValidationSchema
-} = require('../../../validation');
-
+const { serviceCategoryValidationSchema, adminValidationSchema } = require('../../../validation');
 
 router.use(requireAdminRole);
 
-
 router.get('/dashboard/stats', getDashboardStats);
-
 
 router.get('/admins', getAllAdmins);
 router.post('/admins', validate(adminValidationSchema, 'body'), createAdmin);
 router.get('/profile', getCurrentAdmin);
 router.put('/profile', validate(adminValidationSchema, 'body'), updateCurrentAdmin);
 
-
 router.get('/users', getAllUsers);
-
 
 router.get('/categories', getAllCategories);
 router.post('/categories', validate(serviceCategoryValidationSchema, 'body'), createCategory);

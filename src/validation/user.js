@@ -1,14 +1,12 @@
 const { z } = require('zod');
 const { BaseValidationSchema } = require('./base');
 
-
 const clientValidationSchema = z.object({
   user_id: BaseValidationSchema.number,
   first_name: BaseValidationSchema.name,
   last_name: BaseValidationSchema.name,
   image_url: BaseValidationSchema.url,
 });
-
 
 const masterValidationSchema = z.object({
   user_id: BaseValidationSchema.number,
@@ -23,28 +21,34 @@ const masterValidationSchema = z.object({
   image_url: BaseValidationSchema.url,
 });
 
-
 const salonValidationSchema = z.object({
   user_id: BaseValidationSchema.number,
   name: z.string().min(2).max(255),
   description: z.string().max(1000).optional(),
   address: z.string().max(500).optional(),
-  inn: z.string().regex(/^\d{10}$|^\d{12}$/, 'ИНН должен содержать только цифры и быть длиной 10 или 12 символов').optional(),
+  inn: z
+    .string()
+    .regex(
+      /^\d{10}$|^\d{12}$/,
+      'ИНН должен содержать только цифры и быть длиной 10 или 12 символов'
+    )
+    .optional(),
   rating: z.number().min(0).max(5).optional(),
   image_url: BaseValidationSchema.url,
 });
 
-
-const reviewValidationSchema = z.object({
-  master_id: BaseValidationSchema.number.optional(),
-  salon_id: BaseValidationSchema.number.optional(),
-  booking_id: BaseValidationSchema.number.optional(),
-  rating: z.coerce.number().min(1).max(5, 'Рейтинг должен быть от 1 до 5'),
-  comment: z.string().max(1000, 'Комментарий не должен превышать 1000 символов').optional(),
-}).refine(data => data.master_id || data.salon_id, {
-  message: 'Отзыв должен быть оставлен мастеру или салону',
-  path: ['master_id', 'salon_id'],
-});
+const reviewValidationSchema = z
+  .object({
+    master_id: BaseValidationSchema.number.optional(),
+    salon_id: BaseValidationSchema.number.optional(),
+    booking_id: BaseValidationSchema.number.optional(),
+    rating: z.coerce.number().min(1).max(5, 'Рейтинг должен быть от 1 до 5'),
+    comment: z.string().max(1000, 'Комментарий не должен превышать 1000 символов').optional(),
+  })
+  .refine((data) => data.master_id || data.salon_id, {
+    message: 'Отзыв должен быть оставлен мастеру или салону',
+    path: ['master_id', 'salon_id'],
+  });
 
 module.exports = {
   clientValidationSchema,

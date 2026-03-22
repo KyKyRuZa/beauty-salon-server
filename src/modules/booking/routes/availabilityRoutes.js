@@ -3,9 +3,7 @@ const router = express.Router();
 const availabilityController = require('../controllers/availabilityController');
 const { authenticateToken } = require('../../../middleware/auth');
 
-
 router.get('/available-dates', availabilityController.getAvailableDates);
-
 
 router.use(authenticateToken);
 

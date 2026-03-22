@@ -16,31 +16,30 @@ const sequelize = new Sequelize(
       max: parseInt(process.env.DB_POOL_MAX) || 20,
       min: parseInt(process.env.DB_POOL_MIN) || 5,
       acquire: parseInt(process.env.DB_POOL_ACQUIRE) || 30000,
-      idle: parseInt(process.env.DB_POOL_IDLE) || 10000
+      idle: parseInt(process.env.DB_POOL_IDLE) || 10000,
     },
-
 
     schema: 'public',
 
     logging: (msg) => dbLogger.debug(msg),
 
-
     retry: {
-      max: parseInt(process.env.DB_RETRY_MAX) || 3
+      max: parseInt(process.env.DB_RETRY_MAX) || 3,
     },
-    
 
     dialectOptions: {
-      ssl: process.env.DB_SSL === 'true' ? {
-        require: true,
-        rejectUnauthorized: false
-      } : false
-    }
+      ssl:
+        process.env.DB_SSL === 'true'
+          ? {
+              require: true,
+              rejectUnauthorized: false,
+            }
+          : false,
+    },
   }
 );
 
 function importModels() {
-
   const User = require('../modules/user/models/User');
   const Salon = require('../modules/user/models/Salon');
   const Client = require('../modules/user/models/Client');
@@ -50,14 +49,11 @@ function importModels() {
   const MasterSkill = require('../modules/user/models/MasterSkill');
   const MasterPortfolio = require('../modules/user/models/MasterPortfolio');
 
-
   const Admin = require('../modules/admin/models/Admin');
-
 
   const ServiceCategory = require('../modules/catalog/models/ServiceCategory');
   const MasterService = require('../modules/catalog/models/MasterService');
   const TimeSlot = require('../modules/booking/models/TimeSlot');
-
 
   const Booking = require('../modules/booking/models/Booking');
   const MasterAvailability = require('../modules/booking/models/MasterAvailability');
@@ -66,7 +62,23 @@ function importModels() {
   Salon.associate({ SalonLocation });
   SalonLocation.associate({ Salon });
 
-  return { User, Client, Master, Salon, Admin, ServiceCategory, MasterService, TimeSlot, Booking, MasterAvailability, Review, Favorite, MasterSkill, MasterPortfolio, SalonLocation };
+  return {
+    User,
+    Client,
+    Master,
+    Salon,
+    Admin,
+    ServiceCategory,
+    MasterService,
+    TimeSlot,
+    Booking,
+    MasterAvailability,
+    Review,
+    Favorite,
+    MasterSkill,
+    MasterPortfolio,
+    SalonLocation,
+  };
 }
 
 function defineAssociations(models) {
@@ -83,9 +95,9 @@ const connectDB = async () => {
     dbLogger.info('Соединение с базой данных успешно установлено.', {
       host: process.env.DB_HOST || 'localhost',
       database: process.env.DB_NAME || 'beauty_vite_db',
-      dialect: process.env.DB_DIALECT || 'postgres'
+      dialect: process.env.DB_DIALECT || 'postgres',
     });
-    
+
     await models.User.sync();
 
     await models.Salon.sync();

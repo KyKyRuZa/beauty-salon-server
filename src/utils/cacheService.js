@@ -4,14 +4,14 @@ const { createLogger } = require('./logger');
 const logger = createLogger('cache-service');
 
 const CACHE_TTL = {
-  SESSION: 3600,           // 1 час
-  CATALOG: 300,            // 5 минут
-  SERVICES: 300,           // 5 минут
-  CATEGORIES: 600,         // 10 минут
-  MASTERS: 300,            // 5 минут
-  MASTER_SERVICES: 300,    // 5 минут
-  SEARCH: 180,             // 3 минуты
-  TOP_MASTERS: 2700        // 45 минут
+  SESSION: 3600, // 1 час
+  CATALOG: 300, // 5 минут
+  SERVICES: 300, // 5 минут
+  CATEGORIES: 600, // 10 минут
+  MASTERS: 300, // 5 минут
+  MASTER_SERVICES: 300, // 5 минут
+  SEARCH: 180, // 3 минуты
+  TOP_MASTERS: 2700, // 45 минут
 };
 
 const get = async (key) => {
@@ -110,7 +110,7 @@ const getStats = async () => {
     return {
       info,
       memory,
-      keyspace
+      keyspace,
     };
   } catch (error) {
     logger.error(`Ошибка получения статистики кэша: ${error.message}`);
@@ -133,7 +133,8 @@ const KEYS = {
   // Услуги
   SERVICES: 'catalog:services',
   SERVICE_BY_ID: (id) => `catalog:service:${id}`,
-  SERVICES_BY_CATEGORY: (categoryId, params) => `catalog:services:category:${categoryId}:${JSON.stringify(params)}`,
+  SERVICES_BY_CATEGORY: (categoryId, params) =>
+    `catalog:services:category:${categoryId}:${JSON.stringify(params)}`,
 
   // Мастера
   MASTERS: 'masters:list',
@@ -145,7 +146,7 @@ const KEYS = {
   // Поиск
   SEARCH_CATEGORIES: (query) => `search:categories:${query}`,
   SEARCH_SERVICES: (query) => `search:services:${query}`,
-  SEARCH_MASTERS: (query) => `search:masters:${query}`
+  SEARCH_MASTERS: (query) => `search:masters:${query}`,
 };
 
 module.exports = {
@@ -156,8 +157,8 @@ module.exports = {
     del,
     clearByPattern,
     exists,
-    getStats
+    getStats,
   },
   CACHE_TTL,
-  KEYS
+  KEYS,
 };

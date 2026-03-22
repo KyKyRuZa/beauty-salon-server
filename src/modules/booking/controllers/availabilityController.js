@@ -9,16 +9,20 @@ const getMasterId = async (userId) => {
   try {
     const master = await Master.findOne({
       where: { user_id: userId },
-      paranoid: false
+      paranoid: false,
     });
-    logger.info('getMasterId результат', { userId, masterFound: !!master, masterId: master?.id, masterData: master?.toJSON() });
+    logger.info('getMasterId результат', {
+      userId,
+      masterFound: !!master,
+      masterId: master?.id,
+      masterData: master?.toJSON(),
+    });
     return master ? master.id : null;
   } catch (error) {
     logger.error('getMasterId ошибка', { userId, error: error.message });
     return null;
   }
 };
-
 
 const getAvailableDates = async (req, res) => {
   try {
@@ -27,7 +31,7 @@ const getAvailableDates = async (req, res) => {
     if (!master_id) {
       return res.status(400).json({
         success: false,
-        message: 'Необходимо указать master_id'
+        message: 'Необходимо указать master_id',
       });
     }
 
@@ -40,13 +44,13 @@ const getAvailableDates = async (req, res) => {
 
     res.json({
       success: true,
-      data: dates
+      data: dates,
     });
   } catch (error) {
     logger.error('Ошибка получения доступных дат', { error: error.message });
     res.status(500).json({
       success: false,
-      message: error.message
+      message: error.message,
     });
   }
 };
@@ -66,7 +70,9 @@ const setAvailability = async (req, res) => {
     }
 
     if (!date || !start_time || !end_time) {
-      return res.status(400).json({ success: false, message: 'Необходимо указать date, start_time и end_time' });
+      return res
+        .status(400)
+        .json({ success: false, message: 'Необходимо указать date, start_time и end_time' });
     }
 
     await availabilityService.setAvailability(
@@ -111,15 +117,19 @@ const getAvailability = async (req, res) => {
 const getAvailabilityWithSlots = async (req, res) => {
   try {
     const { date } = req.params;
-    const { master_id, service_id } = req.query; 
+    const { master_id, service_id } = req.query;
 
-    logger.info('getAvailabilityWithSlots запрос:', { date, master_id, service_id, userId: req.user?.userId || req.user?.id });
+    logger.info('getAvailabilityWithSlots запрос:', {
+      date,
+      master_id,
+      service_id,
+      userId: req.user?.userId || req.user?.id,
+    });
 
     if (!date) {
       return res.status(400).json({ success: false, message: 'Необходимо указать дату' });
     }
 
-    
     let effectiveMasterId = master_id ? parseInt(master_id) : null;
 
     if (!effectiveMasterId) {
@@ -133,7 +143,11 @@ const getAvailabilityWithSlots = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Необходимо указать master_id' });
     }
 
-    logger.info('getAvailabilityWithSlots masterId:', { masterId: effectiveMasterId, date, serviceId: service_id });
+    logger.info('getAvailabilityWithSlots masterId:', {
+      masterId: effectiveMasterId,
+      date,
+      serviceId: service_id,
+    });
 
     const result = await availabilityService.getAvailabilityWithSlots(
       effectiveMasterId,
@@ -144,19 +158,19 @@ const getAvailabilityWithSlots = async (req, res) => {
     if (!result) {
       return res.json({
         success: true,
-        data: null
+        data: null,
       });
     }
 
     res.json({
       success: true,
-      data: result
+      data: result,
     });
   } catch (error) {
     logger.error('Ошибка получения расписания со слотами', { error: error.message });
     res.status(500).json({
       success: false,
-      message: error.message
+      message: error.message,
     });
   }
 };
@@ -224,14 +238,14 @@ const regenerateSlots = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Профиль мастера не найден' });
     }
 
-    const availability = await availabilityService.getAvailability(masterId).then(
-      result => result.find(a => a.id === parseInt(id))
-    );
+    const availability = await availabilityService
+      .getAvailability(masterId)
+      .then((result) => result.find((a) => a.id === parseInt(id)));
 
     if (!availability) {
       return res.status(404).json({
         success: false,
-        message: 'Расписание не найдено'
+        message: 'Расписание не найдено',
       });
     }
 
@@ -241,13 +255,13 @@ const regenerateSlots = async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Слоты перегенерированы'
+      message: 'Слоты перегенерированы',
     });
   } catch (error) {
     logger.error('Ошибка перегенерации слотов', { error: error.message });
     res.status(400).json({
       success: false,
-      message: error.message
+      message: error.message,
     });
   }
 };
@@ -259,5 +273,5 @@ module.exports = {
   updateAvailability,
   deleteAvailability,
   regenerateSlots,
-  getAvailableDates
+  getAvailableDates,
 };

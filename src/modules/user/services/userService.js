@@ -5,20 +5,26 @@ const Salon = require('../models/Salon');
 const { Op } = require('sequelize');
 const { createLogger } = require('../../../utils/logger');
 
-
 const logger = createLogger('user-service');
-
 
 const getProfile = async (userId) => {
   logger.info('Получение профиля пользователя', { userId });
 
-
   const user = await User.findByPk(userId);
-  logger.info('Результат поиска пользователя по ID', { userId, userFound: !!user, userData: user ? { id: user.id, email: user.email, role: user.role, isActive: user.isActive } : null });
-
+  logger.info('Результат поиска пользователя по ID', {
+    userId,
+    userFound: !!user,
+    userData: user
+      ? { id: user.id, email: user.email, role: user.role, isActive: user.isActive }
+      : null,
+  });
 
   const allUsers = await User.findAll({ where: { id: userId } });
-  logger.info('Поиск пользователя через findAll', { userId, count: allUsers.length, users: allUsers.map(u => ({ id: u.id, email: u.email, role: u.role })) });
+  logger.info('Поиск пользователя через findAll', {
+    userId,
+    count: allUsers.length,
+    users: allUsers.map((u) => ({ id: u.id, email: u.email, role: u.role })),
+  });
 
   if (!user) {
     logger.warn('Пользователь не найден', { userId });
@@ -35,10 +41,12 @@ const getProfile = async (userId) => {
       logger.info('Получен профиль клиента', {
         userId,
         profileFound: !!profile,
-        profileData: profile ? {
-          firstName: profile.firstName,
-          lastName: profile.lastName
-        } : null
+        profileData: profile
+          ? {
+              firstName: profile.firstName,
+              lastName: profile.lastName,
+            }
+          : null,
       });
       break;
     case 'master':
@@ -46,14 +54,16 @@ const getProfile = async (userId) => {
       logger.info('Получен профиль мастера', {
         userId,
         profileFound: !!profile,
-        profileData: profile ? {
-          firstName: profile.firstName,
-          lastName: profile.lastName,
-          specialization: profile.specialization,
-          experience: profile.experience,
-          rating: profile.rating,
-          bio: profile.bio
-        } : null
+        profileData: profile
+          ? {
+              firstName: profile.firstName,
+              lastName: profile.lastName,
+              specialization: profile.specialization,
+              experience: profile.experience,
+              rating: profile.rating,
+              bio: profile.bio,
+            }
+          : null,
       });
       break;
     case 'salon':
@@ -61,18 +71,19 @@ const getProfile = async (userId) => {
       logger.info('Получен профиль салона', {
         userId,
         profileFound: !!profile,
-        profileData: profile ? {
-          name: profile.name,
-          description: profile.description,
-          address: profile.address,
-          phone: profile.phone,
-          email: profile.email,
-          rating: profile.rating
-        } : null
+        profileData: profile
+          ? {
+              name: profile.name,
+              description: profile.description,
+              address: profile.address,
+              phone: profile.phone,
+              email: profile.email,
+              rating: profile.rating,
+            }
+          : null,
       });
       break;
     case 'admin':
-
       profile = null;
       logger.info('Пользователь с ролью администратора', { userId, role: user.role });
       break;
@@ -84,25 +95,30 @@ const getProfile = async (userId) => {
   logger.info('Получение профиля завершено', {
     userId,
     profileExists: !!profile,
-    profileData: profile ? {
-      firstName: profile.firstName,
-      lastName: profile.lastName,
-      ...profile.get({ plain: true })
-    } : null
+    profileData: profile
+      ? {
+          firstName: profile.firstName,
+          lastName: profile.lastName,
+          ...profile.get({ plain: true }),
+        }
+      : null,
   });
 
+  const transformedProfile = profile
+    ? {
+        ...profile.get({ plain: true }),
+        firstName: profile.firstName,
+        lastName: profile.lastName,
+      }
+    : null;
 
-  const transformedProfile = profile ? {
-    ...profile.get({ plain: true }),
-    firstName: profile.firstName,
-    lastName: profile.lastName
-  } : null;
-
-
-  if (transformedProfile && transformedProfile.image_url && 
-      (transformedProfile.image_url.includes('example.com') || 
-       transformedProfile.image_url.includes('fake-url') || 
-       transformedProfile.image_url.includes('placeholder'))) {
+  if (
+    transformedProfile &&
+    transformedProfile.image_url &&
+    (transformedProfile.image_url.includes('example.com') ||
+      transformedProfile.image_url.includes('fake-url') ||
+      transformedProfile.image_url.includes('placeholder'))
+  ) {
     transformedProfile.image_url = null;
   }
 
@@ -111,12 +127,11 @@ const getProfile = async (userId) => {
       id: user.id,
       email: user.email,
       phone: user.phone,
-      role: user.role
+      role: user.role,
     },
-    profile: transformedProfile
+    profile: transformedProfile,
   };
 };
-
 
 const editProfile = async (userId, profileData) => {
   logger.info('Редактирование профиля пользователя', { userId, profileData });
@@ -129,23 +144,17 @@ const editProfile = async (userId, profileData) => {
 
   const { email, phone, createProfile, avatar, ...profileDetails } = profileData;
 
-
   let cleanPhone = phone;
   if (phone) {
-
     cleanPhone = phone.replace(/\s|-|\(|\)|_/g, '');
     logger.info('Очищенный номер телефона', { original: phone, cleaned: cleanPhone });
   }
 
-
   if (email && email !== user.email) {
     const existingUser = await User.findOne({
       where: {
-        [Op.and]: [
-          { email },
-          { id: { [Op.ne]: userId } }
-        ]
-      }
+        [Op.and]: [{ email }, { id: { [Op.ne]: userId } }],
+      },
     });
 
     if (existingUser) {
@@ -157,11 +166,8 @@ const editProfile = async (userId, profileData) => {
   if (cleanPhone && cleanPhone !== user.phone) {
     const existingUser = await User.findOne({
       where: {
-        [Op.and]: [
-          { phone: cleanPhone },
-          { id: { [Op.ne]: userId } }
-        ]
-      }
+        [Op.and]: [{ phone: cleanPhone }, { id: { [Op.ne]: userId } }],
+      },
     });
 
     if (existingUser) {
@@ -170,12 +176,10 @@ const editProfile = async (userId, profileData) => {
     }
   }
 
-
   if (email || cleanPhone) {
     await user.update({ email, phone: cleanPhone });
     logger.info('Информация о пользователе обновлена', { userId, email, phone: cleanPhone });
   }
-
 
   const transformProfileFields = (details) => {
     const transformed = { ...details };
@@ -190,12 +194,10 @@ const editProfile = async (userId, profileData) => {
       delete transformed.lastName;
     }
 
-
     if (transformed.salonName !== undefined) {
       transformed.name = transformed.salonName;
       delete transformed.salonName;
     }
-
 
     if (transformed.avatar) {
       const baseUrl = process.env.SERVER_URL || `http://localhost:${process.env.PORT || 5000}`;
@@ -208,44 +210,35 @@ const editProfile = async (userId, profileData) => {
     return transformed;
   };
 
-
   const transformedProfileDetails = transformProfileFields(profileDetails);
 
-
   if (profileData.deleteAvatar) {
-
     transformedProfileDetails.image_url = null;
   } else if (avatar) {
-
     let avatarPath;
     if (typeof avatar === 'string') {
-
       avatarPath = avatar;
     } else if (avatar.path) {
-
       avatarPath = avatar.path;
     } else {
-
       console.warn('Avatar is not a valid path or file object:', typeof avatar);
       avatarPath = null;
     }
 
     if (avatarPath) {
-
       const baseUrl = process.env.SERVER_URL || `http://localhost:${process.env.PORT || 5000}`;
       const imageUrl = `${baseUrl}/${avatarPath}`;
 
-
       transformedProfileDetails.image_url = imageUrl;
     }
-  } else if (profileData.image_url &&
-             (profileData.image_url.includes('example.com') || 
-              profileData.image_url.includes('fake-url') || 
-              profileData.image_url.includes('placeholder'))) {
-
+  } else if (
+    profileData.image_url &&
+    (profileData.image_url.includes('example.com') ||
+      profileData.image_url.includes('fake-url') ||
+      profileData.image_url.includes('placeholder'))
+  ) {
     transformedProfileDetails.image_url = null;
   }
-
 
   let updatedProfile;
   switch (user.role) {
@@ -253,14 +246,19 @@ const editProfile = async (userId, profileData) => {
       updatedProfile = await Client.findOne({ where: { user_id: userId } });
       if (updatedProfile) {
         await updatedProfile.update(transformedProfileDetails);
-        logger.info('Профиль клиента обновлен', { userId, profileDetails: transformedProfileDetails });
+        logger.info('Профиль клиента обновлен', {
+          userId,
+          profileDetails: transformedProfileDetails,
+        });
       } else if (createProfile) {
-
         updatedProfile = await Client.create({
           user_id: userId,
-          ...transformedProfileDetails
+          ...transformedProfileDetails,
         });
-        logger.info('Профиль клиента создан', { userId, profileDetails: transformedProfileDetails });
+        logger.info('Профиль клиента создан', {
+          userId,
+          profileDetails: transformedProfileDetails,
+        });
       } else {
         logger.warn('Профиль клиента не найден для обновления', { userId });
       }
@@ -269,14 +267,19 @@ const editProfile = async (userId, profileData) => {
       updatedProfile = await Master.findOne({ where: { user_id: userId } });
       if (updatedProfile) {
         await updatedProfile.update(transformedProfileDetails);
-        logger.info('Профиль мастера обновлен', { userId, profileDetails: transformedProfileDetails });
+        logger.info('Профиль мастера обновлен', {
+          userId,
+          profileDetails: transformedProfileDetails,
+        });
       } else if (createProfile) {
-
         updatedProfile = await Master.create({
           user_id: userId,
-          ...transformedProfileDetails
+          ...transformedProfileDetails,
         });
-        logger.info('Профиль мастера создан', { userId, profileDetails: transformedProfileDetails });
+        logger.info('Профиль мастера создан', {
+          userId,
+          profileDetails: transformedProfileDetails,
+        });
       } else {
         logger.warn('Профиль мастера не найден для обновления', { userId });
       }
@@ -285,12 +288,14 @@ const editProfile = async (userId, profileData) => {
       updatedProfile = await Salon.findOne({ where: { user_id: userId } });
       if (updatedProfile) {
         await updatedProfile.update(transformedProfileDetails);
-        logger.info('Профиль салона обновлен', { userId, profileDetails: transformedProfileDetails });
+        logger.info('Профиль салона обновлен', {
+          userId,
+          profileDetails: transformedProfileDetails,
+        });
       } else if (createProfile) {
-
         updatedProfile = await Salon.create({
           user_id: userId,
-          ...transformedProfileDetails
+          ...transformedProfileDetails,
         });
         logger.info('Профиль салона создан', { userId, profileDetails: transformedProfileDetails });
       } else {
@@ -298,11 +303,13 @@ const editProfile = async (userId, profileData) => {
       }
       break;
     case 'admin':
-
       logger.info('Профиль администратора не требует обновления', { userId, role: user.role });
       break;
     default:
-      logger.error('Неверная роль пользователя для обновления профиля', { userId, role: user.role });
+      logger.error('Неверная роль пользователя для обновления профиля', {
+        userId,
+        role: user.role,
+      });
       throw new Error('Неверная роль пользователя');
   }
 
@@ -311,12 +318,11 @@ const editProfile = async (userId, profileData) => {
   return result;
 };
 
-
 const findById = async (userId) => {
   logger.info('Поиск пользователя по ID', { userId });
 
   const user = await User.findByPk(userId);
-  
+
   if (!user) {
     logger.warn('Пользователь не найден по ID', { userId });
     return null;
@@ -329,5 +335,5 @@ const findById = async (userId) => {
 module.exports = {
   getProfile,
   editProfile,
-  findById
+  findById,
 };

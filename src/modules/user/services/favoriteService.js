@@ -7,34 +7,35 @@ const logger = createLogger('favorite-service');
 
 const addToFavorites = async (userId, masterId) => {
   try {
-
     const master = await Master.findByPk(masterId);
     if (!master) {
       logger.warn('Мастер не найден', { masterId });
       throw new Error('Мастер не найден');
     }
 
-
     const existing = await Favorite.findOne({
       where: { user_id: userId, master_id: masterId },
-      paranoid: false
+      paranoid: false,
     });
 
     if (existing) {
-
       if (existing.deletedAt) {
         await existing.restore();
-        logger.info('Мастер восстановлен в избранном', { userId, masterId, favoriteId: existing.id });
+        logger.info('Мастер восстановлен в избранном', {
+          userId,
+          masterId,
+          favoriteId: existing.id,
+        });
         return existing;
       }
-      
+
       logger.warn('Мастер уже в избранном', { userId, masterId });
       throw new Error('Мастер уже в избранном');
     }
 
     const favorite = await Favorite.create({
       user_id: userId,
-      master_id: masterId
+      master_id: masterId,
     });
 
     logger.info('Мастер добавлен в избранное', { userId, masterId, favoriteId: favorite.id });
@@ -49,7 +50,7 @@ const addToFavorites = async (userId, masterId) => {
 const removeFromFavorites = async (userId, masterId) => {
   try {
     const favorite = await Favorite.findOne({
-      where: { user_id: userId, master_id: masterId }
+      where: { user_id: userId, master_id: masterId },
     });
 
     if (!favorite) {
@@ -80,17 +81,17 @@ const getUserFavorites = async (userId) => {
             {
               model: require('../../user/models/Salon'),
               as: 'salon',
-              attributes: ['id', 'name', 'address', 'rating']
-            }
-          ]
-        }
+              attributes: ['id', 'name', 'address', 'rating'],
+            },
+          ],
+        },
       ],
-      order: [['created_at', 'DESC']]
+      order: [['created_at', 'DESC']],
     });
 
     logger.info('Избранные мастера получены', { userId, count: favorites.length });
 
-    return favorites.map(fav => fav.favorite_master);
+    return favorites.map((fav) => fav.favorite_master);
   } catch (error) {
     logger.error('Ошибка получения избранных мастеров', { error: error.message, userId });
     throw error;
@@ -100,7 +101,7 @@ const getUserFavorites = async (userId) => {
 const isFavorite = async (userId, masterId) => {
   try {
     const favorite = await Favorite.findOne({
-      where: { user_id: userId, master_id: masterId }
+      where: { user_id: userId, master_id: masterId },
     });
 
     return !!favorite;
@@ -113,7 +114,7 @@ const isFavorite = async (userId, masterId) => {
 const toggleFavorite = async (userId, masterId) => {
   try {
     const existing = await Favorite.findOne({
-      where: { user_id: userId, master_id: masterId }
+      where: { user_id: userId, master_id: masterId },
     });
 
     if (existing) {
@@ -134,5 +135,5 @@ module.exports = {
   removeFromFavorites,
   getUserFavorites,
   isFavorite,
-  toggleFavorite
+  toggleFavorite,
 };

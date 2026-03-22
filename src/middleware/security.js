@@ -7,10 +7,9 @@ const { createLogger } = require('../utils/logger');
 
 const logger = createLogger('security');
 
-
 // const generalLimiter = rateLimit({
-//   windowMs: 15 * 60 * 1000, 
-//   max: 100, 
+//   windowMs: 15 * 60 * 1000,
+//   max: 100,
 //   message: {
 //     success: false,
 //     message: 'Слишком много запросов, пожалуйста, попробуйте позже'
@@ -26,17 +25,16 @@ const logger = createLogger('security');
 //   }
 // });
 
-
 // const authLimiter = rateLimit({
-//   windowMs: 15 * 60 * 1000, 
-//   max: 10, 
+//   windowMs: 15 * 60 * 1000,
+//   max: 10,
 //   message: {
 //     success: false,
 //     message: 'Слишком много попыток входа, пожалуйста, попробуйте позже'
 //   },
 //   standardHeaders: true,
 //   legacyHeaders: false,
-//   skipSuccessfulRequests: false, 
+//   skipSuccessfulRequests: false,
 //   handler: (req, res) => {
 //     logger.warn('Rate limit аутентификации превышен', { ip: req.ip, url: req.url });
 //     res.status(429).json({
@@ -46,10 +44,9 @@ const logger = createLogger('security');
 //   }
 // });
 
-
 // const createLimiter = rateLimit({
-//   windowMs: 15 * 60 * 1000, 
-//   max: 20, 
+//   windowMs: 15 * 60 * 1000,
+//   max: 20,
 //   message: {
 //     success: false,
 //     message: 'Слишком много запросов на создание, пожалуйста, попробуйте позже'
@@ -58,18 +55,15 @@ const logger = createLogger('security');
 //   legacyHeaders: false
 // });
 
-
 const corsOptions = {
   origin: process.env.CLIENT_URL || 'http://localhost:5173',
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-  maxAge: 86400 
+  maxAge: 86400,
 };
 
-
 const applySecurityMiddleware = (app) => {
-  
   // app.use(helmet({
   //   contentSecurityPolicy: {
   //     directives: {
@@ -91,24 +85,18 @@ const applySecurityMiddleware = (app) => {
   //   referrerPolicy: { policy: "same-origin" }
   // }));
 
-  
   app.use(cors(corsOptions));
 
-  
   // app.use('/api/', generalLimiter);
 
-  
   // app.use('/api/auth/login', authLimiter);
   // app.use('/api/auth/register', authLimiter);
 
-  
   // app.use('/api/catalog/', createLimiter);
   // app.use('/api/booking/', createLimiter);
 
-  
   app.use(xss());
 
-  
   app.use(hpp());
 
   logger.info('✅ Middleware безопасности применены');
@@ -119,5 +107,5 @@ module.exports = {
   // generalLimiter,
   // authLimiter,
   // createLimiter,
-  corsOptions
+  corsOptions,
 };

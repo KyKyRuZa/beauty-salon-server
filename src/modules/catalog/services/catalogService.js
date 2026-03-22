@@ -8,11 +8,16 @@ const Master = require('../../user/models/Master');
 const Salon = require('../../user/models/Salon');
 const { Op } = require('sequelize');
 
-
-const getAllCatalogCategories = async ({ category = null, search = null, sortBy = 'name', order = 'ASC', limit = null, offset = 0 }) => {
-  
+const getAllCatalogCategories = async ({
+  category = null,
+  search = null,
+  sortBy = 'name',
+  order = 'ASC',
+  limit = null,
+  offset = 0,
+}) => {
   const useCache = !category && !search && !limit;
-  
+
   if (useCache) {
     const cached = await cache.get(KEYS.CATEGORIES);
     if (cached) {
@@ -29,10 +34,9 @@ const getAllCatalogCategories = async ({ category = null, search = null, sortBy 
   if (search) {
     whereClause[Op.or] = [
       { name: { [Op.iLike]: `%${search}%` } },
-      { description: { [Op.iLike]: `%${search}%` } }
+      { description: { [Op.iLike]: `%${search}%` } },
     ];
   }
-
 
   let sortField = sortBy;
   if (sortBy === 'createdAt') {
@@ -44,7 +48,7 @@ const getAllCatalogCategories = async ({ category = null, search = null, sortBy 
   const options = {
     where: whereClause,
     order: [[sortField, order]],
-    offset: parseInt(offset)
+    offset: parseInt(offset),
   };
 
   if (limit) {
@@ -53,7 +57,6 @@ const getAllCatalogCategories = async ({ category = null, search = null, sortBy 
 
   const result = await ServiceCategory.findAndCountAll(options);
 
-  
   if (useCache) {
     await cache.set(KEYS.CATEGORIES, result, CACHE_TTL.CATEGORIES);
   }
@@ -61,46 +64,39 @@ const getAllCatalogCategories = async ({ category = null, search = null, sortBy 
   return result;
 };
 
-
 const getCatalogCategoryById = async (id) => {
-  
   const cached = await cache.get(KEYS.CATEGORY_BY_ID(id));
   if (cached) {
     return cached;
   }
 
   const category = await ServiceCategory.findByPk(id);
-  
-  
+
   if (category) {
     await cache.set(KEYS.CATEGORY_BY_ID(id), category, CACHE_TTL.CATALOG);
   }
-  
+
   return category;
 };
-
 
 const getPopularCategories = async (limit = 10) => {
   return await ServiceCategory.findAll({
     where: {
       is_active: true,
-      is_popular: true
+      is_popular: true,
     },
     limit: parseInt(limit),
-    order: [['created_at', 'DESC']]
+    order: [['created_at', 'DESC']],
   });
 };
 
-
 const createCatalogCategory = async (categoryData) => {
   const category = await ServiceCategory.create(categoryData);
-  
-  
+
   await cache.del(KEYS.CATEGORIES);
-  
+
   return await ServiceCategory.findByPk(category.id);
 };
-
 
 const updateCatalogCategory = async (id, updateData) => {
   const category = await ServiceCategory.findByPk(id);
@@ -109,14 +105,12 @@ const updateCatalogCategory = async (id, updateData) => {
   }
 
   await category.update(updateData);
-  
-  
+
   await cache.del(KEYS.CATEGORIES);
   await cache.del(KEYS.CATEGORY_BY_ID(id));
-  
+
   return await ServiceCategory.findByPk(id);
 };
-
 
 const deleteCatalogCategory = async (id) => {
   const category = await ServiceCategory.findByPk(id);
@@ -125,25 +119,24 @@ const deleteCatalogCategory = async (id) => {
   }
 
   await category.destroy();
-  
-  
+
   await cache.del(KEYS.CATEGORIES);
   await cache.del(KEYS.CATEGORY_BY_ID(id));
-  
+
   return true;
 };
 
-
-const getServiceVariationsByCategory = async (categoryId, { masterId = null, salonId = null, is_active = true, limit = 20 }) => {
+const getServiceVariationsByCategory = async (
+  categoryId,
+  { masterId = null, salonId = null, is_active = true, limit = 20 }
+) => {
   const whereClause = {
-    is_active: is_active
+    is_active: is_active,
   };
 
   if (masterId) {
     whereClause.master_id = masterId;
   }
-
-
 
   return await MasterService.findAll({
     where: whereClause,
@@ -151,25 +144,25 @@ const getServiceVariationsByCategory = async (categoryId, { masterId = null, sal
       {
         model: Master,
         as: 'master_provider',
-        attributes: ['first_name', 'last_name', 'specialization', 'rating']
-      }
+        attributes: ['first_name', 'last_name', 'specialization', 'rating'],
+      },
     ],
-    limit: parseInt(limit)
+    limit: parseInt(limit),
   });
 };
 
-
-const getServiceVariations = async (serviceId, { masterId = null, salonId = null, is_active = true, limit = 20 }) => {
+const getServiceVariations = async (
+  serviceId,
+  { masterId = null, salonId = null, is_active = true, limit = 20 }
+) => {
   const whereClause = {
     id: serviceId,
-    is_active: is_active
+    is_active: is_active,
   };
 
   if (masterId) {
     whereClause.master_id = masterId;
   }
-
-
 
   return await MasterService.findAll({
     where: whereClause,
@@ -177,16 +170,23 @@ const getServiceVariations = async (serviceId, { masterId = null, salonId = null
       {
         model: Master,
         as: 'master_provider',
-        attributes: ['first_name', 'last_name', 'specialization', 'rating']
-      }
+        attributes: ['first_name', 'last_name', 'specialization', 'rating'],
+      },
     ],
-    limit: parseInt(limit)
+    limit: parseInt(limit),
   });
 };
 
-
-const getAllCatalogServices = async ({ category = null, search = null, masterId = null, salonId = null, sortBy = 'name', order = 'ASC', limit = null, offset = 0 }) => {
-
+const getAllCatalogServices = async ({
+  category = null,
+  search = null,
+  masterId = null,
+  salonId = null,
+  sortBy = 'name',
+  order = 'ASC',
+  limit = null,
+  offset = 0,
+}) => {
   let sortField = sortBy;
   if (sortBy === 'createdAt') {
     sortField = 'created_at';
@@ -199,7 +199,7 @@ const getAllCatalogServices = async ({ category = null, search = null, masterId 
   if (search) {
     whereClause[Op.or] = [
       { name: { [Op.iLike]: `%${search}%` } },
-      { description: { [Op.iLike]: `%${search}%` } }
+      { description: { [Op.iLike]: `%${search}%` } },
     ];
   }
 
@@ -207,19 +207,17 @@ const getAllCatalogServices = async ({ category = null, search = null, masterId 
     whereClause.master_id = masterId;
   }
 
-
-
   const options = {
     where: whereClause,
     include: [
       {
         model: Master,
         as: 'master_provider',
-        attributes: ['first_name', 'last_name', 'specialization', 'rating']
-      }
+        attributes: ['first_name', 'last_name', 'specialization', 'rating'],
+      },
     ],
     order: [[sortField, order]],
-    offset: parseInt(offset)
+    offset: parseInt(offset),
   };
 
   if (limit) {
@@ -229,24 +227,22 @@ const getAllCatalogServices = async ({ category = null, search = null, masterId 
   return await MasterService.findAndCountAll(options);
 };
 
-
 const getCatalogServiceById = async (id) => {
   return await MasterService.findByPk(id, {
     include: [
       {
         model: Master,
         as: 'master_provider',
-        attributes: ['first_name', 'last_name', 'specialization', 'rating']
-      }
-    ]
+        attributes: ['first_name', 'last_name', 'specialization', 'rating'],
+      },
+    ],
   });
 };
 
 const createCatalogService = async (serviceData) => {
-
   const catalogServiceData = {
     ...serviceData,
-    master_id: null
+    master_id: null,
   };
 
   const service = await MasterService.create(catalogServiceData);
@@ -255,12 +251,11 @@ const createCatalogService = async (serviceData) => {
       {
         model: Master,
         as: 'master_provider',
-        attributes: ['first_name', 'last_name', 'specialization', 'rating']
-      }
-    ]
+        attributes: ['first_name', 'last_name', 'specialization', 'rating'],
+      },
+    ],
   });
 };
-
 
 const updateCatalogService = async (id, updateData) => {
   const service = await MasterService.findByPk(id);
@@ -274,12 +269,11 @@ const updateCatalogService = async (id, updateData) => {
       {
         model: Master,
         as: 'master_provider',
-        attributes: ['first_name', 'last_name', 'specialization', 'rating']
-      }
-    ]
+        attributes: ['first_name', 'last_name', 'specialization', 'rating'],
+      },
+    ],
   });
 };
-
 
 const deleteCatalogService = async (id) => {
   const service = await MasterService.findByPk(id);
@@ -291,18 +285,15 @@ const deleteCatalogService = async (id) => {
   return true;
 };
 
-
 const createMasterService = async (masterId, serviceData) => {
-
   const master = await Master.findByPk(masterId);
   if (!master) {
     throw new Error('Master not found');
   }
 
-
   const serviceWithMaster = {
     ...serviceData,
-    master_id: masterId
+    master_id: masterId,
   };
 
   const service = await MasterService.create(serviceWithMaster);
@@ -311,32 +302,27 @@ const createMasterService = async (masterId, serviceData) => {
       {
         model: Master,
         as: 'master_provider',
-        attributes: ['first_name', 'last_name', 'specialization', 'rating']
-      }
-    ]
+        attributes: ['first_name', 'last_name', 'specialization', 'rating'],
+      },
+    ],
   });
 };
 
-
-
-
-
 const createSalonService = async (salonId, serviceData) => {
-
   const salon = await Salon.findByPk(salonId);
   if (!salon) {
     throw new Error('Salon not found');
   }
 
-
-
-
-  throw new Error('Salon services are not supported with the current MasterService model. A separate model for salon services would be needed.');
+  throw new Error(
+    'Salon services are not supported with the current MasterService model. A separate model for salon services would be needed.'
+  );
 };
 
-
-const getMasterServices = async (masterId, { category = null, search = null, is_active = true, limit = 20, offset = 0 }) => {
-
+const getMasterServices = async (
+  masterId,
+  { category = null, search = null, is_active = true, limit = 20, offset = 0 }
+) => {
   const master = await Master.findByPk(masterId);
   if (!master) {
     throw new Error('Master not found');
@@ -344,22 +330,22 @@ const getMasterServices = async (masterId, { category = null, search = null, is_
 
   const whereClause = {
     master_id: masterId,
-    is_active: is_active
+    is_active: is_active,
   };
 
-
   if (category) {
-    const catalogCategory = await ServiceCategory.findOne({ where: { name: { [Op.iLike]: `%${category}%` } } });
+    const catalogCategory = await ServiceCategory.findOne({
+      where: { name: { [Op.iLike]: `%${category}%` } },
+    });
     if (catalogCategory) {
       whereClause.category_id = catalogCategory.id;
     }
   }
 
-
   if (search) {
     whereClause[Op.or] = [
       { name: { [Op.iLike]: `%${search}%` } },
-      { description: { [Op.iLike]: `%${search}%` } }
+      { description: { [Op.iLike]: `%${search}%` } },
     ];
   }
 
@@ -369,10 +355,10 @@ const getMasterServices = async (masterId, { category = null, search = null, is_
       {
         model: Master,
         as: 'master_provider',
-        attributes: ['first_name', 'last_name', 'specialization', 'rating']
-      }
+        attributes: ['first_name', 'last_name', 'specialization', 'rating'],
+      },
     ],
-    offset: parseInt(offset)
+    offset: parseInt(offset),
   };
 
   if (limit) {
@@ -382,9 +368,10 @@ const getMasterServices = async (masterId, { category = null, search = null, is_
   return await MasterService.findAndCountAll(options);
 };
 
-
-const getSalonServices = async (salonId, { category = null, search = null, is_active = true, limit = 20, offset = 0 }) => {
-
+const getSalonServices = async (
+  salonId,
+  { category = null, search = null, is_active = true, limit = 20, offset = 0 }
+) => {
   const salon = await Salon.findByPk(salonId);
   if (!salon) {
     throw new Error('Salon not found');
@@ -392,11 +379,13 @@ const getSalonServices = async (salonId, { category = null, search = null, is_ac
 
   const whereClause = {
     salon_id: salonId,
-    is_active: is_active
+    is_active: is_active,
   };
 
   if (category) {
-    const catalogCategory = await ServiceCategory.findOne({ where: { name: { [Op.iLike]: `%${category}%` } } });
+    const catalogCategory = await ServiceCategory.findOne({
+      where: { name: { [Op.iLike]: `%${category}%` } },
+    });
     if (catalogCategory) {
       whereClause.category_id = catalogCategory.id;
     }
@@ -405,7 +394,7 @@ const getSalonServices = async (salonId, { category = null, search = null, is_ac
   if (search) {
     whereClause[Op.or] = [
       { name: { [Op.iLike]: `%${search}%` } },
-      { description: { [Op.iLike]: `%${search}%` } }
+      { description: { [Op.iLike]: `%${search}%` } },
     ];
   }
 
@@ -415,20 +404,20 @@ const getSalonServices = async (salonId, { category = null, search = null, is_ac
       {
         model: ServiceTemplate,
         as: 'catalog',
-        attributes: ['name', 'category', 'subcategory']
+        attributes: ['name', 'category', 'subcategory'],
       },
       {
         model: Master,
         as: 'master_provider',
-        attributes: ['first_name', 'last_name', 'specialization', 'rating']
+        attributes: ['first_name', 'last_name', 'specialization', 'rating'],
       },
       {
         model: Salon,
         as: 'salon',
-        attributes: ['name']
-      }
+        attributes: ['name'],
+      },
     ],
-    offset: parseInt(offset)
+    offset: parseInt(offset),
   };
 
   if (limit) {
@@ -438,13 +427,12 @@ const getSalonServices = async (salonId, { category = null, search = null, is_ac
   return await ServiceVariation.findAndCountAll(options);
 };
 
-
 const updateMasterService = async (masterId, serviceId, updateData) => {
   const service = await MasterService.findOne({
     where: {
       id: serviceId,
-      master_id: masterId
-    }
+      master_id: masterId,
+    },
   });
 
   if (!service) {
@@ -457,25 +445,23 @@ const updateMasterService = async (masterId, serviceId, updateData) => {
       {
         model: Master,
         as: 'master_provider',
-        attributes: ['first_name', 'last_name', 'specialization', 'rating']
-      }
-    ]
+        attributes: ['first_name', 'last_name', 'specialization', 'rating'],
+      },
+    ],
   });
 };
-
 
 const updateSalonService = async (salonId, serviceId, updateData) => {
   const service = await ServiceVariation.findOne({
     where: {
       id: serviceId,
-      salon_id: salonId
-    }
+      salon_id: salonId,
+    },
   });
 
   if (!service) {
     return null;
   }
-
 
   if (updateData.catalog_id) {
     const catalogCategory = await ServiceTemplate.findByPk(updateData.catalog_id);
@@ -484,15 +470,13 @@ const updateSalonService = async (salonId, serviceId, updateData) => {
     }
   }
 
-
   if (updateData.time_slot_start && updateData.time_slot_end) {
     const start = new Date(`1970-01-01T${updateData.time_slot_start}`);
     const end = new Date(`1970-01-01T${updateData.time_slot_end}`);
-    
+
     if (start >= end) {
       throw new Error('Время окончания должно быть позже времени начала');
     }
-    
 
     const durationMs = end - start;
     const durationMinutes = Math.round(durationMs / (1000 * 60));
@@ -505,29 +489,28 @@ const updateSalonService = async (salonId, serviceId, updateData) => {
       {
         model: ServiceTemplate,
         as: 'catalog',
-        attributes: ['name', 'category', 'subcategory']
+        attributes: ['name', 'category', 'subcategory'],
       },
       {
         model: Master,
         as: 'master_provider',
-        attributes: ['first_name', 'last_name', 'specialization', 'rating']
+        attributes: ['first_name', 'last_name', 'specialization', 'rating'],
       },
       {
         model: Salon,
         as: 'salon',
-        attributes: ['name']
-      }
-    ]
+        attributes: ['name'],
+      },
+    ],
   });
 };
-
 
 const deleteMasterService = async (masterId, serviceId) => {
   const service = await MasterService.findOne({
     where: {
       id: serviceId,
-      master_id: masterId
-    }
+      master_id: masterId,
+    },
   });
 
   if (!service) {
@@ -537,14 +520,13 @@ const deleteMasterService = async (masterId, serviceId) => {
   await service.destroy();
   return true;
 };
-
 
 const deleteSalonService = async (salonId, serviceId) => {
   const service = await ServiceVariation.findOne({
     where: {
       id: serviceId,
-      salon_id: salonId
-    }
+      salon_id: salonId,
+    },
   });
 
   if (!service) {
@@ -554,7 +536,6 @@ const deleteSalonService = async (salonId, serviceId) => {
   await service.destroy();
   return true;
 };
-
 
 const searchCategories = async (searchQuery) => {
   if (!searchQuery || searchQuery.length < 2) {
@@ -576,12 +557,11 @@ const searchCategories = async (searchQuery) => {
 
   const results = await sequelize.query(query, {
     replacements: { query: searchQuery },
-    type: QueryTypes.SELECT
+    type: QueryTypes.SELECT,
   });
 
   return results;
 };
-
 
 const searchMasterServices = async (searchQuery) => {
   if (!searchQuery || searchQuery.length < 2) {
@@ -608,12 +588,11 @@ const searchMasterServices = async (searchQuery) => {
 
   const results = await sequelize.query(query, {
     replacements: { query: searchQuery },
-    type: QueryTypes.SELECT
+    type: QueryTypes.SELECT,
   });
 
   return results;
 };
-
 
 const searchMasters = async (searchQuery) => {
   if (!searchQuery || searchQuery.length < 2) {
@@ -646,7 +625,7 @@ const searchMasters = async (searchQuery) => {
 
   const results = await sequelize.query(query, {
     replacements: { query: searchQuery },
-    type: QueryTypes.SELECT
+    type: QueryTypes.SELECT,
   });
 
   return results;
@@ -676,5 +655,5 @@ module.exports = {
   deleteSalonService,
   searchCategories,
   searchMasterServices,
-  searchMasters
+  searchMasters,
 };

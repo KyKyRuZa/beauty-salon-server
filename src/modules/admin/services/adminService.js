@@ -20,15 +20,14 @@ const getDashboardStats = async () => {
     todayBookings: await Booking.count({
       where: {
         created_at: {
-          [Op.gte]: new Date(new Date().setHours(0, 0, 0, 0))
-        }
-      }
-    })
+          [Op.gte]: new Date(new Date().setHours(0, 0, 0, 0)),
+        },
+      },
+    }),
   };
 
   return stats;
 };
-
 
 const getAllUsers = async ({ page = 1, limit = 10, search, role } = {}) => {
   const offset = (page - 1) * limit;
@@ -38,7 +37,7 @@ const getAllUsers = async ({ page = 1, limit = 10, search, role } = {}) => {
     whereClause[Op.or] = [
       { email: { [Op.iLike]: `%${search}%` } },
       { first_name: { [Op.iLike]: `%${search}%` } },
-      { last_name: { [Op.iLike]: `%${search}%` } }
+      { last_name: { [Op.iLike]: `%${search}%` } },
     ];
   }
 
@@ -50,12 +49,11 @@ const getAllUsers = async ({ page = 1, limit = 10, search, role } = {}) => {
     where: whereClause,
     limit: parseInt(limit),
     offset: parseInt(offset),
-    order: [['created_at', 'DESC']]
+    order: [['created_at', 'DESC']],
   });
 
   return result;
 };
-
 
 const getAllAdmins = async ({ page = 1, limit = 10, search } = {}) => {
   const offset = (page - 1) * limit;
@@ -65,7 +63,7 @@ const getAllAdmins = async ({ page = 1, limit = 10, search } = {}) => {
     whereClause[Op.or] = [
       { '$user.email$': { [Op.iLike]: `%${search}%` } },
       { '$user.first_name$': { [Op.iLike]: `%${search}%` } },
-      { '$user.last_name$': { [Op.iLike]: `%${search}%` } }
+      { '$user.last_name$': { [Op.iLike]: `%${search}%` } },
     ];
   }
 
@@ -74,42 +72,36 @@ const getAllAdmins = async ({ page = 1, limit = 10, search } = {}) => {
     limit: parseInt(limit),
     offset: parseInt(offset),
     order: [['created_at', 'DESC']],
-    attributes: ['id', 'user_id', 'role', 'first_name', 'last_name', 'is_active', 'created_at']
+    attributes: ['id', 'user_id', 'role', 'first_name', 'last_name', 'is_active', 'created_at'],
   });
-  
 
-  const userIds = result.rows.map(admin => admin.user_id);
+  const userIds = result.rows.map((admin) => admin.user_id);
   if (userIds.length > 0) {
     const users = await User.findAll({
       where: { id: userIds },
-      attributes: ['id', 'email', 'role']
+      attributes: ['id', 'email', 'role'],
     });
-    
 
     const userMap = {};
-    users.forEach(user => {
+    users.forEach((user) => {
       userMap[user.id] = user;
     });
-    
 
-    result.rows.forEach(admin => {
+    result.rows.forEach((admin) => {
       admin.user = userMap[admin.user_id];
     });
   }
-  
+
   return result;
 };
 
-
 const createAdmin = async (adminData) => {
   const { user_id, role = 'admin', permissions, first_name, last_name } = adminData;
-
 
   const user = await User.findByPk(user_id);
   if (!user) {
     throw new Error('Пользователь не найден');
   }
-
 
   const existingAdmin = await Admin.findOne({ where: { user_id, is_active: true } });
   if (existingAdmin) {
@@ -122,12 +114,11 @@ const createAdmin = async (adminData) => {
     permissions: permissions || {},
     first_name,
     last_name,
-    is_active: true
+    is_active: true,
   });
 
   return newAdmin;
 };
-
 
 const getAllCategories = async ({ page = 1, limit = 10, search } = {}) => {
   const offset = (page - 1) * limit;
@@ -141,12 +132,11 @@ const getAllCategories = async ({ page = 1, limit = 10, search } = {}) => {
     where: whereClause,
     limit: parseInt(limit),
     offset: parseInt(offset),
-    order: [['created_at', 'DESC']]
+    order: [['created_at', 'DESC']],
   });
 
   return result;
 };
-
 
 const createCategory = async (categoryData) => {
   if (!categoryData.name) {
@@ -157,7 +147,6 @@ const createCategory = async (categoryData) => {
   return category;
 };
 
-
 const updateCategory = async (id, updateData) => {
   const category = await ServiceCategory.findByPk(id);
   if (!category) {
@@ -167,7 +156,6 @@ const updateCategory = async (id, updateData) => {
   await category.update(updateData);
   return category;
 };
-
 
 const deleteCategory = async (id) => {
   const category = await ServiceCategory.findByPk(id);
@@ -187,5 +175,5 @@ module.exports = {
   getAllCategories,
   createCategory,
   updateCategory,
-  deleteCategory
+  deleteCategory,
 };

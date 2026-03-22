@@ -10,11 +10,10 @@ const server = http.createServer(app);
 
 const io = socketIo(server, {
   cors: {
-    origin: process.env.CLIENT_URL || "http://localhost:5173",
-    methods: ["GET", "POST"]
-  }
+    origin: process.env.CLIENT_URL || 'http://localhost:5173',
+    methods: ['GET', 'POST'],
+  },
 });
-
 
 io.use((socket, next) => {
   next();
@@ -26,7 +25,7 @@ server.listen(PORT, () => {
   logger.info('Сервер запущен на порте', {
     port: PORT,
     environment: process.env.NODE_ENV || 'development',
-    clientUrl: process.env.CLIENT_URL || "http://localhost:3000"
+    clientUrl: process.env.CLIENT_URL || 'http://localhost:3000',
   });
 });
 

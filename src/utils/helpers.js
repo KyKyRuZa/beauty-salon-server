@@ -38,5 +38,5 @@ module.exports = {
   validatePhone,
   hashPassword,
   comparePassword,
-  formatDate
+  formatDate,
 };

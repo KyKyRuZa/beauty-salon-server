@@ -2,9 +2,7 @@ const jwt = require('jsonwebtoken');
 const sessionService = require('../utils/sessionService');
 const { createLogger } = require('../utils/logger');
 
-
 const logger = createLogger('auth-middleware');
-
 
 const authenticateToken = async (req, res, next) => {
   const authHeader = req.headers['authorization'];
@@ -14,22 +12,20 @@ const authenticateToken = async (req, res, next) => {
     logger.warn('Требуется авторизация', { url: req.url, method: req.method, ip: req.ip });
     return res.status(401).json({
       success: false,
-      message: 'Необходимо авторизоваться для выполнения этого действия'
+      message: 'Необходимо авторизоваться для выполнения этого действия',
     });
   }
 
   try {
-    
     const session = await sessionService.getSession(token);
 
     if (session) {
-      
       req.user = {
         userId: session.userId,
         id: session.userId,
         email: session.email,
         role: session.role,
-        fromSession: true
+        fromSession: true,
       };
 
       logger.debug('Аутентификация через сессию Redis', {
@@ -37,24 +33,23 @@ const authenticateToken = async (req, res, next) => {
         email: session.email,
         url: req.url,
         method: req.method,
-        ip: req.ip
+        ip: req.ip,
       });
 
       return next();
     }
 
-    
     jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret_key', (err, user) => {
       if (err) {
         logger.warn('Неверный или просроченный токен', {
           url: req.url,
           method: req.method,
           ip: req.ip,
-          error: err.message
+          error: err.message,
         });
         return res.status(403).json({
           success: false,
-          message: 'Сессия истекла. Пожалуйста, войдите в систему повторно'
+          message: 'Сессия истекла. Пожалуйста, войдите в систему повторно',
         });
       }
 
@@ -63,7 +58,7 @@ const authenticateToken = async (req, res, next) => {
         userId: user.userId || user.id,
         url: req.url,
         method: req.method,
-        ip: req.ip
+        ip: req.ip,
       });
       next();
     });
@@ -71,21 +66,24 @@ const authenticateToken = async (req, res, next) => {
     logger.error('Ошибка аутентификации', { error: error.message });
     return res.status(500).json({
       success: false,
-      message: 'Ошибка аутентификации'
+      message: 'Ошибка аутентификации',
     });
   }
 };
-
 
 const requireAdminRole = (req, res, next) => {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
 
   if (!token) {
-    logger.warn('Требуется авторизация для доступа к админ-панели', { url: req.url, method: req.method, ip: req.ip });
+    logger.warn('Требуется авторизация для доступа к админ-панели', {
+      url: req.url,
+      method: req.method,
+      ip: req.ip,
+    });
     return res.status(401).json({
       success: false,
-      message: 'Необходимо авторизоваться для выполнения этого действия'
+      message: 'Необходимо авторизоваться для выполнения этого действия',
     });
   }
 
@@ -95,14 +93,13 @@ const requireAdminRole = (req, res, next) => {
         url: req.url,
         method: req.method,
         ip: req.ip,
-        error: err.message
+        error: err.message,
       });
       return res.status(403).json({
         success: false,
-        message: 'Сессия истекла. Пожалуйста, войдите в систему повторно'
+        message: 'Сессия истекла. Пожалуйста, войдите в систему повторно',
       });
     }
-
 
     if (user.role !== 'admin' && user.role !== 'super_admin') {
       logger.warn('Доступ запрещен: недостаточно прав', {
@@ -110,11 +107,11 @@ const requireAdminRole = (req, res, next) => {
         role: user.role,
         url: req.url,
         method: req.method,
-        ip: req.ip
+        ip: req.ip,
       });
       return res.status(403).json({
         success: false,
-        message: 'Доступ запрещен: недостаточно прав'
+        message: 'Доступ запрещен: недостаточно прав',
       });
     }
 
@@ -124,7 +121,7 @@ const requireAdminRole = (req, res, next) => {
       role: user.role,
       url: req.url,
       method: req.method,
-      ip: req.ip
+      ip: req.ip,
     });
     next();
   });
@@ -132,5 +129,5 @@ const requireAdminRole = (req, res, next) => {
 
 module.exports = {
   authenticateToken,
-  requireAdminRole
+  requireAdminRole,
 };

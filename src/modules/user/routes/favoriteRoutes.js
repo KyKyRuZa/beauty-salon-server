@@ -3,7 +3,6 @@ const router = express.Router();
 const favoriteController = require('../controllers/favoriteController');
 const { authenticateToken } = require('../../../middleware/auth');
 
-
 router.use(authenticateToken);
 
 router.get('/', favoriteController.getFavorites);

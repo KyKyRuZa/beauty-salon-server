@@ -14,39 +14,28 @@ const createBooking = async (bookingData) => {
   const transaction = await sequelize.transaction();
 
   try {
-    const {
-      client_id,
-      master_id,
-      master_service_id,
-      time_slot_id,
-      start_time,
-      end_time,
-      comment
-    } = bookingData;
-
+    const { client_id, master_id, master_service_id, time_slot_id, start_time, end_time, comment } =
+      bookingData;
 
     const client = await Client.findByPk(client_id);
     if (!client) {
       throw new Error('Клиент не найден');
     }
 
-
     const master = await Master.findByPk(master_id);
     if (!master) {
       throw new Error('Мастер не найден');
     }
 
-
     const service = await MasterService.findOne({
       where: {
         id: master_service_id,
-        master_id
-      }
+        master_id,
+      },
     });
     if (!service) {
       throw new Error('Услуга не найдена или не принадлежит мастеру');
     }
-
 
     const overlappingBooking = await Booking.findOne({
       where: {
@@ -55,16 +44,15 @@ const createBooking = async (bookingData) => {
         [Op.or]: [
           {
             start_time: { [Op.lt]: end_time },
-            end_time: { [Op.gt]: start_time }
-          }
-        ]
-      }
+            end_time: { [Op.gt]: start_time },
+          },
+        ],
+      },
     });
 
     if (overlappingBooking) {
       throw new Error('Это время уже занято');
     }
-
 
     if (time_slot_id) {
       const timeSlot = await TimeSlot.findByPk(time_slot_id);
@@ -78,21 +66,27 @@ const createBooking = async (bookingData) => {
       await timeSlot.update({ status: 'booked' }, { transaction });
     }
 
-
-    const booking = await Booking.create({
-      client_id,
-      master_id,
-      master_service_id,
-      time_slot_id,
-      start_time,
-      end_time,
-      status: 'confirmed',
-      comment,
-      price: service.price
-    }, { transaction });
+    const booking = await Booking.create(
+      {
+        client_id,
+        master_id,
+        master_service_id,
+        time_slot_id,
+        start_time,
+        end_time,
+        status: 'confirmed',
+        comment,
+        price: service.price,
+      },
+      { transaction }
+    );
 
     await transaction.commit();
-    logger.info('Бронирование создано', { bookingId: booking.id, clientId: client_id, masterId: master_id });
+    logger.info('Бронирование создано', {
+      bookingId: booking.id,
+      clientId: client_id,
+      masterId: master_id,
+    });
 
     return booking;
   } catch (error) {
@@ -107,7 +101,6 @@ const getClientBookings = async (clientId, options = {}) => {
 
   const where = { client_id: clientId };
   if (status) {
-
     if (Array.isArray(status)) {
       where.status = { [Op.in]: status };
     } else {
@@ -121,19 +114,17 @@ const getClientBookings = async (clientId, options = {}) => {
       {
         model: MasterService,
         as: 'service',
-        include: [
-          { model: Master, as: 'master_provider' }
-        ]
+        include: [{ model: Master, as: 'master_provider' }],
       },
       {
         model: Master,
         as: 'booking_master',
-        attributes: ['id', 'first_name', 'last_name', 'specialization', 'rating']
-      }
+        attributes: ['id', 'first_name', 'last_name', 'specialization', 'rating'],
+      },
     ],
     order: [['start_time', 'ASC']],
     limit,
-    offset
+    offset,
   });
 
   logger.info('Получены записи клиента', { clientId, count: bookings.length });
@@ -154,7 +145,7 @@ const getMasterBookings = async (masterId, options = {}) => {
     endOfDay.setHours(23, 59, 59, 999);
     where.start_time = {
       [Op.gte]: startOfDay,
-      [Op.lte]: endOfDay
+      [Op.lte]: endOfDay,
     };
   }
 
@@ -163,19 +154,17 @@ const getMasterBookings = async (masterId, options = {}) => {
     include: [
       {
         model: MasterService,
-        as: 'service'
+        as: 'service',
       },
       {
         model: Client,
         as: 'client',
-        include: [
-          { model: require('../../user/models/User'), as: 'user' }
-        ]
-      }
+        include: [{ model: require('../../user/models/User'), as: 'user' }],
+      },
     ],
     order: [['start_time', 'ASC']],
     limit,
-    offset
+    offset,
   });
 
   logger.info('Получены записи мастера', { masterId, count: bookings.length });
@@ -187,8 +176,8 @@ const getBookingById = async (bookingId) => {
     include: [
       { model: MasterService, as: 'service' },
       { model: Master, as: 'booking_master' },
-      { model: Client, as: 'client' }
-    ]
+      { model: Client, as: 'client' },
+    ],
   });
 
   if (!booking) {
@@ -209,7 +198,6 @@ const updateBookingStatus = async (bookingId, status) => {
     throw new Error('Бронирование не найдено');
   }
 
-
   if (status === 'cancelled' && booking.time_slot_id) {
     const timeSlot = await TimeSlot.findByPk(booking.time_slot_id);
     if (timeSlot) {
@@ -229,11 +217,9 @@ const updateBooking = async (bookingId, updateData) => {
     throw new Error('Бронирование не найдено');
   }
 
-
   if (['completed', 'cancelled'].includes(booking.status)) {
     throw new Error('Нельзя изменить отменённое или завершённое бронирование');
   }
-
 
   if (updateData.start_time || updateData.end_time) {
     const startTime = updateData.start_time || booking.start_time;
@@ -247,10 +233,10 @@ const updateBooking = async (bookingId, updateData) => {
         [Op.or]: [
           {
             start_time: { [Op.lt]: endTime },
-            end_time: { [Op.gt]: startTime }
-          }
-        ]
-      }
+            end_time: { [Op.gt]: startTime },
+          },
+        ],
+      },
     });
 
     if (overlappingBooking) {
@@ -273,8 +259,6 @@ const confirmBooking = async (bookingId) => {
 };
 
 const getAvailableSlots = async (masterId, date, serviceId) => {
-  
-  
   const [year, month, day] = date.split('-');
   const startOfDay = new Date(parseInt(year), parseInt(month) - 1, parseInt(day), 0, 0, 0, 0);
   const endOfDay = new Date(parseInt(year), parseInt(month) - 1, parseInt(day), 23, 59, 59, 999);
@@ -282,9 +266,8 @@ const getAvailableSlots = async (masterId, date, serviceId) => {
   try {
     const logger = require('../../../utils/logger').createLogger('booking-service');
     logger.info('getAvailableSlots вызов', { masterId, date, serviceId });
-    
-    
-    let serviceDuration = 60; 
+
+    let serviceDuration = 60;
     if (serviceId) {
       const MasterService = require('../../catalog/models/MasterService');
       const service = await MasterService.findByPk(serviceId);
@@ -293,35 +276,28 @@ const getAvailableSlots = async (masterId, date, serviceId) => {
       }
     }
 
-    
     const slotsWhere = {
       master_id: masterId,
       start_time: {
         [Op.gte]: startOfDay,
-        [Op.lte]: endOfDay
+        [Op.lte]: endOfDay,
       },
-      status: 'free'
+      status: 'free',
     };
 
-    
     if (serviceId) {
-      slotsWhere[Op.or] = [
-        { service_id: serviceId },
-        { service_id: null }
-      ];
+      slotsWhere[Op.or] = [{ service_id: serviceId }, { service_id: null }];
     }
 
     logger.info('getAvailableSlots поиск слотов', { slotsWhere, serviceId });
 
     const slots = await TimeSlot.findAll({
-      where: slotsWhere
+      where: slotsWhere,
     });
 
     logger.info('getAvailableSlots найдено слотов', { count: slots.length, serviceId });
 
-
     if (slots.length > 0) {
-      
       const serviceDurationMs = serviceDuration * 60000;
 
       const bookings = await Booking.findAll({
@@ -330,43 +306,46 @@ const getAvailableSlots = async (masterId, date, serviceId) => {
           status: { [Op.in]: ['confirmed'] },
           start_time: {
             [Op.gte]: startOfDay,
-            [Op.lte]: endOfDay
-          }
-        }
+            [Op.lte]: endOfDay,
+          },
+        },
       });
 
-      const availableSlots = slots.filter(slot => {
+      const availableSlots = slots.filter((slot) => {
         const slotStart = new Date(slot.start_time);
         const slotEnd = new Date(slot.end_time);
 
-        
         const slotDuration = slotEnd - slotStart;
         if (slotDuration < serviceDurationMs) {
           return false;
         }
 
-        return !bookings.some(booking => {
+        return !bookings.some((booking) => {
           const bookingStart = new Date(booking.start_time);
           const bookingEnd = new Date(booking.end_time);
-          return (slotStart < bookingEnd && slotEnd > bookingStart);
+          return slotStart < bookingEnd && slotEnd > bookingStart;
         });
       });
 
-      logger.info('Получены доступные слоты из БД', { masterId, date, count: availableSlots.length, serviceId, serviceDuration });
+      logger.info('Получены доступные слоты из БД', {
+        masterId,
+        date,
+        count: availableSlots.length,
+        serviceId,
+        serviceDuration,
+      });
       return availableSlots;
     }
-
 
     const availability = await MasterAvailability.findOne({
       where: {
         master_id: masterId,
         date,
-        is_available: true
-      }
+        is_available: true,
+      },
     });
 
     if (availability) {
-      
       const slotDuration = availability.slot_duration || serviceDuration;
 
       const availabilityService = require('./availabilityService');
@@ -376,36 +355,36 @@ const getAvailableSlots = async (masterId, date, serviceId) => {
         availability.start_time,
         availability.end_time,
         slotDuration,
-        undefined, 
-        serviceId 
+        undefined,
+        serviceId
       );
 
-      
       const newSlotsWhere = {
         master_id: masterId,
         start_time: {
           [Op.gte]: startOfDay,
-          [Op.lte]: endOfDay
+          [Op.lte]: endOfDay,
         },
-        status: 'free'
+        status: 'free',
       };
-      
-      
+
       if (serviceId) {
-        newSlotsWhere[Op.or] = [
-          { service_id: serviceId },
-          { service_id: null }
-        ];
+        newSlotsWhere[Op.or] = [{ service_id: serviceId }, { service_id: null }];
       }
 
       const newSlots = await TimeSlot.findAll({
-        where: newSlotsWhere
+        where: newSlotsWhere,
       });
 
-      logger.info('Слоты сгенерированы из расписания', { masterId, date, count: newSlots.length, serviceId });
+      logger.info('Слоты сгенерированы из расписания', {
+        masterId,
+        date,
+        count: newSlots.length,
+        serviceId,
+      });
       return newSlots;
     }
-    
+
     logger.info('Возвращаем слоты', { masterId, date, count: slots.length, serviceId });
     return slots;
   } catch (error) {
@@ -415,11 +394,9 @@ const getAvailableSlots = async (masterId, date, serviceId) => {
 };
 
 const getFreeTimeWindows = async (masterId, date, serviceDuration = 60) => {
-  
   const [year, month, day] = date.split('-');
   const startOfDay = new Date(parseInt(year), parseInt(month) - 1, parseInt(day), 0, 0, 0, 0);
   const endOfDay = new Date(parseInt(year), parseInt(month) - 1, parseInt(day), 23, 59, 59, 999);
-
 
   const bookings = await Booking.findAll({
     where: {
@@ -427,28 +404,26 @@ const getFreeTimeWindows = async (masterId, date, serviceDuration = 60) => {
       status: { [Op.in]: ['confirmed'] },
       start_time: {
         [Op.gte]: startOfDay,
-        [Op.lte]: endOfDay
-      }
+        [Op.lte]: endOfDay,
+      },
     },
-    order: [['start_time', 'ASC']]
+    order: [['start_time', 'ASC']],
   });
-
 
   const workingSlots = await TimeSlot.findAll({
     where: {
       master_id: masterId,
       start_time: {
         [Op.gte]: startOfDay,
-        [Op.lte]: endOfDay
-      }
+        [Op.lte]: endOfDay,
+      },
     },
-    order: [['start_time', 'ASC']]
+    order: [['start_time', 'ASC']],
   });
 
   if (workingSlots.length === 0) {
     return [];
   }
-
 
   const freeWindows = [];
   let currentTime = new Date(workingSlots[0].start_time);
@@ -457,20 +432,18 @@ const getFreeTimeWindows = async (masterId, date, serviceDuration = 60) => {
   while (currentTime < dayEnd) {
     const windowEnd = new Date(currentTime.getTime() + serviceDuration * 60000);
 
-
-    const hasConflict = bookings.some(booking => {
+    const hasConflict = bookings.some((booking) => {
       const bookingStart = new Date(booking.start_time);
       const bookingEnd = new Date(booking.end_time);
-      return (currentTime < bookingEnd && windowEnd > bookingStart);
+      return currentTime < bookingEnd && windowEnd > bookingStart;
     });
 
     if (!hasConflict) {
       freeWindows.push({
         start_time: currentTime.toISOString(),
-        end_time: windowEnd.toISOString()
+        end_time: windowEnd.toISOString(),
       });
     }
-
 
     currentTime = new Date(currentTime.getTime() + 30 * 60000);
   }
@@ -488,5 +461,5 @@ module.exports = {
   cancelBooking,
   confirmBooking,
   getAvailableSlots,
-  getFreeTimeWindows
+  getFreeTimeWindows,
 };

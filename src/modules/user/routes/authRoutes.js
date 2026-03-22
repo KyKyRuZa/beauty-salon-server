@@ -8,39 +8,43 @@ const { createLogger } = require('../../../utils/logger');
 const {
   registerValidationSchema,
   loginValidationSchema,
-  updateProfileValidationSchema
+  updateProfileValidationSchema,
 } = require('../../../validation');
 
 const logger = createLogger('auth-routes');
-
 
 router.post('/register', validate(registerValidationSchema, 'body'), authController.register);
 router.post('/login', validate(loginValidationSchema, 'body'), authController.login);
 router.post('/logout', authController.logout);
 
-
 router.use(authenticateToken);
 
 router.get('/profile', authController.getProfile);
 
-router.put('/edit-profile', upload.single('avatar'), (req, res, next) => {
-  logger.debug('Edit profile request', {
-    body: req.body,
-    file: req.file,
-    contentType: req.headers['content-type']
-  });
+router.put(
+  '/edit-profile',
+  upload.single('avatar'),
+  (req, res, next) => {
+    logger.debug('Edit profile request', {
+      body: req.body,
+      file: req.file,
+      contentType: req.headers['content-type'],
+    });
 
+    if (req.file) {
+      // Делаем путь относительным (убираем /app/ если есть)
+      req.body.avatar = req.file.path.replace('/app/', '');
+    }
 
-  if (req.file) {
-    // Делаем путь относительным (убираем /app/ если есть)
-    req.body.avatar = req.file.path.replace('/app/', '');
-  }
+    next();
+  },
+  authController.editProfile
+);
 
-
-  next();
-}, authController.editProfile);
-
-
-router.put('/change-password', validate(require('../../../validation').changePasswordValidationSchema, 'body'), authController.changePassword);
+router.put(
+  '/change-password',
+  validate(require('../../../validation').changePasswordValidationSchema, 'body'),
+  authController.changePassword
+);
 
 module.exports = router;

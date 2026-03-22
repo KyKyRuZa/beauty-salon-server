@@ -7,105 +7,152 @@ const {
   getAllCategories: getAllCategoriesService,
   createCategory: createCategoryService,
   updateCategory: updateCategoryService,
-  deleteCategory: deleteCategoryService
+  deleteCategory: deleteCategoryService,
 } = require('../services/adminService');
 const { Op } = require('sequelize');
 const Admin = require('../models/Admin');
 
-
 const logger = createLogger('admin-controller');
 
-
 const getDashboardStats = async (req, res) => {
-  logger.info('Получение статистики админ-панели', { userId: req.user?.userId || req.user?.id, ip: req.ip });
+  logger.info('Получение статистики админ-панели', {
+    userId: req.user?.userId || req.user?.id,
+    ip: req.ip,
+  });
 
   try {
-
-    let admin = await Admin.findOne({ where: { user_id: req.user.userId || req.user.id, is_active: true } });
-    logger.info('Проверка администратора', { userId: req.user.userId || req.user.id, adminFound: !!admin, userRole: req.user.role });
-    
+    let admin = await Admin.findOne({
+      where: { user_id: req.user.userId || req.user.id, is_active: true },
+    });
+    logger.info('Проверка администратора', {
+      userId: req.user.userId || req.user.id,
+      adminFound: !!admin,
+      userRole: req.user.role,
+    });
 
     if (!admin && req.user.role === 'admin') {
-      logger.info('Создание записи администратора для пользователя', { userId: req.user.userId || req.user.id });
+      logger.info('Создание записи администратора для пользователя', {
+        userId: req.user.userId || req.user.id,
+      });
       try {
         admin = await Admin.create({
           user_id: req.user.userId || req.user.id,
           role: 'admin',
-          is_active: true
+          is_active: true,
         });
-        logger.info('Запись администратора успешно создана', { adminId: admin.id, userId: req.user.userId || req.user.id });
+        logger.info('Запись администратора успешно создана', {
+          adminId: admin.id,
+          userId: req.user.userId || req.user.id,
+        });
       } catch (creationError) {
-        logger.error('Ошибка создания записи администратора', { error: creationError.message, userId: req.user.userId || req.user.id });
+        logger.error('Ошибка создания записи администратора', {
+          error: creationError.message,
+          userId: req.user.userId || req.user.id,
+        });
 
-        admin = await Admin.findOne({ where: { user_id: req.user.userId || req.user.id, is_active: true } });
+        admin = await Admin.findOne({
+          where: { user_id: req.user.userId || req.user.id, is_active: true },
+        });
       }
     }
-    
+
     if (!admin) {
-      logger.warn('Доступ запрещен - пользователь не является администратором', { userId: req.user.userId || req.user.id, userRole: req.user.role });
+      logger.warn('Доступ запрещен - пользователь не является администратором', {
+        userId: req.user.userId || req.user.id,
+        userRole: req.user.role,
+      });
       return res.status(403).json({
         success: false,
-        message: 'Доступ запрещен. Только администраторы могут просматривать статистику.'
+        message: 'Доступ запрещен. Только администраторы могут просматривать статистику.',
       });
     }
 
-
     const stats = await getStatsService();
 
-    logger.info('Статистика админ-панели успешно получена', { userId: req.user?.userId || req.user?.id, ip: req.ip });
+    logger.info('Статистика админ-панели успешно получена', {
+      userId: req.user?.userId || req.user?.id,
+      ip: req.ip,
+    });
 
     res.status(200).json({
       success: true,
-      data: stats
+      data: stats,
     });
   } catch (error) {
-    logger.error('Ошибка получения статистики админ-панели', { error: error.message, userId: req.user?.userId || req.user?.id, ip: req.ip });
+    logger.error('Ошибка получения статистики админ-панели', {
+      error: error.message,
+      userId: req.user?.userId || req.user?.id,
+      ip: req.ip,
+    });
     res.status(500).json({
       success: false,
-      message: error.message
+      message: error.message,
     });
   }
 };
 
-
 const getAllUsers = async (req, res) => {
-  logger.info('Получение списка пользователей', { userId: req.user?.userId || req.user?.id, ip: req.ip });
+  logger.info('Получение списка пользователей', {
+    userId: req.user?.userId || req.user?.id,
+    ip: req.ip,
+  });
 
   try {
-
-    let admin = await Admin.findOne({ where: { user_id: req.user.userId || req.user.id, is_active: true } });
-    logger.info('Проверка администратора', { userId: req.user.userId || req.user.id, adminFound: !!admin, userRole: req.user.role });
-    
+    let admin = await Admin.findOne({
+      where: { user_id: req.user.userId || req.user.id, is_active: true },
+    });
+    logger.info('Проверка администратора', {
+      userId: req.user.userId || req.user.id,
+      adminFound: !!admin,
+      userRole: req.user.role,
+    });
 
     if (!admin && req.user.role === 'admin') {
-      logger.info('Создание записи администратора для пользователя', { userId: req.user.userId || req.user.id });
+      logger.info('Создание записи администратора для пользователя', {
+        userId: req.user.userId || req.user.id,
+      });
       try {
         admin = await Admin.create({
           user_id: req.user.userId || req.user.id,
           role: 'admin',
-          is_active: true
+          is_active: true,
         });
-        logger.info('Запись администратора успешно создана', { adminId: admin.id, userId: req.user.userId || req.user.id });
+        logger.info('Запись администратора успешно создана', {
+          adminId: admin.id,
+          userId: req.user.userId || req.user.id,
+        });
       } catch (creationError) {
-        logger.error('Ошибка создания записи администратора', { error: creationError.message, userId: req.user.userId || req.user.id });
+        logger.error('Ошибка создания записи администратора', {
+          error: creationError.message,
+          userId: req.user.userId || req.user.id,
+        });
 
-        admin = await Admin.findOne({ where: { user_id: req.user.userId || req.user.id, is_active: true } });
+        admin = await Admin.findOne({
+          where: { user_id: req.user.userId || req.user.id, is_active: true },
+        });
       }
     }
-    
+
     if (!admin) {
-      logger.warn('Доступ запрещен - пользователь не является администратором', { userId: req.user.userId || req.user.id, userRole: req.user.role });
+      logger.warn('Доступ запрещен - пользователь не является администратором', {
+        userId: req.user.userId || req.user.id,
+        userRole: req.user.role,
+      });
       return res.status(403).json({
         success: false,
-        message: 'Доступ запрещен. Только администраторы могут просматривать пользователей.'
+        message: 'Доступ запрещен. Только администраторы могут просматривать пользователей.',
       });
     }
 
     const { page = 1, limit = 10, search, role } = req.query;
-    
+
     const result = await getAllUsersService({ page, limit, search, role });
 
-    logger.info('Список пользователей успешно получен', { count: result.rows.length, total: result.count, ip: req.ip });
+    logger.info('Список пользователей успешно получен', {
+      count: result.rows.length,
+      total: result.count,
+      ip: req.ip,
+    });
 
     res.status(200).json({
       success: true,
@@ -114,39 +161,45 @@ const getAllUsers = async (req, res) => {
         total: result.count,
         page: parseInt(page),
         limit: parseInt(limit),
-        pages: Math.ceil(result.count / limit)
-      }
+        pages: Math.ceil(result.count / limit),
+      },
     });
   } catch (error) {
-    logger.error('Ошибка получения списка пользователей', { error: error.message, userId: req.user?.userId || req.user?.id, ip: req.ip });
+    logger.error('Ошибка получения списка пользователей', {
+      error: error.message,
+      userId: req.user?.userId || req.user?.id,
+      ip: req.ip,
+    });
     res.status(500).json({
       success: false,
-      message: error.message
+      message: error.message,
     });
   }
 };
 
-
 const getAllCategories = async (req, res) => {
-  logger.info('Получение списка категорий услуг', { userId: req.user?.userId || req.user?.id, ip: req.ip });
+  logger.info('Получение списка категорий услуг', {
+    userId: req.user?.userId || req.user?.id,
+    ip: req.ip,
+  });
 
   try {
-
-    let admin = await Admin.findOne({ where: { user_id: req.user.userId || req.user.id, is_active: true } });
-    
+    let admin = await Admin.findOne({
+      where: { user_id: req.user.userId || req.user.id, is_active: true },
+    });
 
     if (!admin && req.user.role === 'admin') {
       admin = await Admin.create({
         user_id: req.user.userId || req.user.id,
         role: 'admin',
-        is_active: true
+        is_active: true,
       });
     }
-    
+
     if (!admin) {
       return res.status(403).json({
         success: false,
-        message: 'Доступ запрещен. Только администраторы могут просматривать категории.'
+        message: 'Доступ запрещен. Только администраторы могут просматривать категории.',
       });
     }
 
@@ -154,7 +207,11 @@ const getAllCategories = async (req, res) => {
 
     const result = await getAllCategoriesService({ page, limit, search });
 
-    logger.info('Список категорий услуг успешно получен', { count: result.rows.length, total: result.count, ip: req.ip });
+    logger.info('Список категорий услуг успешно получен', {
+      count: result.rows.length,
+      total: result.count,
+      ip: req.ip,
+    });
 
     res.status(200).json({
       success: true,
@@ -163,39 +220,45 @@ const getAllCategories = async (req, res) => {
         total: result.count,
         page: parseInt(page),
         limit: parseInt(limit),
-        pages: Math.ceil(result.count / limit)
-      }
+        pages: Math.ceil(result.count / limit),
+      },
     });
   } catch (error) {
-    logger.error('Ошибка получения списка категорий услуг', { error: error.message, userId: req.user?.userId || req.user?.id, ip: req.ip });
+    logger.error('Ошибка получения списка категорий услуг', {
+      error: error.message,
+      userId: req.user?.userId || req.user?.id,
+      ip: req.ip,
+    });
     res.status(500).json({
       success: false,
-      message: error.message
+      message: error.message,
     });
   }
 };
 
-
 const createCategory = async (req, res) => {
-  logger.info('Создание новой категории услуги', { userId: req.user?.userId || req.user?.id, ip: req.ip });
+  logger.info('Создание новой категории услуги', {
+    userId: req.user?.userId || req.user?.id,
+    ip: req.ip,
+  });
 
   try {
-
-    let admin = await Admin.findOne({ where: { user_id: req.user.userId || req.user.id, is_active: true } });
-    
+    let admin = await Admin.findOne({
+      where: { user_id: req.user.userId || req.user.id, is_active: true },
+    });
 
     if (!admin && req.user.role === 'admin') {
       admin = await Admin.create({
         user_id: req.user.userId || req.user.id,
         role: 'admin',
-        is_active: true
+        is_active: true,
       });
     }
-    
+
     if (!admin) {
       return res.status(403).json({
         success: false,
-        message: 'Доступ запрещен. Только администраторы могут создавать категории.'
+        message: 'Доступ запрещен. Только администраторы могут создавать категории.',
       });
     }
 
@@ -207,39 +270,46 @@ const createCategory = async (req, res) => {
 
     res.status(201).json({
       success: true,
-      data: category
+      data: category,
     });
   } catch (error) {
-    logger.error('Ошибка создания категории услуги', { error: error.message, userId: req.user?.userId || req.user?.id, ip: req.ip });
+    logger.error('Ошибка создания категории услуги', {
+      error: error.message,
+      userId: req.user?.userId || req.user?.id,
+      ip: req.ip,
+    });
 
     res.status(400).json({
       success: false,
-      message: error.message
+      message: error.message,
     });
   }
 };
 
-
 const updateCategory = async (req, res) => {
-  logger.info('Обновление категории услуги', { categoryId: req.params.id, userId: req.user?.userId || req.user?.id, ip: req.ip });
+  logger.info('Обновление категории услуги', {
+    categoryId: req.params.id,
+    userId: req.user?.userId || req.user?.id,
+    ip: req.ip,
+  });
 
   try {
-
-    let admin = await Admin.findOne({ where: { user_id: req.user.userId || req.user.id, is_active: true } });
-    
+    let admin = await Admin.findOne({
+      where: { user_id: req.user.userId || req.user.id, is_active: true },
+    });
 
     if (!admin && req.user.role === 'admin') {
       admin = await Admin.create({
         user_id: req.user.userId || req.user.id,
         role: 'admin',
-        is_active: true
+        is_active: true,
       });
     }
-    
+
     if (!admin) {
       return res.status(403).json({
         success: false,
-        message: 'Доступ запрещен. Только администраторы могут обновлять категории.'
+        message: 'Доступ запрещен. Только администраторы могут обновлять категории.',
       });
     }
 
@@ -252,38 +322,45 @@ const updateCategory = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      data: category
+      data: category,
     });
   } catch (error) {
-    logger.error('Ошибка обновления категории услуги', { error: error.message, categoryId: req.params.id, ip: req.ip });
+    logger.error('Ошибка обновления категории услуги', {
+      error: error.message,
+      categoryId: req.params.id,
+      ip: req.ip,
+    });
     res.status(400).json({
       success: false,
-      message: error.message
+      message: error.message,
     });
   }
 };
 
-
 const deleteCategory = async (req, res) => {
-  logger.info('Удаление категории услуги', { categoryId: req.params.id, userId: req.user?.userId || req.user?.id, ip: req.ip });
+  logger.info('Удаление категории услуги', {
+    categoryId: req.params.id,
+    userId: req.user?.userId || req.user?.id,
+    ip: req.ip,
+  });
 
   try {
-
-    let admin = await Admin.findOne({ where: { user_id: req.user.userId || req.user.id, is_active: true } });
-    
+    let admin = await Admin.findOne({
+      where: { user_id: req.user.userId || req.user.id, is_active: true },
+    });
 
     if (!admin && req.user.role === 'admin') {
       admin = await Admin.create({
         user_id: req.user.userId || req.user.id,
         role: 'admin',
-        is_active: true
+        is_active: true,
       });
     }
-    
+
     if (!admin) {
       return res.status(403).json({
         success: false,
-        message: 'Доступ запрещен. Только администраторы могут удалять категории.'
+        message: 'Доступ запрещен. Только администраторы могут удалять категории.',
       });
     }
 
@@ -295,7 +372,7 @@ const deleteCategory = async (req, res) => {
       logger.warn('Категория услуги не найдена для удаления', { categoryId: id, ip: req.ip });
       return res.status(404).json({
         success: false,
-        message: 'Категория услуги не найдена'
+        message: 'Категория услуги не найдена',
       });
     }
 
@@ -303,43 +380,48 @@ const deleteCategory = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: 'Категория услуги успешно удалена'
+      message: 'Категория услуги успешно удалена',
     });
   } catch (error) {
-    logger.error('Ошибка удаления категории услуги', { error: error.message, categoryId: req.params.id, ip: req.ip });
+    logger.error('Ошибка удаления категории услуги', {
+      error: error.message,
+      categoryId: req.params.id,
+      ip: req.ip,
+    });
     res.status(500).json({
       success: false,
-      message: error.message
+      message: error.message,
     });
   }
 };
 
-
 const createAdmin = async (req, res) => {
-  logger.info('Создание нового администратора', { userId: req.user?.userId || req.user?.id, ip: req.ip });
+  logger.info('Создание нового администратора', {
+    userId: req.user?.userId || req.user?.id,
+    ip: req.ip,
+  });
 
   try {
-
     let currentAdmin = await Admin.findOne({
       where: {
         user_id: req.user.userId || req.user.id,
-        is_active: true
-      }
+        is_active: true,
+      },
     });
-
 
     if (!currentAdmin && req.user.role === 'admin') {
       currentAdmin = await Admin.create({
         user_id: req.user.userId || req.user.id,
         role: 'admin',
-        is_active: true
+        is_active: true,
       });
     }
 
     if (!currentAdmin || currentAdmin.role !== 'super_admin') {
       return res.status(403).json({
         success: false,
-        message: 'Доступ запрещен. Только суперадминистраторы могут создавать других администраторов.'
+        message:
+          'Доступ запрещен. Только суперадминистраторы могут создавать других администраторов.',
       });
     }
 
@@ -347,8 +429,11 @@ const createAdmin = async (req, res) => {
 
     const newAdmin = await createAdminService(adminData);
 
-    logger.info('Новый администратор успешно создан', { adminId: newAdmin.id, userId: adminData.user_id, ip: req.ip });
-
+    logger.info('Новый администратор успешно создан', {
+      adminId: newAdmin.id,
+      userId: adminData.user_id,
+      ip: req.ip,
+    });
 
     const formattedData = {
       id: newAdmin.id,
@@ -357,53 +442,77 @@ const createAdmin = async (req, res) => {
       first_name: newAdmin.first_name,
       last_name: newAdmin.last_name,
       is_active: newAdmin.is_active,
-      created_at: newAdmin.created_at
+      created_at: newAdmin.created_at,
     };
 
     res.status(201).json({
       success: true,
-      data: formattedData
+      data: formattedData,
     });
   } catch (error) {
-    logger.error('Ошибка создания администратора', { error: error.message, userId: req.user?.userId || req.user?.id, ip: req.ip });
+    logger.error('Ошибка создания администратора', {
+      error: error.message,
+      userId: req.user?.userId || req.user?.id,
+      ip: req.ip,
+    });
     res.status(500).json({
       success: false,
-      message: error.message
+      message: error.message,
     });
   }
 };
 
-
 const getAllAdmins = async (req, res) => {
-  logger.info('Получение списка администраторов', { userId: req.user?.userId || req.user?.id, ip: req.ip });
+  logger.info('Получение списка администраторов', {
+    userId: req.user?.userId || req.user?.id,
+    ip: req.ip,
+  });
 
   try {
-
-    let admin = await Admin.findOne({ where: { user_id: req.user.userId || req.user.id, is_active: true } });
-    logger.info('Проверка администратора', { userId: req.user.userId || req.user.id, adminFound: !!admin, userRole: req.user.role });
-
+    let admin = await Admin.findOne({
+      where: { user_id: req.user.userId || req.user.id, is_active: true },
+    });
+    logger.info('Проверка администратора', {
+      userId: req.user.userId || req.user.id,
+      adminFound: !!admin,
+      userRole: req.user.role,
+    });
 
     if (!admin && req.user.role === 'admin') {
-      logger.info('Создание записи администратора для пользователя', { userId: req.user.userId || req.user.id });
+      logger.info('Создание записи администратора для пользователя', {
+        userId: req.user.userId || req.user.id,
+      });
       try {
         admin = await Admin.create({
           user_id: req.user.userId || req.user.id,
           role: 'admin',
-          is_active: true
+          is_active: true,
         });
-        logger.info('Запись администратора успешно создана', { adminId: admin.id, userId: req.user.userId || req.user.id });
+        logger.info('Запись администратора успешно создана', {
+          adminId: admin.id,
+          userId: req.user.userId || req.user.id,
+        });
       } catch (creationError) {
-        logger.error('Ошибка создания записи администратора', { error: creationError.message, userId: req.user.userId || req.user.id });
+        logger.error('Ошибка создания записи администратора', {
+          error: creationError.message,
+          userId: req.user.userId || req.user.id,
+        });
 
-        admin = await Admin.findOne({ where: { user_id: req.user.userId || req.user.id, is_active: true } });
+        admin = await Admin.findOne({
+          where: { user_id: req.user.userId || req.user.id, is_active: true },
+        });
       }
     }
 
     if (!admin) {
-      logger.warn('Доступ запрещен - пользователь не является администратором', { userId: req.user.userId || req.user.id, userRole: req.user.role });
+      logger.warn('Доступ запрещен - пользователь не является администратором', {
+        userId: req.user.userId || req.user.id,
+        userRole: req.user.role,
+      });
       return res.status(403).json({
         success: false,
-        message: 'Доступ запрещен. Только администраторы могут просматривать список администраторов.'
+        message:
+          'Доступ запрещен. Только администраторы могут просматривать список администраторов.',
       });
     }
 
@@ -411,17 +520,20 @@ const getAllAdmins = async (req, res) => {
 
     const result = await getAllAdminsService({ page, limit, search });
 
-    logger.info('Список администраторов успешно получен', { count: result.rows.length, total: result.count, ip: req.ip });
+    logger.info('Список администраторов успешно получен', {
+      count: result.rows.length,
+      total: result.count,
+      ip: req.ip,
+    });
 
-
-    const formattedData = result.rows.map(admin => ({
+    const formattedData = result.rows.map((admin) => ({
       id: admin.id,
       user_id: admin.user_id,
       role: admin.role,
       first_name: admin.first_name,
       last_name: admin.last_name,
       is_active: admin.is_active,
-      created_at: admin.created_at
+      created_at: admin.created_at,
     }));
 
     res.status(200).json({
@@ -431,55 +543,77 @@ const getAllAdmins = async (req, res) => {
         total: result.count,
         page: parseInt(page),
         limit: parseInt(limit),
-        pages: Math.ceil(result.count / limit)
-      }
+        pages: Math.ceil(result.count / limit),
+      },
     });
   } catch (error) {
-    logger.error('Ошибка получения списка администраторов', { error: error.message, userId: req.user?.userId || req.user?.id, ip: req.ip });
+    logger.error('Ошибка получения списка администраторов', {
+      error: error.message,
+      userId: req.user?.userId || req.user?.id,
+      ip: req.ip,
+    });
     res.status(500).json({
       success: false,
-      message: error.message
+      message: error.message,
     });
   }
 };
 
-
 const getCurrentAdmin = async (req, res) => {
-  logger.info('Получение профиля текущего администратора', { userId: req.user?.userId || req.user?.id, ip: req.ip });
+  logger.info('Получение профиля текущего администратора', {
+    userId: req.user?.userId || req.user?.id,
+    ip: req.ip,
+  });
 
   try {
-
-    let admin = await Admin.findOne({ where: { user_id: req.user.userId || req.user.id, is_active: true } });
-    logger.info('Проверка администратора', { userId: req.user.userId || req.user.id, adminFound: !!admin, userRole: req.user.role });
-
+    let admin = await Admin.findOne({
+      where: { user_id: req.user.userId || req.user.id, is_active: true },
+    });
+    logger.info('Проверка администратора', {
+      userId: req.user.userId || req.user.id,
+      adminFound: !!admin,
+      userRole: req.user.role,
+    });
 
     if (!admin && req.user.role === 'admin') {
-      logger.info('Создание записи администратора для пользователя', { userId: req.user.userId || req.user.id });
+      logger.info('Создание записи администратора для пользователя', {
+        userId: req.user.userId || req.user.id,
+      });
       try {
         admin = await Admin.create({
           user_id: req.user.userId || req.user.id,
           role: 'admin',
-          is_active: true
+          is_active: true,
         });
-        logger.info('Запись администратора успешно создана', { adminId: admin.id, userId: req.user.userId || req.user.id });
+        logger.info('Запись администратора успешно создана', {
+          adminId: admin.id,
+          userId: req.user.userId || req.user.id,
+        });
       } catch (creationError) {
-        logger.error('Ошибка создания записи администратора', { error: creationError.message, userId: req.user.userId || req.user.id });
+        logger.error('Ошибка создания записи администратора', {
+          error: creationError.message,
+          userId: req.user.userId || req.user.id,
+        });
 
-        admin = await Admin.findOne({ where: { user_id: req.user.userId || req.user.id, is_active: true } });
+        admin = await Admin.findOne({
+          where: { user_id: req.user.userId || req.user.id, is_active: true },
+        });
       }
     }
 
     if (!admin) {
-      logger.warn('Доступ запрещен - пользователь не является администратором', { userId: req.user.userId || req.user.id, userRole: req.user.role });
+      logger.warn('Доступ запрещен - пользователь не является администратором', {
+        userId: req.user.userId || req.user.id,
+        userRole: req.user.role,
+      });
       return res.status(403).json({
         success: false,
-        message: 'Доступ запрещен. Только администраторы могут просматривать свой профиль.'
+        message: 'Доступ запрещен. Только администраторы могут просматривать свой профиль.',
       });
     }
 
     logger.info('Профиль администратора успешно получен', { adminId: admin.id, ip: req.ip });
 
-
     const formattedData = {
       id: admin.id,
       user_id: admin.user_id,
@@ -488,66 +622,87 @@ const getCurrentAdmin = async (req, res) => {
       last_name: admin.last_name,
       permissions: admin.permissions,
       is_active: admin.is_active,
-      created_at: admin.created_at
+      created_at: admin.created_at,
     };
 
     res.status(200).json({
       success: true,
-      data: formattedData
+      data: formattedData,
     });
   } catch (error) {
-    logger.error('Ошибка получения профиля администратора', { error: error.message, userId: req.user?.userId || req.user?.id, ip: req.ip });
+    logger.error('Ошибка получения профиля администратора', {
+      error: error.message,
+      userId: req.user?.userId || req.user?.id,
+      ip: req.ip,
+    });
     res.status(500).json({
       success: false,
-      message: error.message
+      message: error.message,
     });
   }
 };
 
-
 const updateCurrentAdmin = async (req, res) => {
-  logger.info('Обновление профиля текущего администратора', { userId: req.user?.userId || req.user?.id, ip: req.ip });
+  logger.info('Обновление профиля текущего администратора', {
+    userId: req.user?.userId || req.user?.id,
+    ip: req.ip,
+  });
 
   try {
-
-    let admin = await Admin.findOne({ where: { user_id: req.user.userId || req.user.id, is_active: true } });
-    logger.info('Проверка администратора', { userId: req.user.userId || req.user.id, adminFound: !!admin, userRole: req.user.role });
-
+    let admin = await Admin.findOne({
+      where: { user_id: req.user.userId || req.user.id, is_active: true },
+    });
+    logger.info('Проверка администратора', {
+      userId: req.user.userId || req.user.id,
+      adminFound: !!admin,
+      userRole: req.user.role,
+    });
 
     if (!admin && req.user.role === 'admin') {
-      logger.info('Создание записи администратора для пользователя', { userId: req.user.userId || req.user.id });
+      logger.info('Создание записи администратора для пользователя', {
+        userId: req.user.userId || req.user.id,
+      });
       try {
         admin = await Admin.create({
           user_id: req.user.userId || req.user.id,
           role: 'admin',
-          is_active: true
+          is_active: true,
         });
-        logger.info('Запись администратора успешно создана', { adminId: admin.id, userId: req.user.userId || req.user.id });
+        logger.info('Запись администратора успешно создана', {
+          adminId: admin.id,
+          userId: req.user.userId || req.user.id,
+        });
       } catch (creationError) {
-        logger.error('Ошибка создания записи администратора', { error: creationError.message, userId: req.user.userId || req.user.id });
+        logger.error('Ошибка создания записи администратора', {
+          error: creationError.message,
+          userId: req.user.userId || req.user.id,
+        });
 
-        admin = await Admin.findOne({ where: { user_id: req.user.userId || req.user.id, is_active: true } });
+        admin = await Admin.findOne({
+          where: { user_id: req.user.userId || req.user.id, is_active: true },
+        });
       }
     }
 
     if (!admin) {
-      logger.warn('Доступ запрещен - пользователь не является администратором', { userId: req.user.userId || req.user.id, userRole: req.user.role });
+      logger.warn('Доступ запрещен - пользователь не является администратором', {
+        userId: req.user.userId || req.user.id,
+        userRole: req.user.role,
+      });
       return res.status(403).json({
         success: false,
-        message: 'Доступ запрещен. Только администраторы могут обновлять свой профиль.'
+        message: 'Доступ запрещен. Только администраторы могут обновлять свой профиль.',
       });
     }
 
     const { first_name, last_name } = req.body;
 
-
     await admin.update({
       first_name,
-      last_name
+      last_name,
     });
 
     logger.info('Профиль администратора успешно обновлен', { adminId: admin.id, ip: req.ip });
-
 
     const formattedData = {
       id: admin.id,
@@ -557,18 +712,22 @@ const updateCurrentAdmin = async (req, res) => {
       last_name: admin.last_name,
       permissions: admin.permissions,
       is_active: admin.is_active,
-      created_at: admin.created_at
+      created_at: admin.created_at,
     };
 
     res.status(200).json({
       success: true,
-      data: formattedData
+      data: formattedData,
     });
   } catch (error) {
-    logger.error('Ошибка обновления профиля администратора', { error: error.message, userId: req.user?.userId || req.user?.id, ip: req.ip });
+    logger.error('Ошибка обновления профиля администратора', {
+      error: error.message,
+      userId: req.user?.userId || req.user?.id,
+      ip: req.ip,
+    });
     res.status(500).json({
       success: false,
-      message: error.message
+      message: error.message,
     });
   }
 };
@@ -583,5 +742,5 @@ module.exports = {
   createAdmin,
   getAllAdmins,
   getCurrentAdmin,
-  updateCurrentAdmin
+  updateCurrentAdmin,
 };

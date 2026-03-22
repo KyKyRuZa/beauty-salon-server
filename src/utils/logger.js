@@ -1,6 +1,5 @@
 const winston = require('winston');
 
-
 const createLogger = (serviceName) => {
   return winston.createLogger({
     level: process.env.LOG_LEVEL || 'info',
@@ -14,18 +13,15 @@ const createLogger = (serviceName) => {
     transports: [
       new winston.transports.File({
         filename: `./logs/${serviceName}-error.log`,
-        level: 'error'
+        level: 'error',
       }),
       new winston.transports.File({
-        filename: `./logs/${serviceName}-combined.log`
+        filename: `./logs/${serviceName}-combined.log`,
       }),
       new winston.transports.Console({
-        format: winston.format.combine(
-          winston.format.colorize(),
-          winston.format.simple()
-        )
-      })
-    ]
+        format: winston.format.combine(winston.format.colorize(), winston.format.simple()),
+      }),
+    ],
   });
 };
 

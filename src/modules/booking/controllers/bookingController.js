@@ -7,33 +7,25 @@ const createBooking = async (req, res) => {
   try {
     logger.info('Запрос на создание бронирования', { userId: req.user?.userId || req.user?.id });
 
-    const {
-      master_id,
-      master_service_id,
-      time_slot_id,
-      start_time,
-      end_time,
-      comment
-    } = req.body;
+    const { master_id, master_service_id, time_slot_id, start_time, end_time, comment } = req.body;
 
-    
     const userId = req.user?.userId || req.user?.id;
     const Client = require('../../user/models/Client');
     const client = await Client.findOne({ where: { user_id: userId } });
-    
+
     if (!client) {
       return res.status(400).json({
         success: false,
-        message: 'Профиль клиента не найден'
+        message: 'Профиль клиента не найден',
       });
     }
-    
+
     const client_id = client.id;
 
     if (!master_id || !master_service_id || !start_time || !end_time) {
       return res.status(400).json({
         success: false,
-        message: 'Необходимо указать master_id, master_service_id, start_time и end_time'
+        message: 'Необходимо указать master_id, master_service_id, start_time и end_time',
       });
     }
 
@@ -44,7 +36,7 @@ const createBooking = async (req, res) => {
       time_slot_id,
       start_time,
       end_time,
-      comment
+      comment,
     });
 
     logger.info('Бронирование успешно создано', { bookingId: booking.id });
@@ -52,42 +44,39 @@ const createBooking = async (req, res) => {
     res.status(201).json({
       success: true,
       message: 'Запись успешно создана',
-      data: booking
+      data: booking,
     });
   } catch (error) {
     logger.error('Ошибка создания бронирования', { error: error.message });
 
     res.status(400).json({
       success: false,
-      message: error.message
+      message: error.message,
     });
   }
 };
 
 const getMyBookings = async (req, res) => {
   try {
-
     const userId = req.user?.id || req.user?.userId;
     if (!userId) {
       return res.status(400).json({
         success: false,
-        message: 'Пользователь не найден'
+        message: 'Пользователь не найден',
       });
     }
 
     const { status } = req.query;
 
-
     const Client = require('../../user/models/Client');
     const client = await Client.findOne({ where: { user_id: userId } });
-    
+
     if (!client) {
       return res.status(400).json({
         success: false,
-        message: 'Профиль клиента не найден'
+        message: 'Профиль клиента не найден',
       });
     }
-
 
     let statusFilter = null;
     if (status) {
@@ -98,21 +87,21 @@ const getMyBookings = async (req, res) => {
       }
     }
 
-    const bookings = await bookingService.getClientBookings(client.id, { 
-      status: statusFilter 
+    const bookings = await bookingService.getClientBookings(client.id, {
+      status: statusFilter,
     });
 
     logger.info('Получены записи клиента', { clientId: client.id, count: bookings.length });
 
     res.json({
       success: true,
-      data: bookings
+      data: bookings,
     });
   } catch (error) {
     logger.error('Ошибка получения записей клиента', { error: error.message });
     res.status(500).json({
       success: false,
-      message: error.message
+      message: error.message,
     });
   }
 };
@@ -123,7 +112,7 @@ const getMasterBookings = async (req, res) => {
     if (!master_id) {
       return res.status(400).json({
         success: false,
-        message: 'Профиль мастера не найден'
+        message: 'Профиль мастера не найден',
       });
     }
 
@@ -135,13 +124,13 @@ const getMasterBookings = async (req, res) => {
 
     res.json({
       success: true,
-      data: bookings
+      data: bookings,
     });
   } catch (error) {
     logger.error('Ошибка получения записей мастера', { error: error.message });
     res.status(500).json({
       success: false,
-      message: error.message
+      message: error.message,
     });
   }
 };
@@ -154,13 +143,13 @@ const getBookingById = async (req, res) => {
 
     res.json({
       success: true,
-      data: booking
+      data: booking,
     });
   } catch (error) {
     logger.error('Ошибка получения бронирования', { error: error.message });
     res.status(404).json({
       success: false,
-      message: error.message
+      message: error.message,
     });
   }
 };
@@ -177,13 +166,13 @@ const updateBooking = async (req, res) => {
     res.json({
       success: true,
       message: 'Бронирование обновлено',
-      data: booking
+      data: booking,
     });
   } catch (error) {
     logger.error('Ошибка обновления бронирования', { error: error.message });
     res.status(400).json({
       success: false,
-      message: error.message
+      message: error.message,
     });
   }
 };
@@ -199,13 +188,13 @@ const cancelBooking = async (req, res) => {
     res.json({
       success: true,
       message: 'Бронирование отменено',
-      data: booking
+      data: booking,
     });
   } catch (error) {
     logger.error('Ошибка отмены бронирования', { error: error.message });
     res.status(400).json({
       success: false,
-      message: error.message
+      message: error.message,
     });
   }
 };
@@ -221,13 +210,13 @@ const confirmBooking = async (req, res) => {
     res.json({
       success: true,
       message: 'Бронирование подтверждено',
-      data: booking
+      data: booking,
     });
   } catch (error) {
     logger.error('Ошибка подтверждения бронирования', { error: error.message });
     res.status(400).json({
       success: false,
-      message: error.message
+      message: error.message,
     });
   }
 };
@@ -239,7 +228,7 @@ const getAvailableSlots = async (req, res) => {
     if (!master_id || !date) {
       return res.status(400).json({
         success: false,
-        message: 'Необходимо указать master_id и date'
+        message: 'Необходимо указать master_id и date',
       });
     }
 
@@ -247,13 +236,13 @@ const getAvailableSlots = async (req, res) => {
 
     res.json({
       success: true,
-      data: slots
+      data: slots,
     });
   } catch (error) {
     logger.error('Ошибка получения доступных слотов', { error: error.message });
     res.status(500).json({
       success: false,
-      message: error.message
+      message: error.message,
     });
   }
 };
@@ -265,25 +254,21 @@ const getFreeWindows = async (req, res) => {
     if (!master_id || !date) {
       return res.status(400).json({
         success: false,
-        message: 'Необходимо указать master_id и date'
+        message: 'Необходимо указать master_id и date',
       });
     }
 
-    const windows = await bookingService.getFreeTimeWindows(
-      master_id,
-      date,
-      parseInt(duration)
-    );
+    const windows = await bookingService.getFreeTimeWindows(master_id, date, parseInt(duration));
 
     res.json({
       success: true,
-      data: windows
+      data: windows,
     });
   } catch (error) {
     logger.error('Ошибка получения свободных окон', { error: error.message });
     res.status(500).json({
       success: false,
-      message: error.message
+      message: error.message,
     });
   }
 };
@@ -297,5 +282,5 @@ module.exports = {
   cancelBooking,
   confirmBooking,
   getAvailableSlots,
-  getFreeWindows
+  getFreeWindows,
 };

@@ -13,7 +13,7 @@ const detectCity = async (req, res) => {
     if (!lat || !lng) {
       return res.status(400).json({
         success: false,
-        message: 'Необходимо указать координаты (lat, lng)'
+        message: 'Необходимо указать координаты (lat, lng)',
       });
     }
 
@@ -24,14 +24,14 @@ const detectCity = async (req, res) => {
     if (isNaN(latNum) || isNaN(lngNum)) {
       return res.status(400).json({
         success: false,
-        message: 'Неверный формат координат'
+        message: 'Неверный формат координат',
       });
     }
 
     if (latNum < -90 || latNum > 90 || lngNum < -180 || lngNum > 180) {
       return res.status(400).json({
         success: false,
-        message: 'Координаты вне допустимого диапазона'
+        message: 'Координаты вне допустимого диапазона',
       });
     }
 
@@ -41,24 +41,24 @@ const detectCity = async (req, res) => {
     if (!result) {
       return res.status(404).json({
         success: false,
-        message: 'Город не найден в радиусе 100 км'
+        message: 'Город не найден в радиусе 100 км',
       });
     }
 
     logger.info(`Город определён: ${result.city} (${result.distance} км)`, {
       coordinates: { lat: latNum, lng: lngNum },
-      ip: req.ip
+      ip: req.ip,
     });
 
     res.json({
       success: true,
-      data: result
+      data: result,
     });
   } catch (error) {
     logger.error('Ошибка определения города:', error);
     res.status(500).json({
       success: false,
-      message: 'Ошибка при определении города'
+      message: 'Ошибка при определении города',
     });
   }
 };
@@ -70,28 +70,28 @@ const detectCity = async (req, res) => {
 const getCacheStats = async (req, res) => {
   try {
     const stats = geoService.getCacheStats();
-    
+
     // Получаем размер кэша из Redis
     const redis = require('../../../config/redis');
     const dbSize = await redis.dbsize();
-    
+
     res.json({
       success: true,
       data: {
         ...stats,
-        redisKeys: dbSize
-      }
+        redisKeys: dbSize,
+      },
     });
   } catch (error) {
     logger.error('Ошибка получения статистики:', error);
     res.status(500).json({
       success: false,
-      message: error.message
+      message: error.message,
     });
   }
 };
 
 module.exports = {
   detectCity,
-  getCacheStats
+  getCacheStats,
 };

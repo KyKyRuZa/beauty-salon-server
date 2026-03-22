@@ -18,9 +18,9 @@ const storage = multer.diskStorage({
     cb(null, uploadDir);
   },
   filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
     cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
-  }
+  },
 });
 
 // Фильтр файлов - только изображения
@@ -31,7 +31,7 @@ const fileFilter = (req, file, cb) => {
     uploadLogger.warn('Попытка загрузки неизображаемого файла', {
       mimetype: file.mimetype,
       originalName: file.originalname,
-      userId: req.user?.id
+      userId: req.user?.id,
     });
     cb(new Error('Можно загружать только изображения'), false);
   }
@@ -41,9 +41,9 @@ const fileFilter = (req, file, cb) => {
 const upload = multer({
   storage: storage,
   limits: {
-    fileSize: 30 * 1024 * 1024 // 30MB
+    fileSize: 30 * 1024 * 1024, // 30MB
   },
-  fileFilter: fileFilter
+  fileFilter: fileFilter,
 });
 
 module.exports = upload;

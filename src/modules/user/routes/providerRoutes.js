@@ -24,7 +24,7 @@ router.get('/master/:masterId/skills', async (req, res) => {
     const { masterId } = req.params;
     const skills = await MasterSkill.findAll({
       where: { master_id: masterId, is_active: true },
-      order: [['sort_order', 'ASC']]
+      order: [['sort_order', 'ASC']],
     });
     res.json({ success: true, data: skills });
   } catch (error) {
@@ -43,13 +43,16 @@ router.get('/master/:masterId/portfolio', async (req, res) => {
     const { masterId } = req.params;
     const { category, is_featured } = req.query;
     const where = { master_id: masterId, is_visible: true };
-    
+
     if (category) where.category = category;
     if (is_featured !== undefined) where.is_featured = is_featured === 'true';
-    
+
     const portfolio = await MasterPortfolio.findAll({
       where,
-      order: [['is_featured', 'DESC'], ['created_at', 'DESC']]
+      order: [
+        ['is_featured', 'DESC'],
+        ['created_at', 'DESC'],
+      ],
     });
     res.json({ success: true, data: portfolio });
   } catch (error) {

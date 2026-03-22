@@ -1,101 +1,104 @@
 const { DataTypes } = require('sequelize');
 const { sequelize } = require('../../../config/database');
 
-
-const Admin = sequelize.define('Admin', {
-  id: {
-    type: DataTypes.INTEGER,
-    primaryKey: true,
-    autoIncrement: true,
-    field: 'id'
-  },
-  user_id: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-    field: 'user_id',
-    references: {
-      model: {
-        schema: 'user_schema',
-        tableName: 'users'
-      },
-      key: 'id'
+const Admin = sequelize.define(
+  'Admin',
+  {
+    id: {
+      type: DataTypes.INTEGER,
+      primaryKey: true,
+      autoIncrement: true,
+      field: 'id',
     },
-    onDelete: 'CASCADE'
-  },
-  role: {
-    type: DataTypes.STRING,
-    allowNull: false,
-    defaultValue: 'admin',
-    validate: {
-      isIn: {
-        args: [['admin', 'super_admin', 'moderator']],
-        msg: 'Role must be admin, super_admin, or moderator'
-      }
+    user_id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      field: 'user_id',
+      references: {
+        model: {
+          schema: 'user_schema',
+          tableName: 'users',
+        },
+        key: 'id',
+      },
+      onDelete: 'CASCADE',
     },
-    field: 'role'
-  },
-  permissions: {
-    type: DataTypes.JSONB,
-    allowNull: true,
-    field: 'permissions'
-  },
-  first_name: {
-    type: DataTypes.STRING,
-    field: 'first_name',
-    validate: {
-      len: {
-        args: [2, 100],
-        msg: 'Имя должно содержать от 2 до 100 символов'
+    role: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      defaultValue: 'admin',
+      validate: {
+        isIn: {
+          args: [['admin', 'super_admin', 'moderator']],
+          msg: 'Role must be admin, super_admin, or moderator',
+        },
       },
-      isAlphaWithCyrillic(value) {
-        if (value && !/^[A-Za-zА-Яа-яЁё\s\-']+$/i.test(value)) {
-          throw new Error('Имя должно содержать только буквы, пробелы, дефисы и апострофы');
-        }
-      }
-    }
-  },
-  last_name: {
-    type: DataTypes.STRING,
-    field: 'last_name',
-    validate: {
-      len: {
-        args: [2, 100],
-        msg: 'Фамилия должна содержать от 2 до 100 символов'
+      field: 'role',
+    },
+    permissions: {
+      type: DataTypes.JSONB,
+      allowNull: true,
+      field: 'permissions',
+    },
+    first_name: {
+      type: DataTypes.STRING,
+      field: 'first_name',
+      validate: {
+        len: {
+          args: [2, 100],
+          msg: 'Имя должно содержать от 2 до 100 символов',
+        },
+        isAlphaWithCyrillic(value) {
+          if (value && !/^[A-Za-zА-Яа-яЁё\s\-']+$/i.test(value)) {
+            throw new Error('Имя должно содержать только буквы, пробелы, дефисы и апострофы');
+          }
+        },
       },
-      isAlphaWithCyrillic(value) {
-        if (value && !/^[A-Za-zА-Яа-яЁё\s\-']+$/i.test(value)) {
-          throw new Error('Фамилия должна содержать только буквы, пробелы, дефисы и апострофы');
-        }
-      }
-    }
+    },
+    last_name: {
+      type: DataTypes.STRING,
+      field: 'last_name',
+      validate: {
+        len: {
+          args: [2, 100],
+          msg: 'Фамилия должна содержать от 2 до 100 символов',
+        },
+        isAlphaWithCyrillic(value) {
+          if (value && !/^[A-Za-zА-Яа-яЁё\s\-']+$/i.test(value)) {
+            throw new Error('Фамилия должна содержать только буквы, пробелы, дефисы и апострофы');
+          }
+        },
+      },
+    },
+    is_active: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: true,
+      field: 'is_active',
+    },
   },
-  is_active: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: true,
-    field: 'is_active'
+  {
+    tableName: 'admins',
+    schema: 'user_schema',
+    indexes: [
+      {
+        fields: ['user_id'],
+        name: 'admin_user_id_index',
+      },
+      {
+        fields: ['role'],
+        name: 'admin_role_index',
+      },
+      {
+        fields: ['is_active'],
+        name: 'admin_is_active_index',
+      },
+    ],
+    paranoid: true,
+    timestamps: true,
+    createdAt: 'created_at',
+    updatedAt: 'updated_at',
+    deletedAt: 'deleted_at',
   }
-}, {
-  tableName: 'admins',
-  schema: 'user_schema',
-  indexes: [
-    {
-      fields: ['user_id'],
-      name: 'admin_user_id_index'
-    },
-    {
-      fields: ['role'],
-      name: 'admin_role_index'
-    },
-    {
-      fields: ['is_active'],
-      name: 'admin_is_active_index'
-    }
-  ],
-  paranoid: true,
-  timestamps: true,
-  createdAt: 'created_at',
-  updatedAt: 'updated_at',
-  deletedAt: 'deleted_at'
-});
+);
 
 module.exports = Admin;
