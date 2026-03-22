@@ -7,10 +7,11 @@ const cacheService = require('../../../utils/cacheService');
 const logger = createLogger('catalog-controller');
 
 const getAllCatalogCategories = async (req, res) => {
-  logger.info('Получение категорий услуг из каталога', { ip: req.ip, params: req.query });
+  logger.info('Получение категорий услуг из каталога', { ip: req.ip, params: req.query, requestId: req.requestId });
 
   try {
-    const { category, search, sortBy = 'name', order = 'ASC', limit, offset = 0 } = req.query;
+    const { category, search, sortBy = 'name', order = 'ASC' } = req.query;
+    const { limit, offset } = req.pagination;
 
     // Формируем ключ кэша на основе параметров запроса
     const cacheKey = cacheService.KEYS.CATEGORIES_LIST({
@@ -26,15 +27,19 @@ const getAllCatalogCategories = async (req, res) => {
     let result = await cacheService.cache.get(cacheKey);
 
     if (result) {
-      logger.debug('Кэш хит: категории каталога', { cacheKey, ip: req.ip });
+      logger.debug('Кэш хит: категории каталога', { cacheKey, ip: req.ip, requestId: req.requestId });
       return res.status(200).json({
         success: true,
         data: result.rows,
         pagination: {
           total: result.count,
-          limit: limit ? parseInt(limit) : null,
-          offset: parseInt(offset),
-          pages: limit ? Math.ceil(result.count / limit) : 1,
+          limit,
+          offset,
+          pages: Math.ceil(result.count / limit),
+        },
+        meta: {
+          timestamp: new Date().toISOString(),
+          requestId: req.requestId,
         },
       });
     }
@@ -50,12 +55,13 @@ const getAllCatalogCategories = async (req, res) => {
 
     // Сохраняем в кэш на 5 минут
     await cacheService.cache.set(cacheKey, result, cacheService.CACHE_TTL.CATEGORIES);
-    logger.debug('Кэш установлен: категории каталога', { cacheKey, ip: req.ip });
+    logger.debug('Кэш установлен: категории каталога', { cacheKey, ip: req.ip, requestId: req.requestId });
 
     logger.info('Категории услуг из каталога успешно получены', {
       count: result.rows.length,
       total: result.count,
       ip: req.ip,
+      requestId: req.requestId,
     });
 
     res.status(200).json({
@@ -63,9 +69,13 @@ const getAllCatalogCategories = async (req, res) => {
       data: result.rows,
       pagination: {
         total: result.count,
-        limit: limit ? parseInt(limit) : null,
-        offset: parseInt(offset),
-        pages: limit ? Math.ceil(result.count / limit) : 1,
+        limit,
+        offset,
+        pages: Math.ceil(result.count / limit),
+      },
+      meta: {
+        timestamp: new Date().toISOString(),
+        requestId: req.requestId,
       },
     });
   } catch (error) {

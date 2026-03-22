@@ -1,4 +1,5 @@
 const { createLogger } = require('../../../utils/logger');
+const { circuitBreakers } = require('../../../utils/circuitBreaker');
 const logger = createLogger('modular-monolith-geo');
 const fs = require('fs');
 const path = require('path');
@@ -109,8 +110,11 @@ const findNearestCity = async (lat, lng) => {
   const cacheKey = `geo:${latRounded}:${lngRounded}`;
 
   try {
-    // 1. Проверяем кэш
-    const cached = await redis.get(cacheKey);
+    // 1. Проверяем кэш через circuit breaker
+    const cached = await circuitBreakers.yandexGeo.call(async () => {
+      return await redis.get(cacheKey);
+    });
+    
     if (cached) {
       cacheStats.hits++;
       logger.debug(`Кэш hit: ${cacheKey}`);

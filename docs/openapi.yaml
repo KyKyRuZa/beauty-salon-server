@@ -1,0 +1,965 @@
+openapi: 3.0.3
+info:
+  title: Beauty Vite API
+  version: 1.0.0
+  description: API для платформы записи в салоны красоты и к мастерам
+  contact:
+    name: Beauty Vite Team
+    email: support@beauty-vite.ru
+
+servers:
+  - url: http://localhost:5000/api/v1
+    description: Development server
+  - url: https://api.beauty-vite.ru/api/v1
+    description: Production server
+
+tags:
+  - name: Auth
+    description: Аутентификация и авторизация
+  - name: Catalog
+    description: Каталог услуг и категорий
+  - name: Booking
+    description: Бронирования и слоты
+  - name: Availability
+    description: Доступность мастеров
+  - name: Timeslots
+    description: Временные слоты
+  - name: Geo
+    description: Геолокация и города
+  - name: Admin
+    description: Админ-панель
+  - name: Providers
+    description: Мастера и салоны
+  - name: Reviews
+    description: Отзывы
+  - name: Favorites
+    description: Избранное
+
+paths:
+  # ==================== AUTH ====================
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Регистрация нового пользователя
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password, phone]
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: user@example.com
+                password:
+                  type: string
+                  minLength: 8
+                  example: Password123
+                phone:
+                  type: string
+                  minLength: 10
+                  example: +79991234567
+                first_name:
+                  type: string
+                  minLength: 2
+                  example: Иван
+                last_name:
+                  type: string
+                  minLength: 2
+                  example: Иванов
+      responses:
+        '201':
+          description: Пользователь успешно зарегистрирован
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      user:
+                        type: object
+                      token:
+                        type: string
+        '400':
+          description: Ошибка валидации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Вход пользователя
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: user@example.com
+                password:
+                  type: string
+                  example: Password123
+      responses:
+        '200':
+          description: Успешный вход
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      user:
+                        type: object
+                      token:
+                        type: string
+        '401':
+          description: Неверные учётные данные
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/logout:
+    post:
+      tags: [Auth]
+      summary: Выход пользователя
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Успешный выход
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+
+  /auth/profile:
+    get:
+      tags: [Auth]
+      summary: Получить профиль пользователя
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Профиль пользователя
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      user:
+                        type: object
+                      profile:
+                        type: object
+
+  /auth/edit-profile:
+    put:
+      tags: [Auth]
+      summary: Редактировать профиль
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                first_name:
+                  type: string
+                  minLength: 2
+                last_name:
+                  type: string
+                  minLength: 2
+                phone:
+                  type: string
+                  minLength: 10
+                email:
+                  type: string
+                  format: email
+
+  /auth/change-password:
+    put:
+      tags: [Auth]
+      summary: Изменить пароль
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [currentPassword, newPassword]
+              properties:
+                currentPassword:
+                  type: string
+                  minLength: 6
+                newPassword:
+                  type: string
+                  minLength: 6
+
+  # ==================== CATALOG ====================
+  /catalog/categories:
+    get:
+      tags: [Catalog]
+      summary: Получить все категории
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: sort_by
+          in: query
+          schema:
+            type: string
+            enum: [name, created_at, updated_at]
+            default: name
+        - name: order
+          in: query
+          schema:
+            type: string
+            enum: [ASC, DESC]
+            default: ASC
+      responses:
+        '200':
+          description: Список категорий
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Category'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+
+  /catalog/categories/{id}:
+    get:
+      tags: [Catalog]
+      summary: Получить категорию по ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Категория
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Category'
+
+  /catalog:
+    get:
+      tags: [Catalog]
+      summary: Получить все услуги
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Список услуг
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Service'
+
+  /catalog/{id}:
+    get:
+      tags: [Catalog]
+      summary: Получить услугу по ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Услуга
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Service'
+
+  # ==================== BOOKING ====================
+  /booking:
+    post:
+      tags: [Booking]
+      summary: Создать бронирование
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [master_id, service_id, start_time, end_time]
+              properties:
+                master_id:
+                  type: integer
+                  example: 1
+                service_id:
+                  type: integer
+                  example: 1
+                start_time:
+                  type: string
+                  format: date-time
+                end_time:
+                  type: string
+                  format: date-time
+                comment:
+                  type: string
+                  maxLength: 500
+      responses:
+        '201':
+          description: Бронирование создано
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Booking'
+        '400':
+          description: Ошибка валидации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Слот уже забронирован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /booking/my:
+    get:
+      tags: [Booking]
+      summary: Мои бронирования
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Список бронирований
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Booking'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+
+  /booking/{id}:
+    get:
+      tags: [Booking]
+      summary: Получить бронирование по ID
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Бронирование
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Booking'
+
+  /booking/{id}/cancel:
+    post:
+      tags: [Booking]
+      summary: Отменить бронирование
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Бронирование отменено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+
+  /booking/{id}/confirm:
+    post:
+      tags: [Booking]
+      summary: Подтвердить бронирование
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Бронирование подтверждено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+
+  # ==================== AVAILABILITY ====================
+  /availability:
+    post:
+      tags: [Availability]
+      summary: Установить доступность
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [master_id, date, start_time, end_time]
+              properties:
+                master_id:
+                  type: integer
+                date:
+                  type: string
+                  format: date
+                start_time:
+                  type: string
+                  format: time
+                end_time:
+                  type: string
+                  format: time
+                slot_duration:
+                  type: integer
+                  default: 60
+      responses:
+        '201':
+          description: Доступность установлена
+
+  /availability/available-dates:
+    get:
+      tags: [Availability]
+      summary: Получить доступные даты
+      parameters:
+        - name: master_id
+          in: query
+          required: true
+          schema:
+            type: integer
+        - name: service_id
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Список доступных дат
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      type: string
+                      format: date
+
+  # ==================== TIMESLOTS ====================
+  /timeslots:
+    post:
+      tags: [Timeslots]
+      summary: Создать временной слот
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [master_id, start_time, end_time]
+              properties:
+                master_id:
+                  type: integer
+                start_time:
+                  type: string
+                  format: date-time
+                end_time:
+                  type: string
+                  format: date-time
+                service_id:
+                  type: integer
+                status:
+                  type: string
+                  enum: [free, booked, blocked]
+                  default: free
+
+  /timeslots/master:
+    get:
+      tags: [Timeslots]
+      summary: Получить слоты мастера
+      parameters:
+        - name: master_id
+          in: query
+          required: true
+          schema:
+            type: integer
+        - name: date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Список слотов
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TimeSlot'
+
+  # ==================== GEO ====================
+  /geo/detect-city:
+    post:
+      tags: [Geo]
+      summary: Определить город по координатам
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [lat, lng]
+              properties:
+                lat:
+                  type: number
+                  format: float
+                lng:
+                  type: number
+                  format: float
+      responses:
+        '200':
+          description: Город определён
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      city:
+                        type: string
+                      distance:
+                        type: number
+
+  # ==================== PROVIDERS ====================
+  /providers/{id}:
+    get:
+      tags: [Providers]
+      summary: Получить профиль мастера/салона
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Профиль
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Provider'
+
+  # ==================== REVIEWS ====================
+  /reviews:
+    post:
+      tags: [Reviews]
+      summary: Создать отзыв
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [provider_id, rating, text]
+              properties:
+                provider_id:
+                  type: integer
+                rating:
+                  type: number
+                  minimum: 1
+                  maximum: 5
+                text:
+                  type: string
+                  maxLength: 1000
+
+  # ==================== FAVORITES ====================
+  /favorites/{masterId}:
+    post:
+      tags: [Favorites]
+      summary: Добавить в избранное
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: masterId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Добавлено в избранное
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+
+  /favorites/{masterId}/toggle:
+    post:
+      tags: [Favorites]
+      summary: Переключить избранное
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: masterId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Статус изменён
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      isFavorite:
+                        type: boolean
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              example: VALIDATION_ERROR
+            message:
+              type: string
+              example: Ошибка валидации данных
+            details:
+              type: array
+              items:
+                type: object
+                properties:
+                  field:
+                    type: string
+                  message:
+                    type: string
+        meta:
+          type: object
+          properties:
+            timestamp:
+              type: string
+              format: date-time
+            requestId:
+              type: string
+
+    Category:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+        is_active:
+          type: boolean
+        is_popular:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    Service:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+        price:
+          type: number
+        duration:
+          type: integer
+        master_id:
+          type: integer
+        category_id:
+          type: integer
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+
+    Booking:
+      type: object
+      properties:
+        id:
+          type: integer
+        client_id:
+          type: integer
+        master_id:
+          type: integer
+        service_id:
+          type: integer
+        start_time:
+          type: string
+          format: date-time
+        end_time:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [confirmed, cancelled, completed]
+        comment:
+          type: string
+        master_comment:
+          type: string
+        price:
+          type: number
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    TimeSlot:
+      type: object
+      properties:
+        id:
+          type: integer
+        master_id:
+          type: integer
+        service_id:
+          type: integer
+        start_time:
+          type: string
+          format: date-time
+        end_time:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [free, booked, blocked]
+        source:
+          type: string
+          enum: [auto, manual]
+
+    Provider:
+      type: object
+      properties:
+        id:
+          type: integer
+        type:
+          type: string
+          enum: [master, salon]
+        name:
+          type: string
+        rating:
+          type: number
+          format: float
+        image_url:
+          type: string
+        specialization:
+          type: string
+        address:
+          type: string
+        city:
+          type: string
+        is_verified:
+          type: boolean
+        working_hours:
+          type: object
+
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+          example: 1
+        limit:
+          type: integer
+          example: 20
+        total:
+          type: integer
+          example: 100
+        totalPages:
+          type: integer
+          example: 5
+        hasNext:
+          type: boolean
+        hasPrev:
+          type: boolean

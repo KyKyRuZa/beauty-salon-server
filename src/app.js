@@ -2,6 +2,9 @@ const express = require('express');
 const compression = require('compression');
 const { createLogger } = require('./utils/logger');
 const { applySecurityMiddleware } = require('./middleware/security');
+const { requestLogger } = require('./middleware/requestLogger');
+const { errorResponse } = require('./utils/apiResponse');
+const API_ERRORS = require('./utils/apiErrors');
 require('dotenv').config();
 
 const logger = createLogger('modular-monolith-app');
@@ -50,6 +53,9 @@ connectDB()
 
 applySecurityMiddleware(app);
 
+// Request ID middleware - ДО всех обработчиков
+app.use(requestLogger);
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -63,12 +69,29 @@ app.use((req, res, next) => {
     logger.info(`${req.method} ${req.path}`, {
       ip: req.ip,
       userAgent: req.get('User-Agent'),
+      requestId: req.requestId,
       timestamp: new Date().toISOString(),
     });
   }
   next();
 });
 
+// API v1 routes - версионирование API
+app.use('/api/v1/auth/admin', adminAuthRoutes);
+app.use('/api/v1/auth', userAuthRoutes);
+app.use('/api/v1/services', serviceRoutes);
+app.use('/api/v1/providers', providerRoutes);
+app.use('/api/v1/salon-locations', salonLocationRoutes);
+app.use('/api/v1/geo', geoRoutes);
+app.use('/api/v1/reviews', reviewRoutes);
+app.use('/api/v1/favorites', favoriteRoutes);
+app.use('/api/v1/booking', bookingRoutes);
+app.use('/api/v1/timeslots', timeslotRoutes);
+app.use('/api/v1/availability', availabilityRoutes);
+app.use('/api/v1/catalog', catalogRoutes);
+app.use('/api/v1/admin', adminRoutes);
+
+// Legacy routes (без версии) - для обратной совместимости
 app.use('/api/auth/admin', adminAuthRoutes);
 app.use('/api/auth', userAuthRoutes);
 app.use('/api/services', serviceRoutes);
@@ -135,19 +158,27 @@ app.use((err, req, res, next) => {
     url: req.url,
     method: req.method,
   });
+
+  // Стандартизированный ответ с ошибкой
+  if (err.code && API_ERRORS[err.code]) {
+    return errorResponse(res, err.statusCode || 500, err.code, err.message);
+  }
+
   res.status(500).json({
     success: false,
-    message: 'Что-то пошло не так!',
-    error: process.env.NODE_ENV === 'development' ? err.message : {},
+    error: {
+      code: API_ERRORS.INTERNAL_ERROR,
+      message: 'Внутренняя ошибка сервера',
+    },
+    meta: {
+      timestamp: new Date().toISOString(),
+    },
   });
 });
 
 app.use((req, res) => {
   logger.warn('Маршрут не найден', { url: req.url, method: req.method });
-  res.status(404).json({
-    success: false,
-    message: 'Маршрут не найден',
-  });
+  errorResponse(res, 404, API_ERRORS.NOT_FOUND, 'Маршрут не найден');
 });
 
 module.exports = app;

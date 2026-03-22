@@ -24,6 +24,7 @@ router.get('/profile', authController.getProfile);
 router.put(
   '/edit-profile',
   upload.single('avatar'),
+  validate(updateProfileValidationSchema, 'body'),
   (req, res, next) => {
     logger.debug('Edit profile request', {
       body: req.body,

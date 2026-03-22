@@ -1,64 +1,90 @@
 const { z } = require('zod');
 const { BaseValidationSchema } = require('./base');
 
-const timeSlotValidationSchema = z
-  .object({
-    master_id: BaseValidationSchema.number,
-    start_time: z.string().datetime(),
-    end_time: z.string().datetime(),
-    status: z.enum(['free', 'booked', 'blocked']).default('free'),
-  })
-  .refine((data) => new Date(data.end_time) > new Date(data.start_time), {
-    message: 'Время окончания должно быть позже времени начала',
-  });
+const { number, date } = BaseValidationSchema;
 
-const bookingValidationSchema = z
-  .object({
-    user_id: BaseValidationSchema.number,
-    service_template_id: BaseValidationSchema.number,
-    master_id: BaseValidationSchema.number,
-    start_time: z.string().datetime(),
-    end_time: z.string().datetime(),
-    status: z.enum(['confirmed', 'cancelled', 'completed']).default('confirmed'),
-  })
-  .refine((data) => new Date(data.end_time) > new Date(data.start_time), {
-    message: 'Время окончания должно быть позже времени начала',
-  });
+/**
+ * Схемы валидации для бронирований
+ */
 
-const orderValidationSchema = z.object({
-  user_id: BaseValidationSchema.number,
-  service_template_id: BaseValidationSchema.number,
-  booking_id: BaseValidationSchema.number.optional(),
-  total_amount: z.number().min(0),
-  status: z.enum(['confirmed', 'cancelled', 'completed', 'refunded']).default('confirmed'),
+const createBookingSchema = z.object({
+  body: z.object({
+    master_id: number,
+    service_id: number,
+    start_time: z.string().datetime('Время начала должно быть в формате ISO'),
+    end_time: z.string().datetime('Время окончания должно быть в формате ISO'),
+    comment: z.string().max(500).optional(),
+  }),
 });
 
-const masterAvailabilityValidationSchema = z
-  .object({
-    master_id: BaseValidationSchema.number,
-    service_template_id: BaseValidationSchema.number,
-    date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Дата должна быть в формате YYYY-MM-DD'),
-    start_time: z
-      .string()
-      .regex(/^([01]\d|2[0-3]):([0-5]\d)$/, 'Время должно быть в формате HH:MM'),
-    end_time: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, 'Время должно быть в формате HH:MM'),
-    is_available: z.boolean().default(true),
-  })
-  .refine(
-    (data) => {
-      const [startHours, startMinutes] = data.start_time.split(':').map(Number);
-      const [endHours, endMinutes] = data.end_time.split(':').map(Number);
+const updateBookingSchema = z.object({
+  body: z.object({
+    status: z.enum(['confirmed', 'cancelled', 'completed']).optional(),
+    comment: z.string().max(500).optional(),
+    master_comment: z.string().max(500).optional(),
+  }),
+});
 
-      return endHours * 60 + endMinutes > startHours * 60 + startMinutes;
-    },
-    {
-      message: 'Время окончания должно быть позже времени начала',
-    }
-  );
+const getBookingsQuerySchema = z.object({
+  query: z.object({
+    page: z.string().regex(/^\d+$/).default('1'),
+    limit: z.string().regex(/^\d+$/).default('20'),
+    status: z.enum(['confirmed', 'cancelled', 'completed']).optional(),
+    date_from: z.string().date().optional(),
+    date_to: z.string().date().optional(),
+  }),
+});
+
+const setAvailabilitySchema = z.object({
+  body: z.object({
+    master_id: number,
+    date: date,
+    start_time: z.string().regex(/^\d{2}:\d{2}:\d{2}$/, 'Время должно быть в формате HH:MM:SS'),
+    end_time: z.string().regex(/^\d{2}:\d{2}:\d{2}$/, 'Время должно быть в формате HH:MM:SS'),
+    slot_duration: z.number().int().positive().default(60),
+    service_id: number.optional(),
+  }),
+});
+
+const updateAvailabilitySchema = z.object({
+  params: z.object({
+    id: z.string().regex(/^\d+$/, 'ID должен быть числом'),
+  }),
+  body: z.object({
+    start_time: z.string().regex(/^\d{2}:\d{2}:\d{2}$/).optional(),
+    end_time: z.string().regex(/^\d{2}:\d{2}:\d{2}$/).optional(),
+    slot_duration: z.number().int().positive().optional(),
+    is_available: z.boolean().optional(),
+  }),
+});
+
+const createTimeSlotSchema = z.object({
+  body: z.object({
+    master_id: number,
+    start_time: z.string().datetime(),
+    end_time: z.string().datetime(),
+    service_id: number.optional(),
+    status: z.enum(['free', 'booked', 'blocked']).optional().default('free'),
+  }),
+});
+
+const updateTimeSlotSchema = z.object({
+  params: z.object({
+    id: z.string().regex(/^\d+$/, 'ID должен быть числом'),
+  }),
+  body: z.object({
+    start_time: z.string().datetime().optional(),
+    end_time: z.string().datetime().optional(),
+    status: z.enum(['free', 'booked', 'blocked']).optional(),
+  }),
+});
 
 module.exports = {
-  timeSlotValidationSchema,
-  bookingValidationSchema,
-  orderValidationSchema,
-  masterAvailabilityValidationSchema,
+  createBookingSchema,
+  updateBookingSchema,
+  getBookingsQuerySchema,
+  setAvailabilitySchema,
+  updateAvailabilitySchema,
+  createTimeSlotSchema,
+  updateTimeSlotSchema,
 };

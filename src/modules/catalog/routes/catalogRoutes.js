@@ -3,15 +3,17 @@ const router = express.Router();
 const catalogController = require('../controllers/catalogController');
 const { authenticateToken } = require('../../../middleware/auth');
 const { validate } = require('../../../middleware/validation');
+const { pagination } = require('../../../middleware/pagination');
 const {
   serviceCategoryValidationSchema,
   serviceTemplateValidationSchema,
   masterServiceValidationSchema,
   updateMasterServiceValidationSchema,
+  updateServiceSchema,
 } = require('../../../validation');
 
 router.get('/', catalogController.getAllCatalogServices);
-router.get('/categories', catalogController.getAllCatalogCategories);
+router.get('/categories', pagination, catalogController.getAllCatalogCategories);
 router.get('/categories/popular', catalogController.getPopularCategories);
 router.get('/categories/:id', catalogController.getCatalogCategoryById);
 router.get('/by-category/:categoryId', catalogController.getServicesByCategory);
@@ -42,7 +44,7 @@ router.post(
 );
 router.put(
   '/:id',
-  validate(serviceTemplateValidationSchema, 'body'),
+  validate(updateServiceSchema, 'body'),
   catalogController.updateCatalogService
 );
 router.delete('/:id', catalogController.deleteCatalogService);

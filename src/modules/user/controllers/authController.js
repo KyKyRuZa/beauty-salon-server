@@ -4,23 +4,14 @@ const sessionService = require('../../../utils/sessionService');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { createLogger } = require('../../../utils/logger');
-const {
-  registerValidationSchema,
-  updateProfileValidationSchema,
-  changePasswordValidationSchema,
-} = require('../../../validation');
 
 const logger = createLogger('auth-controller');
 
-const register = async (req, res) => {
+const register = async (req, res, next) => {
   logger.info('Получен запрос на регистрацию', { ip: req.ip, userAgent: req.get('User-Agent') });
 
   try {
     const userData = req.body;
-
-    const validatedUserData = registerValidationSchema.parse(userData);
-
-    const user = await authService.register(validatedUserData);
 
     const token = jwt.sign(
       { userId: user.id, email: user.email, role: user.role },
@@ -197,10 +188,10 @@ const editProfile = async (req, res) => {
     const { updateProfileValidationSchema } = require('../../../validation');
 
     let validatedProfileData;
-    if (Object.keys(profileDataForValidation).length === 0 && req.file) {
+    if (Object.keys(req.body).length === 0 && req.file) {
       validatedProfileData = {};
     } else {
-      validatedProfileData = updateProfileValidationSchema.parse(profileDataForValidation);
+      validatedProfileData = req.body;
     }
 
     if (req.file) {
@@ -261,8 +252,6 @@ const changePassword = async (req, res) => {
   try {
     const userId = req.user.userId || req.user.id;
     const { currentPassword, newPassword } = req.body;
-
-    const validatedData = changePasswordValidationSchema.parse(req.body);
 
     const user = await userService.findById(userId);
     if (!user) {
